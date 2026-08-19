@@ -16,10 +16,10 @@ import java.util.Set;
 /**
  * - Ép UTF-8 cho mọi request
  * - /reception/* : RECEPTIONIST, MANAGER, ADMIN
- * - /staff/*     : SERVICE_STAFF, RECEPTIONIST, MANAGER, ADMIN
+ * - /staff/* : SERVICE_STAFF, RECEPTIONIST, MANAGER, ADMIN
  * - /profile, /my-reservations, /booking, /services : phải đăng nhập
  */
-@WebFilter(urlPatterns = {"/*"})
+@WebFilter(urlPatterns = { "/*" })
 public class AuthFilter implements Filter {
 
     private static final Set<String> LOGIN_REQUIRED_PREFIX = Set.of(
@@ -37,25 +37,41 @@ public class AuthFilter implements Filter {
         User user = (User) req.getSession().getAttribute(Constants.SESSION_USER);
 
         if (path.startsWith("/reception/")) {
-            if (user == null) { res.sendRedirect(req.getContextPath() + "/login"); return; }
+            if (user == null) {
+                redirectToLogin(req, res, path);
+                return;
+            }
             if (!hasRole(user, Constants.ROLE_RECEPTIONIST, Constants.ROLE_MANAGER, Constants.ROLE_ADMIN)) {
-                res.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+                res.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
             }
         } else if (path.startsWith("/staff/")) {
-            if (user == null) { res.sendRedirect(req.getContextPath() + "/login"); return; }
+            if (user == null) {
+                redirectToLogin(req, res, path);
+                return;
+            }
             if (!hasRole(user, Constants.ROLE_SERVICE_STAFF, Constants.ROLE_RECEPTIONIST,
                     Constants.ROLE_MANAGER, Constants.ROLE_ADMIN)) {
-                res.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+                res.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
             }
         } else if (user == null && LOGIN_REQUIRED_PREFIX.stream().anyMatch(path::startsWith)) {
-            res.sendRedirect(req.getContextPath() + "/login");
+            redirectToLogin(req, res, path);
             return;
         }
         chain.doFilter(request, response);
     }
 
+    private void redirectToLogin(HttpServletRequest req, HttpServletResponse res, String path) throws IOException {
+        String target = path + (req.getQueryString() != null ? "?" + req.getQueryString() : "");
+        String encoded = java.net.URLEncoder.encode(target, java.nio.charset.StandardCharsets.UTF_8);
+        res.sendRedirect(req.getContextPath() + "/login?redirect=" + encoded);
+    }
+
     private boolean hasRole(User u, String... roles) {
-        for (String r : roles) if (r.equals(u.getRoleCode())) return true;
+        for (String r : roles)
+            if (r.equals(u.getRoleCode()))
+                return true;
         return false;
     }
 }
