@@ -220,7 +220,8 @@ public class ReservationRepository extends BaseRepository implements IReservatio
 
     @Override
     public List<Reservation> searchByCodeOrCustomer(String keyword, String statusCode) {
-        String sql = BASE_SELECT + "WHERE (r.booking_code LIKE ? OR c.full_name LIKE ? OR c.phone LIKE ?) "
+        String sql = BASE_SELECT.replace("SELECT r.*", "SELECT TOP (100) r.*")
+                   + "WHERE (r.booking_code LIKE ? OR c.full_name LIKE ? OR c.phone LIKE ?) "
                    + (statusCode != null ? "AND r.status_code = ? " : "")
                    + "ORDER BY r.booked_at DESC";
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -267,6 +268,20 @@ public class ReservationRepository extends BaseRepository implements IReservatio
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, holdHours);
             return ps.executeUpdate();
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
+    public void markNoShow(long reservationId) {
+        // Chỉ đánh dấu không đến cho đơn CONFIRMED đã qua ngày nhận phòng
+        String sql = "UPDATE reservations SET status_code = 'NO_SHOW', updated_at = SYSUTCDATETIME() "
+                   + "WHERE reservation_id = ? AND status_code = 'CONFIRMED' "
+                   + "AND check_in_date < CAST(GETDATE() AS date)";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, reservationId);
+            if (ps.executeUpdate() == 0)
+                throw new IllegalStateException(
+                        "Chỉ đánh dấu KHÔNG ĐẾN cho đơn CONFIRMED đã qua ngày nhận phòng");
         } catch (SQLException e) { throw wrap(e); }
     }
 

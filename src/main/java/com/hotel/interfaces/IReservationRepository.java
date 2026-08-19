@@ -18,6 +18,8 @@ public interface IReservationRepository {
     /** F02/F06: số phòng của 1 loại đã bị giữ trong khoảng ngày (PENDING/CONFIRMED/CHECKED_IN) */
     int countSoldRooms(long roomTypeId, LocalDate checkIn, LocalDate checkOut, Long excludeReservationId);
     void updateStatus(long reservationId, String statusCode);
+    /** Đánh dấu NO_SHOW: đơn CONFIRMED đã qua ngày nhận phòng mà khách không đến */
+    void markNoShow(long reservationId);
     /** Tự hủy các đơn PENDING quá hạn giữ chỗ mà chưa nộp đủ cọc. @return số đơn bị hủy */
     int cancelExpiredPending(int holdHours);
     void cancel(long reservationId, String reason);
