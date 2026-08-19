@@ -3,7 +3,7 @@
   <h2>Quản lý đơn đặt phòng</h2>
   <form method="get" action="${pageContext.request.contextPath}/reception/reservations"
         style="display:flex;gap:8px;flex-wrap:wrap">
-    <input name="q" value="${q}" placeholder="Mã đơn / tên khách / SĐT" style="width:280px">
+    <input name="q" value="<c:out value='${q}'/>" placeholder="Mã đơn / tên khách / SĐT" style="width:280px">
     <select name="status">
       <option value="">-- tất cả trạng thái --</option>
       <option value="PENDING" ${statusFilter == 'PENDING' ? 'selected' : ''}>PENDING (chờ cọc)</option>
@@ -20,7 +20,7 @@
     <c:forEach var="rv" items="${reservations}">
       <tr>
         <td>${rv.bookingCode}</td>
-        <td>${rv.customerName}</td>
+        <td><c:out value="${rv.customerName}"/></td>
         <td>${rv.checkInDate}</td><td>${rv.checkOutDate}</td>
         <td><fmt:formatNumber value="${rv.totalAmount}"/> đ</td>
         <td><fmt:formatNumber value="${rv.depositRequired}"/> đ</td>

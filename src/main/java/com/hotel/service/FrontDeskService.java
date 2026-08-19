@@ -37,6 +37,8 @@ public class FrontDeskService {
     private final IRoomRepository roomRepo = new RoomRepository();
     private final IInvoiceRepository invoiceRepo = new InvoiceRepository();
     private final IInvoiceItemRepository invoiceItemRepo = new InvoiceItemRepository();
+    private final com.hotel.interfaces.IReservationGuestRepository guestRepo =
+            new com.hotel.repository.ReservationGuestRepository();
     private final PaymentService paymentService = new PaymentService();
 
     /** F10: check-in - yêu cầu đơn CONFIRMED và đã nộp đủ cọc */
@@ -47,6 +49,19 @@ public class FrontDeskService {
             throw new IllegalStateException("Đơn phải ở trạng thái CONFIRMED mới check-in được");
         if (paymentService.getDepositPaid(reservationId).compareTo(r.getDepositRequired()) < 0)
             throw new IllegalStateException("Khách chưa nộp đủ tiền cọc");
+        // Không cho check-in TRƯỚC ngày nhận phòng (khách đến sớm → đổi ngày đơn hoặc tạo Walk-in)
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (today.isBefore(r.getCheckInDate()))
+            throw new IllegalStateException("Đơn nhận phòng ngày "
+                    + r.getCheckInDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    + " — chưa đến ngày. Khách đến sớm: hãy ĐỔI NGÀY đơn (màn chi tiết đơn) hoặc tạo WALK-IN cho đêm nay");
+        // Khai báo lưu trú: khách ở CHÍNH bắt buộc có giấy tờ tùy thân
+        boolean primaryHasDoc = guestRepo.findByReservation(reservationId).stream()
+                .anyMatch(g -> g.isPrimaryGuest()
+                        && g.getIdDocumentNumber() != null && !g.getIdDocumentNumber().isBlank());
+        if (!primaryHasDoc)
+            throw new IllegalStateException("Khách ở chính chưa khai giấy tờ tùy thân — "
+                    + "bổ sung ở bảng 'Danh sách khách ở' trước khi check-in");
         // VÁ LỖ HỔNG: không cho check-in nếu không đủ phòng sạch sẵn sàng để gán
         // (tránh tình trạng khách CHECKED_IN "trên giấy" nhưng không có phòng thật)
         List<String> shortages = findRoomShortages(reservationId);
@@ -146,6 +161,15 @@ public class FrontDeskService {
         if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Chỉ thêm phụ thu cho khách đang ở");
+        // V3: validate dữ liệu phụ thu trước khi ghi (tránh nổ CHECK constraint DB)
+        if (description == null || description.isBlank())
+            throw new IllegalArgumentException("Mô tả phụ thu không được để trống");
+        if (description.length() > 255)
+            throw new IllegalArgumentException("Mô tả phụ thu tối đa 255 ký tự");
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Số lượng phụ thu phải lớn hơn 0");
+        if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException("Đơn giá phụ thu không được âm");
         Invoice inv = getOrCreateDraftInvoice(r, byUserId);
         InvoiceItem item = new InvoiceItem();
         item.setInvoiceId(inv.getInvoiceId());
@@ -160,7 +184,9 @@ public class FrontDeskService {
 
     /** F12: ghi chú kỳ ở */
     public void addStayNote(long reservationId, String note) {
-        reservationRepo.appendSpecialRequest(reservationId, "[Ghi chú] " + note);
+        if (note == null || note.isBlank())
+            throw new IllegalArgumentException("Ghi chú không được để trống");
+        reservationRepo.appendSpecialRequest(reservationId, "[Ghi chú] " + note.trim());
     }
 
     /**

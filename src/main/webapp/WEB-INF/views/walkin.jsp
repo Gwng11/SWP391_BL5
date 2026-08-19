@@ -14,13 +14,13 @@
         <option value="PASSPORT" ${param.docType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
       </select>
     </div>
-    <div><label>Số giấy tờ</label><input name="docNo" value="${param.docNo}" placeholder="Quét / nhập số giấy tờ" required></div>
+    <div><label>Số giấy tờ</label><input name="docNo" value="<c:out value='${param.docNo}'/>" placeholder="Quét / nhập số giấy tờ" required></div>
     <button class="btn" type="submit">🔍 Tra cứu khách</button>
   </form>
   <c:if test="${lookedUp}">
     <c:choose>
       <c:when test="${found != null}">
-        <div class="msg" style="margin-top:10px">✔ Khách cũ: <b>${found.fullName}</b> (${found.customerCode}) — thông tin đã được điền sẵn bên dưới.</div>
+        <div class="msg" style="margin-top:10px">✔ Khách cũ: <b><c:out value="${found.fullName}"/></b> (${found.customerCode}) — thông tin đã được điền sẵn bên dưới.</div>
       </c:when>
       <c:otherwise>
         <div class="err" style="margin-top:10px">Chưa có hồ sơ với giấy tờ này — nhập thông tin bên dưới để tạo mới.</div>
@@ -41,15 +41,15 @@
           <option value="PASSPORT" ${param.docType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
         </select>
         <label>Số giấy tờ *</label>
-        <input name="idDocumentNumber" value="${found != null ? found.idDocumentNumber : param.docNo}" style="width:100%" required>
+        <input name="idDocumentNumber" value="<c:out value='${found != null ? found.idDocumentNumber : param.docNo}'/>" maxlength="50" style="width:100%" required>
         <label>Họ tên *</label>
-        <input name="fullName" value="${found.fullName}" style="width:100%" required>
+        <input name="fullName" value="<c:out value='${found.fullName}'/>" maxlength="150" style="width:100%" required>
         <label>SĐT</label>
-        <input name="phone" value="${found.phone}" style="width:100%">
+        <input name="phone" value="<c:out value='${found.phone}'/>" maxlength="30" style="width:100%">
         <label>Email (để gửi xác nhận, bỏ trống được)</label>
-        <input name="email" value="${found.email}" style="width:100%">
+        <input name="email" value="<c:out value='${found.email}'/>" maxlength="255" style="width:100%">
         <label>Quốc tịch</label>
-        <input name="nationality" value="${found != null ? found.nationality : 'Việt Nam'}" style="width:100%">
+        <input name="nationality" value="${found != null ? found.nationality : 'Việt Nam'}" maxlength="80" style="width:100%">
       </div>
 
       <!-- BƯỚC 3: Phòng & thanh toán -->
