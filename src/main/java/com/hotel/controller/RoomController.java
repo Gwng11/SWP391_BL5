@@ -22,17 +22,17 @@ public class RoomController extends BaseController {
             req.getRequestDispatcher("/WEB-INF/views/room-detail.jsp").forward(req, resp);
             return;
         }
-        // F02: form tìm kiếm + kết quả
-        LocalDate checkIn = dateParam(req, "checkIn");
-        LocalDate checkOut = dateParam(req, "checkOut");
+        // F02: form tìm kiếm + kết quả (parse ngày cũng nằm trong try để không nổ 500)
         int adults = intParam(req, "adults", 1);
         int children = intParam(req, "children", 0);
-        if (checkIn != null && checkOut != null) {
-            try {
+        try {
+            LocalDate checkIn = dateParam(req, "checkIn");
+            LocalDate checkOut = dateParam(req, "checkOut");
+            if (checkIn != null && checkOut != null) {
                 req.setAttribute("results", roomService.searchAvailability(checkIn, checkOut, adults, children));
-            } catch (IllegalArgumentException e) {
-                req.setAttribute("err", e.getMessage());
             }
+        } catch (IllegalArgumentException e) {
+            req.setAttribute("err", e.getMessage());
         }
         req.setAttribute("roomTypes", roomService.getAllActiveTypes());
         req.getRequestDispatcher("/WEB-INF/views/rooms.jsp").forward(req, resp);

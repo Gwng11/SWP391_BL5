@@ -16,9 +16,21 @@ public class CustomerService {
 
     public Customer getById(long customerId) { return customerRepo.findById(customerId); }
 
+    /** V4: chặn vượt độ dài cột DB (customers) */
+    private void validateLengths(Customer c) {
+        ValidationUtil.requireMaxLen(c.getFullName(), 150, "Họ tên");
+        ValidationUtil.requireMaxLen(c.getEmail(), 255, "Email");
+        ValidationUtil.requireMaxLen(c.getPhone(), 30, "Số điện thoại");
+        ValidationUtil.requireMaxLen(c.getIdDocumentType(), 30, "Loại giấy tờ");
+        ValidationUtil.requireMaxLen(c.getIdDocumentNumber(), 50, "Số giấy tờ");
+        ValidationUtil.requireMaxLen(c.getNationality(), 80, "Quốc tịch");
+        ValidationUtil.requireMaxLen(c.getAddress(), 255, "Địa chỉ");
+    }
+
     /** Tạo hồ sơ khách walk-in (không gắn user account) */
     public long createWalkIn(Customer c, long createdByUserId) {
         if (ValidationUtil.isBlank(c.getFullName())) throw new IllegalArgumentException("Họ tên không được để trống");
+        validateLengths(c);
         if (!ValidationUtil.isBlank(c.getEmail()) && !ValidationUtil.isEmail(c.getEmail()))
             throw new IllegalArgumentException("Email không hợp lệ");
         // CK_customers_document: loại và số giấy tờ phải đi cùng nhau
@@ -34,6 +46,7 @@ public class CustomerService {
 
     public void update(Customer c) {
         if (ValidationUtil.isBlank(c.getFullName())) throw new IllegalArgumentException("Họ tên không được để trống");
+        validateLengths(c);
         customerRepo.update(c);
     }
 }

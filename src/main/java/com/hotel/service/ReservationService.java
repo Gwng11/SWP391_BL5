@@ -81,7 +81,9 @@ public class ReservationService {
         for (RoomRequest rq : roomRequests) {
             RoomType type = roomTypeRepo.findById(rq.roomTypeId);
             if (type == null || !type.isActive()) throw new IllegalArgumentException("Loại phòng không tồn tại");
-            if (rq.quantity <= 0 || rq.adults <= 0) throw new IllegalArgumentException("Số lượng/số khách không hợp lệ");
+            if (rq.quantity <= 0) throw new IllegalArgumentException("Số phòng phải lớn hơn 0");
+            if (rq.adults <= 0) throw new IllegalArgumentException("Phải có ít nhất 1 người lớn");
+            if (rq.children < 0) throw new IllegalArgumentException("Số trẻ em không được âm");
             if (rq.adults > type.getMaxAdults() * rq.quantity || rq.children > type.getMaxChildren() * rq.quantity)
                 throw new IllegalArgumentException("Vượt sức chứa của loại phòng " + type.getTypeName());
             if (!roomService.isAvailable(rq.roomTypeId, checkIn, checkOut, rq.quantity, null))

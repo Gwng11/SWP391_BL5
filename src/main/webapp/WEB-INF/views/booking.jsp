@@ -60,12 +60,12 @@
                 <input type="hidden" name="checkOut" value="${param.checkOut}">
                 <input type="hidden" name="adults" value="${param.adults}">
                 <input type="hidden" name="children" value="${param.children}">
-                <div><label>Họ tên *</label><input name="newFullName" required></div>
-                <div><label>SĐT</label><input name="newPhone" value="${param.q}"></div>
+                <div><label>Họ tên *</label><input name="newFullName" maxlength="150" required></div>
+                <div><label>SĐT</label><input name="newPhone" value="${param.q}" maxlength="30"></div>
                 <div><label>Loại giấy tờ</label>
                   <select name="newDocType"><option value="">-- không --</option>
                     <option value="CCCD">CCCD</option><option value="PASSPORT">Hộ chiếu</option></select></div>
-                <div><label>Số giấy tờ</label><input name="newDocNumber"></div>
+                <div><label>Số giấy tờ</label><input name="newDocNumber" maxlength="50"></div>
                 <button class="btn btn-success" type="submit">Tạo & chọn khách này</button>
               </form>
             </details>
@@ -86,7 +86,7 @@
       <input type="hidden" name="customerId" value="${selectedCustomer.customerId}">
     </c:if>
     <label>Tên khách ở chính</label>
-    <input name="primaryGuestName" value="${selectedCustomer.fullName}" style="width:100%">
+    <input name="primaryGuestName" value="${selectedCustomer.fullName}" maxlength="150" style="width:100%">
     <label>Yêu cầu đặc biệt</label><textarea name="specialRequests" style="width:100%" rows="3"></textarea>
     <p>Tạm tính = giá theo ngày × số đêm × số phòng + 10% thuế. Cọc 30% để xác nhận đơn.</p>
     <button class="btn btn-success" type="submit">Xác nhận đặt phòng</button>

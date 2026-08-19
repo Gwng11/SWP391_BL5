@@ -161,6 +161,15 @@ public class FrontDeskService {
         if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Chỉ thêm phụ thu cho khách đang ở");
+        // V3: validate dữ liệu phụ thu trước khi ghi (tránh nổ CHECK constraint DB)
+        if (description == null || description.isBlank())
+            throw new IllegalArgumentException("Mô tả phụ thu không được để trống");
+        if (description.length() > 255)
+            throw new IllegalArgumentException("Mô tả phụ thu tối đa 255 ký tự");
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Số lượng phụ thu phải lớn hơn 0");
+        if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException("Đơn giá phụ thu không được âm");
         Invoice inv = getOrCreateDraftInvoice(r, byUserId);
         InvoiceItem item = new InvoiceItem();
         item.setInvoiceId(inv.getInvoiceId());
@@ -175,7 +184,9 @@ public class FrontDeskService {
 
     /** F12: ghi chú kỳ ở */
     public void addStayNote(long reservationId, String note) {
-        reservationRepo.appendSpecialRequest(reservationId, "[Ghi chú] " + note);
+        if (note == null || note.isBlank())
+            throw new IllegalArgumentException("Ghi chú không được để trống");
+        reservationRepo.appendSpecialRequest(reservationId, "[Ghi chú] " + note.trim());
     }
 
     /**

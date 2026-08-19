@@ -32,31 +32,31 @@
       <tr><th>Họ tên</th><th>Loại giấy tờ</th><th>Số giấy tờ</th><th>Khách chính</th></tr>
       <c:forEach var="g" items="${guests}" varStatus="st">
         <tr>
-          <td><input name="gName" value="${g.fullName}" style="width:180px"></td>
+          <td><input name="gName" value="${g.fullName}" maxlength="150" style="width:180px"></td>
           <td><select name="gDocType">
                 <option value="" ${empty g.idDocumentType ? 'selected' : ''}>--</option>
                 <option value="CCCD" ${g.idDocumentType == 'CCCD' ? 'selected' : ''}>CCCD</option>
                 <option value="PASSPORT" ${g.idDocumentType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
               </select></td>
-          <td><input name="gDocNo" value="${g.idDocumentNumber}" style="width:150px"></td>
+          <td><input name="gDocNo" value="${g.idDocumentNumber}" maxlength="50" style="width:150px"></td>
           <td style="text-align:center"><input type="radio" name="primaryIdx" value="${st.index}"
                 ${g.primaryGuest ? 'checked' : ''}></td>
         </tr>
       </c:forEach>
       <%-- 2 dòng trống để bổ sung khách mới --%>
       <tr>
-        <td><input name="gName" placeholder="Thêm khách..." style="width:180px"></td>
+        <td><input name="gName" placeholder="Thêm khách..." maxlength="150" style="width:180px"></td>
         <td><select name="gDocType"><option value="">--</option>
               <option value="CCCD">CCCD</option><option value="PASSPORT">Hộ chiếu</option></select></td>
-        <td><input name="gDocNo" style="width:150px"></td>
+        <td><input name="gDocNo" maxlength="50" style="width:150px"></td>
         <td style="text-align:center"><input type="radio" name="primaryIdx" value="${guests.size()}"
               ${empty guests ? 'checked' : ''}></td>
       </tr>
       <tr>
-        <td><input name="gName" placeholder="Thêm khách..." style="width:180px"></td>
+        <td><input name="gName" placeholder="Thêm khách..." maxlength="150" style="width:180px"></td>
         <td><select name="gDocType"><option value="">--</option>
               <option value="CCCD">CCCD</option><option value="PASSPORT">Hộ chiếu</option></select></td>
-        <td><input name="gDocNo" style="width:150px"></td>
+        <td><input name="gDocNo" maxlength="50" style="width:150px"></td>
         <td style="text-align:center"><input type="radio" name="primaryIdx" value="${guests.size() + 1}"></td>
       </tr>
     </table>

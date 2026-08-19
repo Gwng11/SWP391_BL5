@@ -57,7 +57,7 @@
         onsubmit="return confirm('Xác nhận hủy đơn?${depositPaid > 0 ? ' Tiền cọc sẽ KHÔNG được hoàn lại!' : ''}')">
     <input type="hidden" name="id" value="${r.reservationId}">
     <input type="hidden" name="action" value="cancel">
-    <input name="reason" placeholder="Lý do hủy" style="width:300px">
+    <input name="reason" placeholder="Lý do hủy" maxlength="255" style="width:300px">
     <button class="btn btn-danger" type="submit">Hủy đơn</button>
   </form>
 </div>

@@ -21,9 +21,9 @@
   <h3>${editing == null ? 'Tạo khách walk-in' : 'Cập nhật khách hàng #'.concat(editing.customerId)}</h3>
   <form method="post" action="${pageContext.request.contextPath}/reception/customers">
     <c:if test="${editing != null}"><input type="hidden" name="customerId" value="${editing.customerId}"></c:if>
-    <label>Họ tên *</label><input name="fullName" value="${editing.fullName}" style="width:100%" required>
-    <label>Email</label><input name="email" value="${editing.email}" style="width:100%">
-    <label>SĐT</label><input name="phone" value="${editing.phone}" style="width:100%">
+    <label>Họ tên *</label><input name="fullName" value="${editing.fullName}" maxlength="150" style="width:100%" required>
+    <label>Email</label><input name="email" value="${editing.email}" maxlength="255" style="width:100%">
+    <label>SĐT</label><input name="phone" value="${editing.phone}" maxlength="30" style="width:100%">
     <label>Ngày sinh</label><input type="date" name="dateOfBirth" value="${editing.dateOfBirth}" style="width:100%">
     <label>Loại giấy tờ</label>
     <select name="idDocumentType" style="width:100%">
@@ -31,9 +31,9 @@
       <option value="CCCD" ${editing.idDocumentType == 'CCCD' ? 'selected' : ''}>CCCD</option>
       <option value="PASSPORT" ${editing.idDocumentType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
     </select>
-    <label>Số giấy tờ</label><input name="idDocumentNumber" value="${editing.idDocumentNumber}" style="width:100%">
-    <label>Quốc tịch</label><input name="nationality" value="${editing.nationality}" style="width:100%">
-    <label>Địa chỉ</label><input name="address" value="${editing.address}" style="width:100%">
+    <label>Số giấy tờ</label><input name="idDocumentNumber" value="${editing.idDocumentNumber}" maxlength="50" style="width:100%">
+    <label>Quốc tịch</label><input name="nationality" value="${editing.nationality}" maxlength="80" style="width:100%">
+    <label>Địa chỉ</label><input name="address" value="${editing.address}" maxlength="255" style="width:100%">
     <p><button class="btn btn-success" type="submit">${editing == null ? 'Tạo hồ sơ' : 'Lưu thay đổi'}</button></p>
   </form>
 </div>

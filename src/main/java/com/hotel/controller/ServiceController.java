@@ -48,7 +48,14 @@ public class ServiceController extends BaseController {
                     throw new IllegalArgumentException("Bạn chỉ được yêu cầu dịch vụ cho đơn của chính mình");
             }
             String scheduled = req.getParameter("scheduledAt"); // datetime-local: yyyy-MM-ddTHH:mm
-            LocalDateTime scheduledAt = (scheduled == null || scheduled.isEmpty()) ? null : LocalDateTime.parse(scheduled);
+            LocalDateTime scheduledAt = null;
+            if (scheduled != null && !scheduled.isEmpty()) {
+                try {
+                    scheduledAt = LocalDateTime.parse(scheduled);
+                } catch (java.time.format.DateTimeParseException e) {
+                    throw new IllegalArgumentException("Thời gian hẹn không hợp lệ");
+                }
+            }
             serviceRequestService.createRequest(
                     reservationId,
                     longParam(req, "hotelServiceId"),

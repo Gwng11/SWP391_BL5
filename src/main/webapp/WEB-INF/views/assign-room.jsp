@@ -34,7 +34,7 @@
               <option value="${nr.roomId}">Phòng ${nr.roomNumber} (tầng ${nr.floorNumber}, ${nr.cleaningStatus})</option>
             </c:forEach>
           </select>
-          <input name="reason" placeholder="Lý do" style="width:140px">
+          <input name="reason" placeholder="Lý do" maxlength="255" style="width:140px">
           <button class="btn" type="submit">Đổi</button>
         </form>
       </td>
