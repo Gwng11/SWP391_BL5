@@ -25,10 +25,26 @@
   <c:forEach var="g" items="${guests}">
     <tr><td>${g.fullName}</td><td>${g.idDocumentType} ${g.idDocumentNumber}</td></tr>
   </c:forEach></table>
+  <h4>Tình trạng phòng sạch sẵn sàng để gán</h4>
+  <table><tr><th>Loại phòng</th><th>Cần</th><th>Sẵn sàng</th><th></th></tr>
+  <c:forEach var="l" items="${lines}">
+    <tr>
+      <td>${l.typeName}</td><td>${l.quantity}</td><td>${readyMap[l.reservationRoomId]}</td>
+      <td>
+        <c:choose>
+          <c:when test="${readyMap[l.reservationRoomId] < l.quantity}">
+            <b style="color:#c0392b">⚠ KHÔNG ĐỦ — cần dọn phòng / xử lý bảo trì trước</b>
+          </c:when>
+          <c:otherwise><span style="color:#1e8449">✔ Đủ</span></c:otherwise>
+        </c:choose>
+      </td>
+    </tr>
+  </c:forEach></table>
   <form method="post" action="${pageContext.request.contextPath}/reception/checkin" style="margin-top:12px">
     <input type="hidden" name="id" value="${r.reservationId}">
     <button class="btn btn-success" type="submit">✔ Check-in & chuyển sang gán phòng</button>
   </form>
+  <p style="color:#636e72;font-size:13px">* Hệ thống sẽ từ chối check-in nếu không đủ phòng sạch sẵn sàng để gán.</p>
 </div>
 </c:if>
 <%@ include file="_footer.jspf" %>

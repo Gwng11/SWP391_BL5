@@ -1,5 +1,6 @@
 package com.hotel.controller;
 
+import com.hotel.entity.Customer;
 import com.hotel.entity.Reservation;
 import com.hotel.entity.User;
 import com.hotel.service.PaymentService;
@@ -24,21 +25,39 @@ public class DepositController extends BaseController {
         long id = longParam(req, "reservationId");
         Reservation r = reservationService.getById(id);
         if (r == null) { resp.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
+        if (!checkOwnership(req, resp, r)) return; // chống IDOR
         req.setAttribute("r", r);
         req.setAttribute("depositPaid", paymentService.getDepositPaid(id));
         req.setAttribute("outstanding", paymentService.getDepositOutstanding(r));
         req.getRequestDispatcher("/WEB-INF/views/deposit.jsp").forward(req, resp);
     }
 
+    /** Khách CUSTOMER chỉ được xem/thanh toán cọc đơn của chính mình */
+    private boolean checkOwnership(HttpServletRequest req, HttpServletResponse resp, Reservation r) throws IOException {
+        User me = currentUser(req);
+        if (!Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) return true;
+        Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
+        if (c == null || c.getCustomerId() != r.getCustomerId()) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;
+    }
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         User me = currentUser(req);
         long id = longParam(req, "reservationId");
+        Reservation r = reservationService.getById(id);
+        if (r == null) { resp.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
+        if (!checkOwnership(req, resp, r)) return; // chống IDOR
         try {
             String method = req.getParameter("method"); // CASH | ONLINE
-            // Khách hàng chỉ được thanh toán online
-            if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) method = "ONLINE";
             BigDecimal amount = decimalParam(req, "amount");
+            if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
+                method = "ONLINE";                              // khách chỉ thanh toán online
+                amount = paymentService.getDepositOutstanding(r); // khách KHÔNG tự quyết số tiền cọc
+            }
             Long recordedBy = Constants.ROLE_CUSTOMER.equals(me.getRoleCode()) ? null : me.getUserId();
             paymentService.payDeposit(id, amount, method, recordedBy);
             resp.sendRedirect(req.getContextPath() + "/reservation?id=" + id + "&paid=1");

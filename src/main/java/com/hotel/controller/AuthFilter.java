@@ -64,6 +64,9 @@ public class AuthFilter implements Filter {
 
     private void redirectToLogin(HttpServletRequest req, HttpServletResponse res, String path) throws IOException {
         String target = path + (req.getQueryString() != null ? "?" + req.getQueryString() : "");
+        if ("GET".equalsIgnoreCase(req.getMethod())) {
+            req.getSession().setAttribute("redirectAfterLogin", target);
+        }
         String encoded = java.net.URLEncoder.encode(target, java.nio.charset.StandardCharsets.UTF_8);
         res.sendRedirect(req.getContextPath() + "/login?redirect=" + encoded);
     }

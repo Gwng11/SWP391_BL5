@@ -49,15 +49,18 @@ public class AuthController extends BaseController {
             if ("/login".equals(path)) {
                 User u = authService.login(req.getParameter("email"), req.getParameter("password"));
                 req.getSession().setAttribute(Constants.SESSION_USER, u);
+                String target = (String) req.getSession().getAttribute("redirectAfterLogin");
+                req.getSession().removeAttribute("redirectAfterLogin");
                 if (Constants.ROLE_CUSTOMER.equals(u.getRoleCode())) {
                     req.getSession().setAttribute(Constants.SESSION_CUSTOMER,
                             new CustomerRepository().findByUserId(u.getUserId()));
                 }
 
                 String redirect = req.getParameter("redirect");
-                if (redirect != null && !redirect.isBlank() && redirect.startsWith("/")
-                        && !redirect.startsWith("//") && !redirect.contains("://")) {
-                    resp.sendRedirect(req.getContextPath() + redirect);
+                String destination = isSafeLocalPath(redirect) ? redirect
+                        : (isSafeLocalPath(target) ? target : null);
+                if (destination != null) {
+                    resp.sendRedirect(req.getContextPath() + destination);
                 } else if (Constants.ROLE_CUSTOMER.equals(u.getRoleCode())) {
                     resp.sendRedirect(req.getContextPath() + "/home");
                 } else if (Constants.ROLE_SERVICE_STAFF.equals(u.getRoleCode())) {
@@ -95,5 +98,10 @@ public class AuthController extends BaseController {
                 view = "/WEB-INF/views/reset-password.jsp";
             req.getRequestDispatcher(view).forward(req, resp);
         }
+    }
+
+    private boolean isSafeLocalPath(String path) {
+        return path != null && !path.isBlank() && path.startsWith("/")
+                && !path.startsWith("//") && !path.contains("://");
     }
 }

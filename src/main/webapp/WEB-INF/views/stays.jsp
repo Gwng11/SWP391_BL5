@@ -3,11 +3,18 @@
 <div class="card">
   <h2>Khách đang lưu trú</h2>
   <table>
-    <tr><th>Mã đơn</th><th>Khách</th><th>Nhận</th><th>Trả dự kiến</th><th>Tổng tiền</th><th>Thao tác</th></tr>
+    <tr><th>Mã đơn</th><th>Khách</th><th>Nhận</th><th>Trả dự kiến</th><th>Phòng</th><th>Tổng tiền</th><th>Thao tác</th></tr>
     <c:forEach var="rv" items="${stays}">
       <tr>
         <td>${rv.bookingCode}</td><td>${rv.customerName}</td>
         <td>${rv.checkInDate}</td><td>${rv.checkOutDate}</td>
+        <td>
+          ${roomProgress[rv.reservationId]}
+          <c:if test="${roomMissing[rv.reservationId]}">
+            <a class="btn btn-danger" style="padding:3px 8px;font-size:12px"
+               href="${pageContext.request.contextPath}/reception/assign?reservationId=${rv.reservationId}">⚠ Chưa gán đủ</a>
+          </c:if>
+        </td>
         <td><fmt:formatNumber value="${rv.totalAmount}"/> đ</td>
         <td>
           <form method="post" style="display:inline-flex;gap:4px" action="${pageContext.request.contextPath}/reception/stays">
