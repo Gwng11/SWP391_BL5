@@ -45,7 +45,7 @@
   <h3>Lịch sử gán phòng</h3>
   <table><tr><th>Phòng</th><th>Gán lúc</th><th>Trả lúc</th><th>Lý do</th></tr>
   <c:forEach var="h" items="${history}">
-    <tr><td>${h.roomNumber}</td><td>${h.assignedAt}</td><td>${h.unassignedAt}</td><td>${h.unassignedReason}</td></tr>
+    <tr><td>${h.roomNumber}</td><td>${h.assignedAt}</td><td>${h.unassignedAt}</td><td><c:out value="${h.unassignedReason}"/></td></tr>
   </c:forEach></table>
 </div>
 <%@ include file="_footer.jspf" %>

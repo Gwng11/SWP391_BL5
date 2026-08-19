@@ -3,13 +3,13 @@
 <div class="card">
   <h2>Check-in (đơn CONFIRMED)</h2>
   <form method="get" action="${pageContext.request.contextPath}/reception/checkin">
-    <input name="q" placeholder="Mã đơn / tên khách / SĐT" value="${param.q}" style="width:300px">
+    <input name="q" placeholder="Mã đơn / tên khách / SĐT" value="<c:out value='${param.q}'/>" style="width:300px">
     <button class="btn" type="submit">Tìm</button>
   </form>
   <table style="margin-top:12px">
     <tr><th>Mã đơn</th><th>Khách</th><th>Nhận</th><th>Trả</th><th>Tổng</th><th></th></tr>
     <c:forEach var="rv" items="${reservations}">
-      <tr><td>${rv.bookingCode}</td><td>${rv.customerName}</td><td>${rv.checkInDate}</td><td>${rv.checkOutDate}</td>
+      <tr><td>${rv.bookingCode}</td><td><c:out value="${rv.customerName}"/></td><td>${rv.checkInDate}</td><td>${rv.checkOutDate}</td>
           <td><fmt:formatNumber value="${rv.totalAmount}"/> đ</td>
           <td><a class="btn" href="?id=${rv.reservationId}">Chọn</a></td></tr>
     </c:forEach>
@@ -18,7 +18,7 @@
 <c:if test="${r != null}">
 <div class="card">
   <h3>Xác nhận check-in: ${r.bookingCode}</h3>
-  <p>Khách: <b>${r.customerName}</b> — Cọc yêu cầu <fmt:formatNumber value="${r.depositRequired}"/> đ,
+  <p>Khách: <b><c:out value="${r.customerName}"/></b> — Cọc yêu cầu <fmt:formatNumber value="${r.depositRequired}"/> đ,
      đã nộp <b><fmt:formatNumber value="${depositPaid}"/> đ</b></p>
   <c:if test="${lateDays != null && lateDays > 0}">
     <div class="err">⚠ Khách đến muộn ${lateDays} ngày so với ngày nhận phòng (${r.checkInDate}).
@@ -32,13 +32,13 @@
       <tr><th>Họ tên</th><th>Loại giấy tờ</th><th>Số giấy tờ</th><th>Khách chính</th></tr>
       <c:forEach var="g" items="${guests}" varStatus="st">
         <tr>
-          <td><input name="gName" value="${g.fullName}" maxlength="150" style="width:180px"></td>
+          <td><input name="gName" value="<c:out value='${g.fullName}'/>" maxlength="150" style="width:180px"></td>
           <td><select name="gDocType">
                 <option value="" ${empty g.idDocumentType ? 'selected' : ''}>--</option>
                 <option value="CCCD" ${g.idDocumentType == 'CCCD' ? 'selected' : ''}>CCCD</option>
                 <option value="PASSPORT" ${g.idDocumentType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
               </select></td>
-          <td><input name="gDocNo" value="${g.idDocumentNumber}" maxlength="50" style="width:150px"></td>
+          <td><input name="gDocNo" value="<c:out value='${g.idDocumentNumber}'/>" maxlength="50" style="width:150px"></td>
           <td style="text-align:center"><input type="radio" name="primaryIdx" value="${st.index}"
                 ${g.primaryGuest ? 'checked' : ''}></td>
         </tr>

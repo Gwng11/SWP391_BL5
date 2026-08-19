@@ -74,6 +74,10 @@ public class ReservationService {
         reservationRepo.cancelExpiredPending(Constants.PENDING_HOLD_HOURS);
 
         int nights = (int) ChronoUnit.DAYS.between(checkIn, checkOut);
+        // V10: giới hạn hợp lý cho kỳ ở và thời gian đặt trước
+        if (nights > 30) throw new IllegalArgumentException("Kỳ ở tối đa 30 đêm");
+        if (checkIn.isAfter(LocalDate.now().plusDays(365)))
+            throw new IllegalArgumentException("Chỉ nhận đặt trước tối đa 365 ngày");
         List<ReservationRoom> lines = new ArrayList<>();
         BigDecimal roomSubtotal = BigDecimal.ZERO;
         int totalAdults = 0, totalChildren = 0;
@@ -156,6 +160,7 @@ public class ReservationService {
             throw new IllegalArgumentException("Khoảng ngày không hợp lệ");
 
         int nights = (int) ChronoUnit.DAYS.between(newCheckIn, newCheckOut);
+        if (nights > 30) throw new IllegalArgumentException("Kỳ ở tối đa 30 đêm"); // V10
         List<ReservationRoom> lines = resRoomRepo.findByReservation(reservationId);
         BigDecimal roomSubtotal = BigDecimal.ZERO;
         for (ReservationRoom rr : lines) {
@@ -190,6 +195,7 @@ public class ReservationService {
             throw new IllegalArgumentException("Ngày trả phòng mới không hợp lệ");
 
         int nights = (int) ChronoUnit.DAYS.between(r.getCheckInDate(), newCheckOut);
+        if (nights > 30) throw new IllegalArgumentException("Tổng kỳ ở sau gia hạn tối đa 30 đêm"); // V10
         List<ReservationRoom> lines = resRoomRepo.findByReservation(reservationId);
         BigDecimal roomSubtotal = BigDecimal.ZERO;
         for (ReservationRoom rr : lines) {

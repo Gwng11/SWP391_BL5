@@ -4,7 +4,7 @@
 <c:if test="${param.paid == '1'}"><div class="msg">Thanh toán thành công!</div></c:if>
 <div class="card">
   <h2>Đơn ${r.bookingCode} <span class="badge">${r.statusCode}</span></h2>
-  <p>Khách: <b>${r.customerName}</b> — ${r.checkInDate} → ${r.checkOutDate} — ${r.adultCount} NL + ${r.childCount} TE</p>
+  <p>Khách: <b><c:out value="${r.customerName}"/></b> — ${r.checkInDate} → ${r.checkOutDate} — ${r.adultCount} NL + ${r.childCount} TE</p>
   <table>
     <tr><th>Loại phòng</th><th>SL</th><th>Đêm</th><th>Giá/đêm</th><th>Thành tiền</th></tr>
     <c:forEach var="rr" items="${rooms}">
@@ -25,7 +25,7 @@
 <div class="card"><h3>Khách ở</h3>
   <table><tr><th>Họ tên</th><th>Giấy tờ</th><th>Chính</th></tr>
   <c:forEach var="g" items="${guests}">
-    <tr><td>${g.fullName}</td><td>${g.idDocumentType} ${g.idDocumentNumber}</td><td>${g.primaryGuest ? '✔' : ''}</td></tr>
+    <tr><td><c:out value="${g.fullName}"/></td><td>${g.idDocumentType} <c:out value="${g.idDocumentNumber}"/></td><td>${g.primaryGuest ? '✔' : ''}</td></tr>
   </c:forEach></table>
 </div>
 </c:if>

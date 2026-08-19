@@ -52,6 +52,11 @@ public class PaymentService {
             throw new IllegalStateException("Đơn không ở trạng thái nhận đặt cọc");
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Số tiền không hợp lệ");
+        // V9: không cho thu vượt phần còn phải thu của cả đơn (tính mọi khoản SUCCESS đã nhận)
+        BigDecimal remaining = r.getTotalAmount().subtract(getTotalPaid(reservationId));
+        if (amount.compareTo(remaining) > 0)
+            throw new IllegalArgumentException("Số tiền vượt phần còn phải thu của đơn (tối đa "
+                    + remaining.toPlainString() + " đ)");
 
         Payment p = new Payment();
         p.setReservationId(reservationId);

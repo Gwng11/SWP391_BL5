@@ -3,15 +3,15 @@
 <div class="card">
   <h2>Quản lý khách hàng</h2>
   <form method="get" action="${pageContext.request.contextPath}/reception/customers">
-    <input name="q" placeholder="Tên / email / SĐT / mã KH / số giấy tờ" value="${param.q}" style="width:340px">
+    <input name="q" placeholder="Tên / email / SĐT / mã KH / số giấy tờ" value="<c:out value='${param.q}'/>" style="width:340px">
     <button class="btn" type="submit">Tìm kiếm</button>
   </form>
   <c:if test="${customers != null}">
   <table style="margin-top:12px">
     <tr><th>ID</th><th>Mã KH</th><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Giấy tờ</th><th></th></tr>
     <c:forEach var="c" items="${customers}">
-      <tr><td>${c.customerId}</td><td>${c.customerCode}</td><td>${c.fullName}</td><td>${c.email}</td>
-          <td>${c.phone}</td><td>${c.idDocumentType} ${c.idDocumentNumber}</td>
+      <tr><td>${c.customerId}</td><td>${c.customerCode}</td><td><c:out value="${c.fullName}"/></td><td><c:out value="${c.email}"/></td>
+          <td><c:out value="${c.phone}"/></td><td>${c.idDocumentType} <c:out value="${c.idDocumentNumber}"/></td>
           <td><a class="btn" href="?edit=${c.customerId}&q=${param.q}">Sửa</a></td></tr>
     </c:forEach>
   </table>
@@ -21,9 +21,9 @@
   <h3>${editing == null ? 'Tạo khách walk-in' : 'Cập nhật khách hàng #'.concat(editing.customerId)}</h3>
   <form method="post" action="${pageContext.request.contextPath}/reception/customers">
     <c:if test="${editing != null}"><input type="hidden" name="customerId" value="${editing.customerId}"></c:if>
-    <label>Họ tên *</label><input name="fullName" value="${editing.fullName}" maxlength="150" style="width:100%" required>
-    <label>Email</label><input name="email" value="${editing.email}" maxlength="255" style="width:100%">
-    <label>SĐT</label><input name="phone" value="${editing.phone}" maxlength="30" style="width:100%">
+    <label>Họ tên *</label><input name="fullName" value="<c:out value='${editing.fullName}'/>" maxlength="150" style="width:100%" required>
+    <label>Email</label><input name="email" value="<c:out value='${editing.email}'/>" maxlength="255" style="width:100%">
+    <label>SĐT</label><input name="phone" value="<c:out value='${editing.phone}'/>" maxlength="30" style="width:100%">
     <label>Ngày sinh</label><input type="date" name="dateOfBirth" value="${editing.dateOfBirth}" style="width:100%">
     <label>Loại giấy tờ</label>
     <select name="idDocumentType" style="width:100%">
@@ -31,9 +31,9 @@
       <option value="CCCD" ${editing.idDocumentType == 'CCCD' ? 'selected' : ''}>CCCD</option>
       <option value="PASSPORT" ${editing.idDocumentType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
     </select>
-    <label>Số giấy tờ</label><input name="idDocumentNumber" value="${editing.idDocumentNumber}" maxlength="50" style="width:100%">
-    <label>Quốc tịch</label><input name="nationality" value="${editing.nationality}" maxlength="80" style="width:100%">
-    <label>Địa chỉ</label><input name="address" value="${editing.address}" maxlength="255" style="width:100%">
+    <label>Số giấy tờ</label><input name="idDocumentNumber" value="<c:out value='${editing.idDocumentNumber}'/>" maxlength="50" style="width:100%">
+    <label>Quốc tịch</label><input name="nationality" value="<c:out value='${editing.nationality}'/>" maxlength="80" style="width:100%">
+    <label>Địa chỉ</label><input name="address" value="<c:out value='${editing.address}'/>" maxlength="255" style="width:100%">
     <p><button class="btn btn-success" type="submit">${editing == null ? 'Tạo hồ sơ' : 'Lưu thay đổi'}</button></p>
   </form>
 </div>

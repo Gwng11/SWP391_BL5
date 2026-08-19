@@ -19,7 +19,7 @@
       <tr>
         <td>${s.serviceRequestId}</td><td>${s.bookingCode}</td><td>${s.serviceName}</td>
         <td>${s.quantity} ${s.unitName}</td><td><fmt:formatNumber value="${s.totalAmount}"/> đ</td>
-        <td>${s.scheduledAt}</td><td><span class="badge">${s.statusCode}</span></td><td>${s.staffName}</td>
+        <td>${s.scheduledAt}</td><td><span class="badge">${s.statusCode}</span></td><td><c:out value="${s.staffName}"/></td>
         <td>
           <c:if test="${s.statusCode == 'PENDING'}">
             <c:choose>

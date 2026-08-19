@@ -6,7 +6,7 @@
     <tr><th>Mã đơn</th><th>Khách</th><th>Nhận</th><th>Trả dự kiến</th><th>Phòng</th><th>Tổng tiền</th><th>Thao tác</th></tr>
     <c:forEach var="rv" items="${stays}">
       <tr>
-        <td>${rv.bookingCode}</td><td>${rv.customerName}</td>
+        <td>${rv.bookingCode}</td><td><c:out value="${rv.customerName}"/></td>
         <td>${rv.checkInDate}</td>
         <td>${rv.checkOutDate}
           <c:if test="${overdueDays[rv.reservationId] != null}">
