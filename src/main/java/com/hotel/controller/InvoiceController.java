@@ -45,6 +45,8 @@ public class InvoiceController extends BaseController {
             } else if ("pay".equals(action)) {
                 invoiceService.processFinalPayment(reservationId,
                         req.getParameter("method") == null ? "CASH" : req.getParameter("method"), me.getUserId());
+            } else if ("voidItem".equals(action)) {
+                invoiceService.voidExtraItem(reservationId, longParam(req, "itemId"), me.getUserId());
             } else {
                 throw new IllegalArgumentException("Hành động không hợp lệ");
             }

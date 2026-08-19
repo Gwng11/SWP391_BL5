@@ -7,7 +7,12 @@
     <c:forEach var="rv" items="${stays}">
       <tr>
         <td>${rv.bookingCode}</td><td>${rv.customerName}</td>
-        <td>${rv.checkInDate}</td><td>${rv.checkOutDate}</td>
+        <td>${rv.checkInDate}</td>
+        <td>${rv.checkOutDate}
+          <c:if test="${overdueDays[rv.reservationId] != null}">
+            <br><span class="badge" style="background:#fdecea;color:#c0392b">⚠ quá hạn ${overdueDays[rv.reservationId]} ngày</span>
+          </c:if>
+        </td>
         <td>
           ${roomProgress[rv.reservationId]}
           <c:if test="${roomMissing[rv.reservationId]}">

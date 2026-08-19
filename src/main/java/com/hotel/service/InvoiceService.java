@@ -105,6 +105,23 @@ public class InvoiceService {
         return invoiceRepo.findById(inv.getInvoiceId());
     }
 
+    /** Hủy dòng phụ thu nhập nhầm - chỉ khi hóa đơn còn DRAFT (chưa phát hành) */
+    public void voidExtraItem(long reservationId, long invoiceItemId, long byUserId) {
+        Invoice inv = invoiceRepo.findByReservation(reservationId);
+        if (inv == null) throw new IllegalArgumentException("Chưa có hóa đơn cho đơn này");
+        if (!Constants.INV_DRAFT.equals(inv.getStatusCode()))
+            throw new IllegalStateException("Hóa đơn đã phát hành — không thể hủy dòng phụ thu");
+        for (InvoiceItem i : invoiceItemRepo.findByInvoice(inv.getInvoiceId())) {
+            if (i.getInvoiceItemId() == invoiceItemId) {
+                if (!"EXTRA".equals(i.getItemType()))
+                    throw new IllegalStateException("Chỉ hủy được dòng phụ thu (EXTRA)");
+                invoiceItemRepo.voidItem(invoiceItemId);
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Dòng phụ thu không tồn tại trong hóa đơn");
+    }
+
     /** Số tiền còn phải thu */
     public BigDecimal getOutstanding(Invoice inv) {
         return inv.getTotalAmount().subtract(inv.getPaidAmount()).max(BigDecimal.ZERO);

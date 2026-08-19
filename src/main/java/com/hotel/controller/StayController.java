@@ -22,11 +22,17 @@ public class StayController extends BaseController {
         // Cảnh báo các đơn đang ở nhưng chưa gán đủ phòng (lưới an toàn cho lỗ hổng check-in)
         java.util.Map<Long, String> roomProgress = new java.util.HashMap<>();
         java.util.Map<Long, Boolean> roomMissing = new java.util.HashMap<>();
+        java.util.Map<Long, Long> overdueDays = new java.util.HashMap<>();
+        java.time.LocalDate today = java.time.LocalDate.now();
         for (com.hotel.entity.Reservation rv : stays) {
             int[] p = frontDeskService.getAssignmentProgress(rv.getReservationId());
             roomProgress.put(rv.getReservationId(), p[0] + "/" + p[1]);
             roomMissing.put(rv.getReservationId(), p[0] < p[1]);
+            if (rv.getCheckOutDate().isBefore(today))
+                overdueDays.put(rv.getReservationId(),
+                        java.time.temporal.ChronoUnit.DAYS.between(rv.getCheckOutDate(), today));
         }
+        req.setAttribute("overdueDays", overdueDays);
         req.setAttribute("stays", stays);
         req.setAttribute("roomProgress", roomProgress);
         req.setAttribute("roomMissing", roomMissing);

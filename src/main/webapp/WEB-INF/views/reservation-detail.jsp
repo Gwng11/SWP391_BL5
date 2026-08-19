@@ -49,7 +49,12 @@
     <button class="btn" type="submit">Cập nhật</button>
   </form>
   <h3 style="margin-top:20px">Hủy đơn</h3>
-  <form method="post" action="${pageContext.request.contextPath}/reservation" onsubmit="return confirm('Xác nhận hủy đơn?')">
+  <c:if test="${depositPaid > 0}">
+    <p style="color:#c0392b">⚠ Đơn đã đặt cọc <b><fmt:formatNumber value="${depositPaid}"/> đ</b> —
+       theo chính sách khách sạn, tiền cọc <b>KHÔNG được hoàn lại</b> khi hủy đơn.</p>
+  </c:if>
+  <form method="post" action="${pageContext.request.contextPath}/reservation"
+        onsubmit="return confirm('Xác nhận hủy đơn?${depositPaid > 0 ? ' Tiền cọc sẽ KHÔNG được hoàn lại!' : ''}')">
     <input type="hidden" name="id" value="${r.reservationId}">
     <input type="hidden" name="action" value="cancel">
     <input name="reason" placeholder="Lý do hủy" style="width:300px">
