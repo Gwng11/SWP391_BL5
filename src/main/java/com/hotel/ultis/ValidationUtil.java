@@ -12,6 +12,14 @@ public final class ValidationUtil {
     public static boolean isPhone(String s) { return s != null && PHONE.matcher(s).matches(); }
     public static boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
 
+    /** V8: CCCD đúng 12 chữ số; Hộ chiếu 6-9 ký tự chữ/số; loại khác không ràng buộc */
+    public static boolean isValidDocument(String type, String number) {
+        if (type == null || number == null) return false;
+        if ("CCCD".equals(type)) return number.matches("^[0-9]{12}$");
+        if ("PASSPORT".equals(type)) return number.matches("^[A-Za-z0-9]{6,9}$");
+        return true;
+    }
+
     /** Chặn chuỗi vượt độ dài cột DB - tránh lỗi SQL truncation 500 */
     public static void requireMaxLen(String value, int max, String label) {
         if (value != null && value.length() > max)

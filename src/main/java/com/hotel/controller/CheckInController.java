@@ -80,6 +80,9 @@ public class CheckInController extends BaseController {
             String dn = docNos != null && i < docNos.length ? docNos[i].trim() : "";
             if (dt.isEmpty() != dn.isEmpty())
                 throw new IllegalArgumentException("Loại và số giấy tờ phải nhập cùng nhau (dòng: " + names[i] + ")");
+            if (!dt.isEmpty() && !com.hotel.ultis.ValidationUtil.isValidDocument(dt, dn))
+                throw new IllegalArgumentException("Số giấy tờ không hợp lệ ở dòng '" + names[i]
+                        + "' (CCCD: 12 chữ số; Hộ chiếu: 6-9 ký tự chữ/số)");
             com.hotel.entity.ReservationGuest g = new com.hotel.entity.ReservationGuest();
             g.setFullName(names[i].trim());
             g.setIdDocumentType(dt.isEmpty() ? null : dt);
