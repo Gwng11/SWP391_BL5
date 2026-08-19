@@ -139,6 +139,11 @@ public class ReservationService {
     public List<Reservation> getByCustomer(long customerId) { return reservationRepo.findByCustomer(customerId); }
     public List<Reservation> getByStatus(String status) { return reservationRepo.findByStatus(status); }
     public List<Reservation> search(String keyword, String status) { return reservationRepo.searchByCodeOrCustomer(keyword, status); }
+
+    /** Đánh dấu khách không đến (NO_SHOW) - giải phóng tồn phòng, giữ tiền cọc theo chính sách */
+    public void markNoShow(long reservationId, Long byUserId) {
+        reservationRepo.markNoShow(reservationId);
+    }
     public List<ReservationRoom> getRooms(long reservationId) { return resRoomRepo.findByReservation(reservationId); }
     public List<ReservationGuest> getGuests(long reservationId) { return guestRepo.findByReservation(reservationId); }
 

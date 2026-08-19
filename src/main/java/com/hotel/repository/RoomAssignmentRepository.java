@@ -106,6 +106,19 @@ public class RoomAssignmentRepository extends BaseRepository implements IRoomAss
                     ps.setLong(2, roomAssignmentId);
                     ps.executeUpdate();
                 }
+                // Phòng mới phải cùng loại với dòng đặt phòng
+                String typeCheck = "SELECT CASE WHEN EXISTS (SELECT 1 FROM reservation_rooms rr "
+                        + "JOIN rooms rm ON rm.room_type_id = rr.room_type_id "
+                        + "WHERE rr.reservation_room_id = ? AND rm.room_id = ?) THEN 1 ELSE 0 END";
+                try (PreparedStatement ps = cn.prepareStatement(typeCheck)) {
+                    ps.setLong(1, reservationRoomId);
+                    ps.setLong(2, newRoomId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        if (rs.getInt(1) == 0)
+                            throw new IllegalStateException("Phòng mới không cùng loại phòng đã đặt");
+                    }
+                }
                 setRoomStatus(cn, oldRoomId, "AVAILABLE", "DIRTY");
                 insertAssignment(cn, reservationRoomId, newRoomId, byUserId);
                 setRoomStatus(cn, newRoomId, "OCCUPIED", null);

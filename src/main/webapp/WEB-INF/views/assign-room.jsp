@@ -28,7 +28,12 @@
           <input type="hidden" name="reservationId" value="${r.reservationId}">
           <input type="hidden" name="action" value="change">
           <input type="hidden" name="assignmentId" value="${a.roomAssignmentId}">
-          <input type="number" name="newRoomId" placeholder="ID phòng mới" required style="width:110px">
+          <select name="newRoomId" required>
+            <option value="">-- chọn phòng mới --</option>
+            <c:forEach var="nr" items="${assignableMap[a.reservationRoomId]}">
+              <option value="${nr.roomId}">Phòng ${nr.roomNumber} (tầng ${nr.floorNumber}, ${nr.cleaningStatus})</option>
+            </c:forEach>
+          </select>
           <input name="reason" placeholder="Lý do" style="width:140px">
           <button class="btn" type="submit">Đổi</button>
         </form>

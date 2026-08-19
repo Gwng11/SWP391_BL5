@@ -38,3 +38,7 @@ GO
 IF COL_LENGTH('dbo.service_requests', 'scheduled_at') IS NULL
     ALTER TABLE dbo.service_requests ADD scheduled_at datetime2(0) NULL;
 GO
+
+-- Khuyến nghị cho web app: tránh SQL Server đóng/mở DB liên tục gây chậm
+ALTER DATABASE SingleHotelManagementDB SET AUTO_CLOSE OFF;
+GO
