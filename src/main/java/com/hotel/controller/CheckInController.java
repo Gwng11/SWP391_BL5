@@ -30,6 +30,14 @@ public class CheckInController extends BaseController {
             req.setAttribute("r", reservationService.getById(detailId));
             req.setAttribute("guests", reservationService.getGuests(detailId));
             req.setAttribute("depositPaid", paymentService.getDepositPaid(detailId));
+            // Cho lễ tân thấy tình trạng phòng sạch TRƯỚC khi bấm check-in
+            java.util.List<com.hotel.entity.ReservationRoom> lines = reservationService.getRooms(detailId);
+            java.util.Map<Long, Integer> readyMap = new java.util.HashMap<>();
+            for (com.hotel.entity.ReservationRoom rr : lines)
+                readyMap.put(rr.getReservationRoomId(),
+                        frontDeskService.getAssignableRooms(rr.getReservationRoomId()).size());
+            req.setAttribute("lines", lines);
+            req.setAttribute("readyMap", readyMap);
         }
         req.getRequestDispatcher("/WEB-INF/views/checkin.jsp").forward(req, resp);
     }

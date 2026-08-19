@@ -66,6 +66,9 @@ public class ReservationService {
         if (roomRequests == null || roomRequests.isEmpty())
             throw new IllegalArgumentException("Chưa chọn phòng nào");
 
+        // Giải phóng tồn phòng đang bị giữ bởi các đơn PENDING quá hạn chưa đặt cọc
+        reservationRepo.cancelExpiredPending(Constants.PENDING_HOLD_HOURS);
+
         int nights = (int) ChronoUnit.DAYS.between(checkIn, checkOut);
         List<ReservationRoom> lines = new ArrayList<>();
         BigDecimal roomSubtotal = BigDecimal.ZERO;

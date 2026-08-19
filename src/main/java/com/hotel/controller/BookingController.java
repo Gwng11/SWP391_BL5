@@ -29,7 +29,10 @@ public class BookingController extends BaseController {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setAttribute("roomType", roomService.getTypeDetail(longParam(req, "roomTypeId")));
+        Long roomTypeId = longParamOrNull(req, "roomTypeId");
+        var roomType = roomTypeId == null ? null : roomService.getTypeDetail(roomTypeId);
+        if (roomType == null) { resp.sendRedirect(req.getContextPath() + "/rooms"); return; }
+        req.setAttribute("roomType", roomType);
         req.getRequestDispatcher("/WEB-INF/views/booking.jsp").forward(req, resp);
     }
 
@@ -50,6 +53,8 @@ public class BookingController extends BaseController {
             String source;
             if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
                 Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
+                if (c == null)
+                    throw new IllegalStateException("Tài khoản chưa có hồ sơ khách hàng, vui lòng liên hệ lễ tân");
                 customerId = c.getCustomerId();
                 source = "ONLINE";
             } else {
@@ -76,7 +81,8 @@ public class BookingController extends BaseController {
             resp.sendRedirect(req.getContextPath() + "/reservation?id=" + r.getReservationId() + "&created=1");
         } catch (IllegalArgumentException | IllegalStateException e) {
             req.setAttribute("err", e.getMessage());
-            req.setAttribute("roomType", roomService.getTypeDetail(longParam(req, "roomTypeId")));
+            Long rtId = longParamOrNull(req, "roomTypeId");
+            if (rtId != null) req.setAttribute("roomType", roomService.getTypeDetail(rtId));
             req.getRequestDispatcher("/WEB-INF/views/booking.jsp").forward(req, resp);
         }
     }

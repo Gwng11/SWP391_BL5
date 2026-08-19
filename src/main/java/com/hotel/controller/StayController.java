@@ -18,7 +18,18 @@ public class StayController extends BaseController {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setAttribute("stays", frontDeskService.getActiveStays());
+        java.util.List<com.hotel.entity.Reservation> stays = frontDeskService.getActiveStays();
+        // Cảnh báo các đơn đang ở nhưng chưa gán đủ phòng (lưới an toàn cho lỗ hổng check-in)
+        java.util.Map<Long, String> roomProgress = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> roomMissing = new java.util.HashMap<>();
+        for (com.hotel.entity.Reservation rv : stays) {
+            int[] p = frontDeskService.getAssignmentProgress(rv.getReservationId());
+            roomProgress.put(rv.getReservationId(), p[0] + "/" + p[1]);
+            roomMissing.put(rv.getReservationId(), p[0] < p[1]);
+        }
+        req.setAttribute("stays", stays);
+        req.setAttribute("roomProgress", roomProgress);
+        req.setAttribute("roomMissing", roomMissing);
         req.getRequestDispatcher("/WEB-INF/views/stays.jsp").forward(req, resp);
     }
 

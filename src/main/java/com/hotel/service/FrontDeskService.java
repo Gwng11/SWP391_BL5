@@ -22,7 +22,11 @@ import com.hotel.ultis.CodeGenerator;
 import com.hotel.ultis.Constants;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** F10 Check-in, F11 Gán/đổi phòng, F12 Quản lý kỳ ở, F13 Check-out */
 public class FrontDeskService {
@@ -43,7 +47,47 @@ public class FrontDeskService {
             throw new IllegalStateException("Đơn phải ở trạng thái CONFIRMED mới check-in được");
         if (paymentService.getDepositPaid(reservationId).compareTo(r.getDepositRequired()) < 0)
             throw new IllegalStateException("Khách chưa nộp đủ tiền cọc");
+        // VÁ LỖ HỔNG: không cho check-in nếu không đủ phòng sạch sẵn sàng để gán
+        // (tránh tình trạng khách CHECKED_IN "trên giấy" nhưng không có phòng thật)
+        List<String> shortages = findRoomShortages(reservationId);
+        if (!shortages.isEmpty())
+            throw new IllegalStateException("Chưa đủ phòng sạch sẵn sàng để gán: "
+                    + String.join("; ", shortages)
+                    + ". Hãy xử lý dọn phòng/bảo trì hoặc đổi loại phòng trước khi check-in");
         reservationRepo.checkIn(reservationId, byUserId);
+    }
+
+    /**
+     * Danh sách loại phòng còn THIẾU phòng sạch sẵn sàng so với nhu cầu của đơn.
+     * Gộp nhu cầu theo loại (nhiều dòng có thể cùng loại phòng), trừ số đã gán trước đó.
+     * Trả về rỗng = đủ phòng để gán.
+     */
+    public List<String> findRoomShortages(long reservationId) {
+        Map<Long, Integer> needByType = new LinkedHashMap<>();
+        Map<Long, String> typeNames = new HashMap<>();
+        for (ReservationRoom rr : resRoomRepo.findByReservation(reservationId)) {
+            int missing = rr.getQuantity() - assignmentRepo.countCurrentByReservationRoom(rr.getReservationRoomId());
+            if (missing > 0) needByType.merge(rr.getRoomTypeId(), missing, Integer::sum);
+            typeNames.put(rr.getRoomTypeId(), rr.getTypeName());
+        }
+        List<String> shortages = new ArrayList<>();
+        for (Map.Entry<Long, Integer> e : needByType.entrySet()) {
+            int ready = roomRepo.findAssignableRooms(e.getKey()).size();
+            if (ready < e.getValue())
+                shortages.add(typeNames.get(e.getKey()) + " (cần " + e.getValue() + ", sẵn sàng " + ready + ")");
+        }
+        return shortages;
+    }
+
+    /** Tiến độ gán phòng của 1 đơn: [đã gán, cần gán] - dùng cảnh báo ở màn Đang ở */
+    public int[] getAssignmentProgress(long reservationId) {
+        int required = 0;
+        int assigned = 0;
+        for (ReservationRoom rr : resRoomRepo.findByReservation(reservationId)) {
+            required += rr.getQuantity();
+            assigned += assignmentRepo.countCurrentByReservationRoom(rr.getReservationRoomId());
+        }
+        return new int[]{assigned, required};
     }
 
     /** F11: danh sách phòng có thể gán cho 1 dòng đặt phòng */

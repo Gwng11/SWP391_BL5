@@ -54,6 +54,15 @@ public class ReservationController extends BaseController {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         User me = currentUser(req);
         long id = longParam(req, "id");
+        // Chống IDOR: khách chỉ được hủy/sửa đơn của chính mình
+        Reservation target = reservationService.getById(id);
+        if (target == null) { resp.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
+        if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
+            Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
+            if (c == null || c.getCustomerId() != target.getCustomerId()) {
+                resp.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+            }
+        }
         try {
             String action = req.getParameter("action");
             if ("cancel".equals(action)) {

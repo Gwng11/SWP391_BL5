@@ -254,6 +254,23 @@ public class ReservationRepository extends BaseRepository implements IReservatio
     }
 
     @Override
+    public int cancelExpiredPending(int holdHours) {
+        // Đơn PENDING quá hạn giữ chỗ mà chưa nộp đủ cọc → tự hủy để trả tồn phòng
+        String sql = "UPDATE reservations SET status_code = 'CANCELLED', "
+                   + "cancellation_reason = N'H\u1ebft h\u1ea1n gi\u1eef ch\u1ed7 - qu\u00e1 h\u1ea1n ch\u01b0a \u0111\u1eb7t c\u1ecdc', "
+                   + "updated_at = SYSUTCDATETIME() "
+                   + "WHERE status_code = 'PENDING' AND deposit_required > 0 "
+                   + "AND booked_at < DATEADD(HOUR, -?, SYSUTCDATETIME()) "
+                   + "AND (SELECT COALESCE(SUM(p.amount), 0) FROM payments p "
+                   + "     WHERE p.reservation_id = reservations.reservation_id "
+                   + "     AND p.status_code = 'SUCCESS' AND p.payment_type = 'DEPOSIT') < deposit_required";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, holdHours);
+            return ps.executeUpdate();
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
     public void updateStatus(long reservationId, String statusCode) {
         String sql = "UPDATE reservations SET status_code = ?, updated_at = SYSUTCDATETIME() WHERE reservation_id = ?";
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {

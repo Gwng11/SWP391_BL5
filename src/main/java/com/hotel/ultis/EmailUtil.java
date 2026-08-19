@@ -30,6 +30,9 @@ public final class EmailUtil {
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", SMTP_HOST);
         props.put("mail.smtp.port", SMTP_PORT);
+        props.put("mail.smtp.connectiontimeout", "5000"); // không để lỗi SMTP treo request
+        props.put("mail.smtp.timeout", "5000");
+        props.put("mail.smtp.writetimeout", "5000");
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
