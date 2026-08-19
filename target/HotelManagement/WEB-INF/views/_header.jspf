@@ -1,0 +1,60 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Hotel Management</title>
+<style>
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin:0;background:#f5f6fa;color:#2d3436;-webkit-font-smoothing:antialiased}
+nav{background:#2c3e50;padding:10px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+nav a{color:#ecf0f1;text-decoration:none;font-size:14px}
+nav a:hover{color:#f1c40f}
+.container{max-width:1100px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left}
+th{background:#f8f9fa}
+.btn{display:inline-block;background:#2980b9;color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;text-decoration:none;font-size:14px}
+.btn:hover{background:#3498db}
+.btn-danger{background:#c0392b}.btn-success{background:#27ae60}
+input,select,textarea,button{font:inherit}
+input,select,textarea{padding:7px;border:1px solid #ccc;border-radius:5px;font-size:14px;margin:2px 0}
+label{font-size:13px;color:#636e72;display:block;margin-top:8px}
+.err{background:#fdecea;color:#c0392b;padding:10px;border-radius:5px;margin-bottom:12px}
+.msg{background:#eafaf1;color:#1e8449;padding:10px;border-radius:5px;margin-bottom:12px}
+.badge{padding:2px 8px;border-radius:10px;font-size:12px;background:#dfe6e9}
+h2{margin-top:0}
+</style>
+</head>
+<body>
+<nav>
+  <a href="${pageContext.request.contextPath}/home"><b>🏨 Hotel</b></a>
+  <a href="${pageContext.request.contextPath}/rooms">Tìm phòng</a>
+  <c:if test="${empty sessionScope.currentUser}">
+    <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
+    <a href="${pageContext.request.contextPath}/register">Đăng ký</a>
+  </c:if>
+  <c:if test="${not empty sessionScope.currentUser}">
+    <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}">
+      <a href="${pageContext.request.contextPath}/my-reservations">Đơn của tôi</a>
+      <a href="${pageContext.request.contextPath}/services">Dịch vụ</a>
+    </c:if>
+    <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' || sessionScope.currentUser.roleCode == 'MANAGER' || sessionScope.currentUser.roleCode == 'ADMIN'}">
+      <a href="${pageContext.request.contextPath}/reception/customers">Khách hàng</a>
+      <a href="${pageContext.request.contextPath}/reception/checkin">Check-in</a>
+      <a href="${pageContext.request.contextPath}/reception/stays">Đang ở</a>
+      <a href="${pageContext.request.contextPath}/reception/checkout">Check-out</a>
+    </c:if>
+    <c:if test="${sessionScope.currentUser.roleCode != 'CUSTOMER'}">
+      <a href="${pageContext.request.contextPath}/staff/service-requests">Yêu cầu DV</a>
+    </c:if>
+    <a href="${pageContext.request.contextPath}/profile">👤 ${sessionScope.currentUser.fullName}</a>
+    <a href="${pageContext.request.contextPath}/logout">Thoát</a>
+  </c:if>
+</nav>
+<div class="container">
+<c:if test="${not empty param.err}"><div class="err">${param.err}</div></c:if>
+<c:if test="${not empty err}"><div class="err">${err}</div></c:if>
+<c:if test="${not empty msg}"><div class="msg">${msg}</div></c:if>
