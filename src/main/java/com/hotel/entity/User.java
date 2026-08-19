@@ -17,6 +17,8 @@ public class User {
     private int failedLoginAttempts;
     private LocalDateTime lockedUntil;
     private LocalDateTime emailVerifiedAt;
+    /** Số yêu cầu dịch vụ ASSIGNED/IN_PROGRESS; không phải cột của bảng users. */
+    private int activeTaskCount;
 
     public long getUserId() { return userId; }
     public void setUserId(long userId) { this.userId = userId; }
@@ -46,4 +48,6 @@ public class User {
     public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
     public LocalDateTime getEmailVerifiedAt() { return emailVerifiedAt; }
     public void setEmailVerifiedAt(LocalDateTime emailVerifiedAt) { this.emailVerifiedAt = emailVerifiedAt; }
+    public int getActiveTaskCount() { return activeTaskCount; }
+    public void setActiveTaskCount(int activeTaskCount) { this.activeTaskCount = activeTaskCount; }
 }

@@ -8,6 +8,7 @@ public interface IRoomRepository {
     int countSellableByType(long roomTypeId);
     /** F11: phòng sạch, trống, chưa gán cho ai - sẵn sàng để assign */
     List<Room> findAssignableRooms(long roomTypeId);
+    List<Room> findAllAssignableRooms();
     Room findById(long roomId);
     void updateStatus(long roomId, String operationalStatus, String cleaningStatus);
 }

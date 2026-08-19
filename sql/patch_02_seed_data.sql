@@ -2,6 +2,7 @@
 -- DỮ LIỆU MẪU (chạy SAU patch_01_required.sql)
 -- Tài khoản test (mật khẩu ghi bên cạnh):
 --   admin@hotel.vn        / Admin@123       (ADMIN)
+--   manager@hotel.vn      / Manager@123     (MANAGER)
 --   receptionist@hotel.vn / Recep@123       (RECEPTIONIST)
 --   staff@hotel.vn        / Staff@123       (SERVICE_STAFF - GENERAL_SERVICE)
 --   customer@test.vn      / Customer@123    (CUSTOMER, đã xác thực email)
@@ -28,6 +29,13 @@ INSERT INTO users (email, password_hash, full_name, phone, role_code, department
 ('receptionist@hotel.vn', '65536:/ipmwffCw0JymYHFhHBieg==:Ou4q8bNOb+QujFDCS67EFwgQ3r/MolkA8RnL8I+vnxU=', N'Lễ tân Mai Anh',    '0900000002', 'RECEPTIONIST', NULL, 'ACTIVE', SYSUTCDATETIME()),
 ('staff@hotel.vn',        '65536:4A7+JwhhVQrGkzAr3bd1aA==:+2sNrGOO485fdEui7NxKEVCd55sy0aHe9JUag2VmIcg=', N'Nhân viên Văn Bình','0900000003', 'SERVICE_STAFF', 'GENERAL_SERVICE', 'ACTIVE', SYSUTCDATETIME()),
 ('customer@test.vn',      '65536:PUc8F/jYWpQ79CzcTU96gw==:vOv0AAX35PUtuXIzg1aq7iYtEUihQgxvbd37yR7ro5c=', N'Nguyễn Văn Khách', '0912345678', 'CUSTOMER', NULL, 'ACTIVE', SYSUTCDATETIME());
+GO
+
+IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'manager@hotel.vn')
+INSERT INTO users (email, password_hash, full_name, phone, role_code, department_code, status_code, email_verified_at)
+VALUES ('manager@hotel.vn',
+        '65536:bMM2lgiA60SoQsyOLgoHGA==:ei9PfrptPXMvh+C2zYsRMLyMP/8AGtOm9+a+hoJJomM=',
+        N'Hotel Manager', '0900000005', 'MANAGER', NULL, 'ACTIVE', SYSUTCDATETIME());
 GO
 
 -- Customer profile gắn với user customer
