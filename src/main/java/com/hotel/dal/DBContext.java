@@ -15,14 +15,15 @@ public class DBContext {
     private static final String SERVER = env("HMS_DB_SERVER", "localhost");
     private static final String PORT = env("HMS_DB_PORT", "1433");
     private static final String DATABASE = env("HMS_DB_NAME", "SingleHotelManagementDB");
-    private static final String USER = env("HMS_DB_USER", "sa");
+    private static final String USER = env("HMS_DB_USER", env("HMS_DB_USERNAME", "sa"));
     private static final String PASSWORD = env("HMS_DB_PASSWORD", "123");
 
-    private static final String URL =
+    private static final String DEFAULT_URL =
             "jdbc:sqlserver://" + SERVER + ":" + PORT
             + ";databaseName=" + DATABASE
             + ";encrypt=true;trustServerCertificate=true"
             + ";loginTimeout=5";
+    private static final String URL = env("HMS_DB_URL", DEFAULT_URL);
 
     static {
         try {

@@ -17,6 +17,27 @@ public final class Constants {
     public static final String ROLE_MANAGER = "MANAGER";
     public static final String ROLE_ADMIN = "ADMIN";
 
+    // SRS system messages used by authentication/RBAC.
+    public static final String MSG_INVALID_LOGIN = "Incorrect email or password. Please try again.";
+    public static final String MSG_LOGIN_REQUIRED = "Email and password are required.";
+    public static final String MSG_ACCOUNT_INACTIVE = "Your account is inactive or blocked.";
+    public static final String MSG_ACCOUNT_LOCKED = "Your account has been locked for 30 minutes.";
+    public static final String MSG_NO_PERMISSION = "You do not have permission to access this function.";
+    public static final String MSG_SYSTEM_ERROR = "An unexpected error has occurred. Please try again later.";
+
+    public static final String ROOM_AVAILABLE = "AVAILABLE";
+    public static final String ROOM_OCCUPIED = "OCCUPIED";
+    public static final String ROOM_MAINTENANCE = "MAINTENANCE";
+    public static final String ROOM_OUT_OF_SERVICE = "OUT_OF_SERVICE";
+    public static final String ROOM_BLOCKED = "BLOCKED";
+    public static final String ROOM_INACTIVE = "INACTIVE";
+
+    public static final String CLEAN_DIRTY = "DIRTY";
+    public static final String CLEAN_CLEANING = "CLEANING";
+    public static final String CLEAN_CLEAN = "CLEAN";
+    public static final String CLEAN_INSPECTED = "INSPECTED";
+    public static final String CLEAN_READY = "READY";
+
     // reservations.status_code
     public static final String RES_PENDING = "PENDING";
     public static final String RES_CONFIRMED = "CONFIRMED";

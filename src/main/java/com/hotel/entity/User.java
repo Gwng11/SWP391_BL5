@@ -8,6 +8,8 @@ public class User {
     private String passwordHash;
     private String fullName;
     private String phone;
+    private String address;
+    private String identificationNumber;
     private String roleCode;
     private String departmentCode;
     private String statusCode;
@@ -28,6 +30,10 @@ public class User {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getIdentificationNumber() { return identificationNumber; }
+    public void setIdentificationNumber(String identificationNumber) { this.identificationNumber = identificationNumber; }
     public String getRoleCode() { return roleCode; }
     public void setRoleCode(String roleCode) { this.roleCode = roleCode; }
     public String getDepartmentCode() { return departmentCode; }

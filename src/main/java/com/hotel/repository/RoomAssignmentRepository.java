@@ -106,7 +106,7 @@ public class RoomAssignmentRepository extends BaseRepository implements IRoomAss
                     ps.setLong(2, roomAssignmentId);
                     ps.executeUpdate();
                 }
-                setRoomStatus(cn, oldRoomId, "AVAILABLE", "DIRTY");
+                releaseRoomAfterStay(cn, oldRoomId);
                 insertAssignment(cn, reservationRoomId, newRoomId, byUserId);
                 setRoomStatus(cn, newRoomId, "OCCUPIED", null);
                 cn.commit();
@@ -142,7 +142,7 @@ public class RoomAssignmentRepository extends BaseRepository implements IRoomAss
                         ps.setLong(2, cur[0]);
                         ps.executeUpdate();
                     }
-                    setRoomStatus(cn, cur[1], "AVAILABLE", "DIRTY");
+                    releaseRoomAfterStay(cn, cur[1]);
                 }
                 cn.commit();
             } catch (SQLException ex) {
@@ -174,5 +174,13 @@ public class RoomAssignmentRepository extends BaseRepository implements IRoomAss
             else { ps.setString(2, cleanStatus); ps.setLong(3, roomId); }
             ps.executeUpdate();
         }
+    }
+
+    private void releaseRoomAfterStay(Connection cn, long roomId) throws SQLException {
+        String sql = "UPDATE r SET operational_status=CASE WHEN rt.is_active=0 THEN 'OUT_OF_SERVICE' ELSE 'AVAILABLE' END, "
+                + "cleaning_status='DIRTY',is_active=CASE WHEN rt.is_active=0 THEN 0 ELSE 1 END,"
+                + "updated_at=SYSUTCDATETIME() FROM rooms r JOIN room_types rt ON rt.room_type_id=r.room_type_id "
+                + "WHERE r.room_id=?";
+        try (PreparedStatement ps=cn.prepareStatement(sql)) { ps.setLong(1,roomId);ps.executeUpdate(); }
     }
 }

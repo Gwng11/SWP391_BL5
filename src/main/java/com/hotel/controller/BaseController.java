@@ -6,6 +6,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /** Helper chung cho các servlet */
 public abstract class BaseController extends HttpServlet {
@@ -38,6 +43,18 @@ public abstract class BaseController extends HttpServlet {
     protected BigDecimal decimalParam(HttpServletRequest req, String name) {
         String v = req.getParameter(name);
         return (v == null || v.isEmpty()) ? null : new BigDecimal(v);
+    }
+
+    protected LocalDateTime dateTimeParam(HttpServletRequest req, String name) {
+        String v = req.getParameter(name);
+        return (v == null || v.isEmpty()) ? null : LocalDateTime.parse(v);
+    }
+
+    protected void redirect(HttpServletRequest req, HttpServletResponse resp, String path,
+                            String key, String message) throws IOException {
+        String separator = path.contains("?") ? "&" : "?";
+        resp.sendRedirect(req.getContextPath() + path + separator + key + "="
+                + URLEncoder.encode(message, StandardCharsets.UTF_8));
     }
 
     /** Base URL để tạo link trong email (verify, reset password) */
