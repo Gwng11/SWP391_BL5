@@ -65,6 +65,10 @@ public class ReservationService {
             throw new IllegalArgumentException("Ngày nhận phòng không được ở quá khứ");
         if (roomRequests == null || roomRequests.isEmpty())
             throw new IllegalArgumentException("Chưa chọn phòng nào");
+        // Chốt chặn: khách hàng phải tồn tại và đang hoạt động (tránh ID rác gây lỗi FK khó hiểu)
+        Customer bookingCustomer = customerRepo.findById(customerId);
+        if (bookingCustomer == null || !"ACTIVE".equals(bookingCustomer.getStatusCode()))
+            throw new IllegalArgumentException("Khách hàng không hợp lệ hoặc đã ngừng hoạt động");
 
         // Giải phóng tồn phòng đang bị giữ bởi các đơn PENDING quá hạn chưa đặt cọc
         reservationRepo.cancelExpiredPending(Constants.PENDING_HOLD_HOURS);
