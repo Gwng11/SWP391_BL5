@@ -58,6 +58,28 @@ public class RoomRepository extends BaseRepository implements IRoomRepository {
     }
 
     @Override
+    public List<Room> findAllAssignableRooms() {
+        String sql = "SELECT r.*, rt.type_name FROM rooms r "
+                   + "JOIN room_types rt ON rt.room_type_id = r.room_type_id "
+                   + "WHERE r.is_active = 1 AND rt.is_active = 1 "
+                   + "AND r.operational_status = 'AVAILABLE' "
+                   + "AND r.cleaning_status IN ('CLEAN','INSPECTED') "
+                   + "AND NOT EXISTS (SELECT 1 FROM room_assignments ra "
+                   + "WHERE ra.room_id = r.room_id AND ra.is_current = 1) "
+                   + "ORDER BY rt.base_price, r.room_number";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            List<Room> list = new ArrayList<>();
+            while (rs.next()) {
+                Room room = map(rs);
+                room.setTypeName(rs.getString("type_name"));
+                list.add(room);
+            }
+            return list;
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
     public Room findById(long roomId) {
         String sql = "SELECT * FROM rooms WHERE room_id = ?";
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {

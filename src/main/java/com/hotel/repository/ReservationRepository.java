@@ -14,6 +14,8 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /** F06, F07, F10, F12, F13 - Đặt phòng */
 public class ReservationRepository extends BaseRepository implements IReservationRepository {
@@ -66,6 +68,7 @@ public class ReservationRepository extends BaseRepository implements IReservatio
         try (Connection cn = getConnection()) {
             cn.setAutoCommit(false);
             try {
+                lockAndCheckAvailability(cn, r, rooms);
                 long reservationId;
                 try (PreparedStatement ps = cn.prepareStatement(insRes, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setLong(1, r.getCustomerId());
@@ -118,13 +121,57 @@ public class ReservationRepository extends BaseRepository implements IReservatio
                 }
                 cn.commit();
                 return reservationId;
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 cn.rollback();
-                throw ex;
+                if (ex instanceof SQLException) throw (SQLException) ex;
+                throw (RuntimeException) ex;
             } finally {
                 cn.setAutoCommit(true);
             }
         } catch (SQLException e) { throw wrap(e); }
+    }
+
+    /**
+     * Serialize sales per room type and re-check inventory inside the same
+     * transaction that inserts the reservation. Lock order is room_type_id to
+     * avoid deadlocks when one reservation contains multiple room types.
+     */
+    private void lockAndCheckAvailability(Connection cn, Reservation reservation,
+                                          List<ReservationRoom> rooms) throws SQLException {
+        Map<Long, Integer> requestedByType = new TreeMap<>();
+        for (ReservationRoom room : rooms) {
+            requestedByType.merge(room.getRoomTypeId(), room.getQuantity(), Integer::sum);
+        }
+
+        String sql = "SELECT "
+                + "(SELECT COUNT(*) FROM rooms p WHERE p.room_type_id = rt.room_type_id "
+                + " AND p.is_active = 1 AND p.operational_status <> 'OUT_OF_SERVICE') AS total_rooms, "
+                + "(SELECT COALESCE(SUM(rr.quantity), 0) FROM reservation_rooms rr "
+                + " JOIN reservations r WITH (HOLDLOCK) ON r.reservation_id = rr.reservation_id "
+                + " WHERE rr.room_type_id = rt.room_type_id "
+                + " AND r.status_code IN ('PENDING','CONFIRMED','CHECKED_IN') "
+                + " AND r.check_in_date < ? AND r.check_out_date > ?) AS sold_rooms, "
+                + "(SELECT COUNT(*) FROM room_rates rate WHERE rate.room_type_id = rt.room_type_id "
+                + " AND rate.rate_date >= ? AND rate.rate_date < ? AND rate.stop_sell = 1) AS stop_sell "
+                + "FROM room_types rt WITH (UPDLOCK, HOLDLOCK) WHERE rt.room_type_id = ? AND rt.is_active = 1";
+
+        try (PreparedStatement ps = cn.prepareStatement(sql)) {
+            for (Map.Entry<Long, Integer> entry : requestedByType.entrySet()) {
+                ps.setDate(1, Date.valueOf(reservation.getCheckOutDate()));
+                ps.setDate(2, Date.valueOf(reservation.getCheckInDate()));
+                ps.setDate(3, Date.valueOf(reservation.getCheckInDate()));
+                ps.setDate(4, Date.valueOf(reservation.getCheckOutDate()));
+                ps.setLong(5, entry.getKey());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) throw new IllegalArgumentException("Loại phòng không tồn tại hoặc đã ngừng bán");
+                    if (rs.getInt("stop_sell") > 0)
+                        throw new IllegalStateException("Loại phòng đang tạm ngừng bán trong khoảng ngày đã chọn");
+                    int available = rs.getInt("total_rooms") - rs.getInt("sold_rooms");
+                    if (available < entry.getValue())
+                        throw new IllegalStateException("Không còn đủ phòng trống; vui lòng tải lại danh sách phòng");
+                }
+            }
+        }
     }
 
     @Override

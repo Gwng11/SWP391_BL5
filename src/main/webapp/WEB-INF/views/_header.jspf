@@ -42,6 +42,7 @@ h2{margin-top:0}
       <a href="${pageContext.request.contextPath}/services">Dịch vụ</a>
     </c:if>
     <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' || sessionScope.currentUser.roleCode == 'MANAGER' || sessionScope.currentUser.roleCode == 'ADMIN'}">
+      <a href="${pageContext.request.contextPath}/reception/walkin">Walk-in</a>
       <a href="${pageContext.request.contextPath}/reception/customers">Khách hàng</a>
       <a href="${pageContext.request.contextPath}/reception/checkin">Check-in</a>
       <a href="${pageContext.request.contextPath}/reception/stays">Đang ở</a>
