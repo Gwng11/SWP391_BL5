@@ -15,8 +15,8 @@ public class DBContext {
     private static final String SERVER = env("HMS_DB_SERVER", "localhost");
     private static final String PORT = env("HMS_DB_PORT", "1433");
     private static final String DATABASE = env("HMS_DB_NAME", "SingleHotelManagementDB");
-    private static final String USER = env("HMS_DB_USER", env("HMS_DB_USERNAME", "sa"));
-    private static final String PASSWORD = env("HMS_DB_PASSWORD", "123");
+    private static final String USER = env("HMS_DB_USER", env("HMS_DB_USERNAME", "ducnh"));
+    private static final String PASSWORD = env("HMS_DB_PASSWORD", "ducnh");
 
     private static final String DEFAULT_URL =
             "jdbc:sqlserver://" + SERVER + ":" + PORT
