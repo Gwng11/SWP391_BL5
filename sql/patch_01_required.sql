@@ -42,3 +42,5 @@ GO
 -- Khuyến nghị cho web app: tránh SQL Server đóng/mở DB liên tục gây chậm
 ALTER DATABASE SingleHotelManagementDB SET AUTO_CLOSE OFF;
 GO
+
+SELECT * from  dbo.user_tokens ;

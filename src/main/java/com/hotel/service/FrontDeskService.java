@@ -33,24 +33,14 @@ import java.util.Map;
 /** F10 Check-in, F11 Gán/đổi phòng, F12 Quản lý kỳ ở, F13 Check-out */
 public class FrontDeskService {
 
-    private final IReservationRepository reservationRepo;
-    private final IReservationRoomRepository resRoomRepo;
-    private final IRoomAssignmentRepository assignmentRepo;
-    private final IRoomRepository roomRepo;
-    private final IInvoiceRepository invoiceRepo;
-    private final IInvoiceItemRepository invoiceItemRepo;
-    private final IReservationGuestRepository guestRepo;
-    private final PaymentService paymentService;
-
-    public FrontDeskService(){this(new ReservationRepository(),new ReservationRoomRepository(),new RoomAssignmentRepository(),new RoomRepository(),new InvoiceRepository(),new InvoiceItemRepository(),new ReservationGuestRepository(),new PaymentService());}
-    public FrontDeskService(IReservationRepository reservationRepo,IReservationRoomRepository resRoomRepo,
-                            IRoomAssignmentRepository assignmentRepo,IRoomRepository roomRepo,
-                            IInvoiceRepository invoiceRepo,IInvoiceItemRepository invoiceItemRepo,
-                            PaymentService paymentService){this(reservationRepo,resRoomRepo,assignmentRepo,roomRepo,invoiceRepo,invoiceItemRepo,new ReservationGuestRepository(),paymentService);}
-    public FrontDeskService(IReservationRepository reservationRepo,IReservationRoomRepository resRoomRepo,
-                            IRoomAssignmentRepository assignmentRepo,IRoomRepository roomRepo,
-                            IInvoiceRepository invoiceRepo,IInvoiceItemRepository invoiceItemRepo,
-                            IReservationGuestRepository guestRepo,PaymentService paymentService){this.reservationRepo=reservationRepo;this.resRoomRepo=resRoomRepo;this.assignmentRepo=assignmentRepo;this.roomRepo=roomRepo;this.invoiceRepo=invoiceRepo;this.invoiceItemRepo=invoiceItemRepo;this.guestRepo=guestRepo;this.paymentService=paymentService;}
+    private final IReservationRepository reservationRepo = new ReservationRepository();
+    private final IReservationRoomRepository resRoomRepo = new ReservationRoomRepository();
+    private final IRoomAssignmentRepository assignmentRepo = new RoomAssignmentRepository();
+    private final IRoomRepository roomRepo = new RoomRepository();
+    private final IInvoiceRepository invoiceRepo = new InvoiceRepository();
+    private final IInvoiceItemRepository invoiceItemRepo = new InvoiceItemRepository();
+    private final PaymentService paymentService = new PaymentService();
+    private final ServiceRequestService serviceRequestService = new ServiceRequestService();
 
     /** F10: check-in - yêu cầu đơn CONFIRMED và đã nộp đủ cọc */
     public void checkIn(long reservationId, long byUserId) {
@@ -209,12 +199,24 @@ public class FrontDeskService {
         if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Đơn không ở trạng thái CHECKED_IN");
+
         Invoice inv = invoiceRepo.findByReservation(reservationId);
         if (inv == null || !Constants.INV_PAID.equals(inv.getStatusCode()))
-            throw new IllegalStateException("Chưa phát hành/thanh toán đủ hóa đơn cuối (F14) trước khi check-out");
+            throw new IllegalStateException("Chưa phát hành/thanh toán đủ hóa đơn cuối trước khi check-out");
+
+        // 1. Lấy danh sách các phòng đang được gán cho đơn này
+        List<RoomAssignment> currentAssignments = assignmentRepo.findCurrentByReservation(reservationId);
+
+        // 2. Thực hiện check-out & giải phóng phòng (Phòng sẽ tự động sang AVAILABLE + DIRTY trong DB)
         reservationRepo.checkOut(reservationId, byUserId);
         assignmentRepo.releaseAllForReservation(reservationId, "Checked out");
+
+        // 3. Tự động sinh Task dọn phòng cho đội Buồng phòng (Housekeeping)
+        for (RoomAssignment ra : currentAssignments) {
+            serviceRequestService.createHousekeepingTask(reservationId, r.getCustomerId(), ra.getRoomNumber());
+        }
     }
+
 
     Invoice getOrCreateDraftInvoice(Reservation r, long byUserId) {
         Invoice inv = invoiceRepo.findByReservation(r.getReservationId());
