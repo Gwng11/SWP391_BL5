@@ -116,6 +116,11 @@ public class AuthService {
     public void forgotPassword(String email, String appBaseUrl) {
         User u = userRepo.findByEmail(email == null ? "" : email.trim().toLowerCase());
         if (u == null || !Constants.ROLE_CUSTOMER.equals(u.getRoleCode())) return;
+        sendResetPasswordEmail(u, appBaseUrl);
+    }
+
+    public void sendResetPasswordEmail(User u, String appBaseUrl) {
+        if (u == null) return;
         String raw = issueToken(u.getUserId(), Constants.TK_PASSWORD_RESET, 60);
         String link = appBaseUrl + "/reset-password?token=" + raw;
         emailService.send(Constants.EV_PASSWORD_RESET, u.getEmail(),

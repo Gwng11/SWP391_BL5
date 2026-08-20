@@ -37,7 +37,10 @@ public class AuthFilter implements Filter {
         String path = req.getRequestURI().substring(req.getContextPath().length());
         User user = (User) req.getSession().getAttribute(Constants.SESSION_USER);
 
-        if (path.startsWith("/manager/")) {
+        if (path.startsWith("/admin/")) {
+            if (!authenticated(req, res, user, path)) return;
+            if (!hasRole(user, Constants.ROLE_ADMIN)) { deny(req, res); return; }
+        } else if (path.startsWith("/manager/")) {
             if (!authenticated(req, res, user, path)) return;
             if (!hasRole(user, Constants.ROLE_MANAGER)) { deny(req, res); return; }
         } else if (path.startsWith("/reception/")) {

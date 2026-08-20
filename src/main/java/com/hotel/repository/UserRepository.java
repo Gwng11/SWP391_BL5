@@ -162,4 +162,71 @@ public class UserRepository extends BaseRepository implements IUserRepository {
             }
         } catch (SQLException e) { throw wrap(e); }
     }
+
+    @Override
+    public List<User> findAll(String search, String roleCode, String statusCode) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM users WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append("AND (email LIKE ? OR full_name LIKE ? OR phone LIKE ?) ");
+            String match = "%" + search.trim() + "%";
+            params.add(match);
+            params.add(match);
+            params.add(match);
+        }
+        if (roleCode != null && !roleCode.trim().isEmpty()) {
+            sql.append("AND role_code = ? ");
+            params.add(roleCode.trim());
+        }
+        if (statusCode != null && !statusCode.trim().isEmpty()) {
+            sql.append("AND status_code = ? ");
+            params.add(statusCode.trim());
+        }
+        sql.append("ORDER BY created_at DESC");
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                List<User> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+                return list;
+            }
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
+    public void updateByAdmin(long userId, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String statusCode, LocalDateTime lockedUntil) {
+        String sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, identification_number = ?, role_code = ?, department_code = ?, status_code = ?, locked_until = ?, updated_at = SYSUTCDATETIME() WHERE user_id = ?";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setString(3, address);
+            ps.setString(4, identificationNumber);
+            ps.setString(5, roleCode);
+            ps.setString(6, departmentCode);
+            ps.setString(7, statusCode);
+            bindTs(ps, 8, lockedUntil);
+            ps.setLong(9, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
+    public void delete(long userId) {
+        String deleteTokens = "DELETE FROM user_tokens WHERE user_id = ?";
+        String deleteUser = "DELETE FROM users WHERE user_id = ?";
+        try (Connection cn = getConnection()) {
+            try (PreparedStatement ps = cn.prepareStatement(deleteTokens)) {
+                ps.setLong(1, userId);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = cn.prepareStatement(deleteUser)) {
+                ps.setLong(1, userId);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) { throw wrap(e); }
+    }
 }

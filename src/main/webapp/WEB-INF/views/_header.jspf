@@ -32,17 +32,19 @@ label{font-size:13px;color:#636e72;display:block;margin-top:8px}
 .badge{padding:2px 8px;border-radius:10px;font-size:12px;background:#dfe6e9}
 h2{margin-top:0}
 .page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}.page-head h1{margin:0;font-size:28px}
-.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}.col-4{grid-column:span 4}.col-6{grid-column:span 6}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}.col-1{grid-column:span 1}.col-2{grid-column:span 2}.col-3{grid-column:span 3}.col-4{grid-column:span 4}.col-5{grid-column:span 5}.col-6{grid-column:span 6}.col-7{grid-column:span 7}.col-8{grid-column:span 8}.col-9{grid-column:span 9}.col-10{grid-column:span 10}.col-11{grid-column:span 11}.col-12{grid-column:span 12}
 .kpi{border-top:4px solid var(--accent);min-height:128px}.kpi .value{font-size:30px;font-weight:700;margin:8px 0}.kpi .label{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
 .nav-card{color:var(--ink);text-decoration:none;border:1px solid var(--line);transition:.15s}.nav-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px #17324d1a}.nav-card h3{margin:0 0 8px}.muted{color:var(--muted)}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}.form-grid .full{grid-column:1/-1}.form-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}.inline{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}.inline label{margin:0}.table-wrap{overflow-x:auto}.pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:16px}.empty{padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:8px}.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.image-tile{border:1px solid var(--line);border-radius:8px;padding:8px}.image-tile img{width:100%;height:120px;object-fit:cover;border-radius:5px;background:#edf1f3}.danger-text{color:#a93226}.status-READY,.status-COMPLETED,.status-CLOSED{background:#d5f5e3}.status-BLOCKED,.status-OUT_OF_SERVICE,.status-FAIL{background:#fadbd8}.status-IN_PROGRESS,.status-ASSIGNED{background:#d6eaf8}
-@media(max-width:800px){nav{position:static;padding:10px 14px;gap:12px}.container{margin:16px auto}.col-4,.col-6,.col-8{grid-column:span 12}.form-grid{grid-template-columns:1fr}.page-head h1{font-size:23px}th,td{white-space:nowrap}}
+@media(max-width:800px){nav{position:static;padding:10px 14px;gap:12px}.container{margin:16px auto}.col-1,.col-2,.col-3,.col-4,.col-5,.col-6,.col-7,.col-8,.col-9,.col-10,.col-11,.col-12{grid-column:span 12}.form-grid{grid-template-columns:1fr}.page-head h1{font-size:23px}th,td{white-space:nowrap}}
 </style>
 </head>
 <body>
 <nav>
   <a href="${pageContext.request.contextPath}/home"><b>🏨 Hotel</b></a>
-  <a href="${pageContext.request.contextPath}/rooms">Tìm phòng</a>
+  <c:if test="${empty sessionScope.currentUser || sessionScope.currentUser.roleCode == 'CUSTOMER'}">
+    <a href="${pageContext.request.contextPath}/rooms">Tìm phòng</a>
+  </c:if>
   <c:if test="${empty sessionScope.currentUser}">
     <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
     <a href="${pageContext.request.contextPath}/register">Đăng ký</a>
@@ -52,7 +54,7 @@ h2{margin-top:0}
       <a href="${pageContext.request.contextPath}/my-reservations">Đơn của tôi</a>
       <a href="${pageContext.request.contextPath}/services">Dịch vụ</a>
     </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' || sessionScope.currentUser.roleCode == 'ADMIN'}">
+    <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
       <a href="${pageContext.request.contextPath}/reception/walkin">Walk-in</a>
       <a href="${pageContext.request.contextPath}/reception/customers">Khách hàng</a>
       <a href="${pageContext.request.contextPath}/reception/reservations">Đơn đặt phòng</a>
@@ -60,7 +62,7 @@ h2{margin-top:0}
       <a href="${pageContext.request.contextPath}/reception/stays">Đang ở</a>
       <a href="${pageContext.request.contextPath}/reception/checkout">Check-out</a>
     </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF' || sessionScope.currentUser.roleCode == 'RECEPTIONIST' || sessionScope.currentUser.roleCode == 'ADMIN'}">
+    <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF' || sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
       <a href="${pageContext.request.contextPath}/staff/service-requests">Yêu cầu DV</a>
     </c:if>
     <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF'}">
@@ -76,6 +78,11 @@ h2{margin-top:0}
       <a href="${pageContext.request.contextPath}/manager/maintenance">Bảo trì</a>
       <a href="${pageContext.request.contextPath}/manager/reports">Báo cáo</a>
     </c:if>
+    <c:if test="${sessionScope.currentUser.roleCode == 'ADMIN'}">
+      <a href="${pageContext.request.contextPath}/admin/users">Tài khoản nhân viên</a>
+      <a href="${pageContext.request.contextPath}/admin/templates">Mẫu email</a>
+      <a href="${pageContext.request.contextPath}/admin/email-logs">Logs email</a>
+    </c:if>
     <a href="${pageContext.request.contextPath}/profile">👤 ${sessionScope.currentUser.fullName}</a>
     <a href="${pageContext.request.contextPath}/logout">Thoát</a>
   </c:if>
@@ -83,4 +90,5 @@ h2{margin-top:0}
 <div class="container">
 <c:if test="${not empty param.err}"><div class="err">${param.err}</div></c:if>
 <c:if test="${not empty err}"><div class="err">${err}</div></c:if>
+<c:if test="${not empty param.msg}"><div class="msg">${param.msg}</div></c:if>
 <c:if test="${not empty msg}"><div class="msg">${msg}</div></c:if>

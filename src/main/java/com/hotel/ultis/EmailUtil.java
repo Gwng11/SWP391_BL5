@@ -17,13 +17,16 @@ import java.util.Properties;
 public final class EmailUtil {
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
-    private static final String SMTP_USER = "your.email@gmail.com";   // TODO
-    private static final String SMTP_PASS = "your-app-password";      // TODO
+    private static final String SMTP_USER = "quangson2112004@gmail.com";
+    private static final String SMTP_PASS = "vohlzaoawyitzwig";
     private static final String FROM_NAME = "Hotel Management";
 
-    private EmailUtil() {}
+    private EmailUtil() {
+    }
 
-    /** Gửi email HTML. Ném exception nếu thất bại để EmailService ghi log FAILED. */
+    /**
+     * Gửi email HTML. Ném exception nếu thất bại để EmailService ghi log FAILED.
+     */
     public static void send(String to, String subject, String htmlBody) throws Exception {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");

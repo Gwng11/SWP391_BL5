@@ -16,4 +16,7 @@ public interface IUserRepository {
     void markEmailVerified(long userId);
     /** Danh sách nhân viên dịch vụ active theo bộ phận, xếp theo số việc đang gánh. */
     List<User> findActiveServiceStaffWithWorkload(String departmentCode);
+    List<User> findAll(String search, String roleCode, String statusCode);
+    void updateByAdmin(long userId, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String statusCode, LocalDateTime lockedUntil);
+    void delete(long userId);
 }
