@@ -13,12 +13,23 @@ import java.util.List;
 /** F15 - yêu cầu dịch vụ, F16 - xử lý yêu cầu */
 public class ServiceRequestRepository extends BaseRepository implements IServiceRequestRepository {
 
-    private static final String JOIN_SQL =
-            "SELECT sr.*, hs.service_name, hs.unit_name, r.booking_code, u.full_name AS staff_name "
-          + "FROM service_requests sr "
-          + "JOIN hotel_services hs ON hs.hotel_service_id = sr.hotel_service_id "
-          + "JOIN reservations r ON r.reservation_id = sr.reservation_id "
-          + "LEFT JOIN users u ON u.user_id = sr.assigned_staff_user_id ";
+//    private static final String JOIN_SQL =
+//            "SELECT sr.*, hs.service_name, hs.unit_name, r.booking_code, u.full_name AS staff_name "
+//          + "FROM service_requests sr "
+//          + "JOIN hotel_services hs ON hs.hotel_service_id = sr.hotel_service_id "
+//          + "JOIN reservations r ON r.reservation_id = sr.reservation_id "
+//          + "LEFT JOIN users u ON u.user_id = sr.assigned_staff_user_id ";
+private static final String JOIN_SQL =
+        "SELECT sr.service_request_id, sr.reservation_id, sr.customer_id, "
+                + "sr.hotel_service_id, sr.assigned_staff_user_id, sr.quantity, "
+                + "sr.unit_price_snapshot, sr.total_amount, sr.status_code, "
+                + "sr.requested_at, sr.scheduled_at, sr.assigned_at, sr.started_at, "
+                + "sr.completed_at, sr.notes, "
+                + "hs.service_name, hs.unit_name, r.booking_code, u.full_name AS staff_name "
+                + "FROM service_requests sr "
+                + "JOIN hotel_services hs ON hs.hotel_service_id = sr.hotel_service_id "
+                + "JOIN reservations r ON r.reservation_id = sr.reservation_id "
+                + "LEFT JOIN users u ON u.user_id = sr.assigned_staff_user_id ";
 
     private ServiceRequest map(ResultSet rs) throws SQLException {
         ServiceRequest s = new ServiceRequest();
