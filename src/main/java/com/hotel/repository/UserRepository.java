@@ -21,6 +21,8 @@ public class UserRepository extends BaseRepository implements IUserRepository {
         u.setPasswordHash(rs.getString("password_hash"));
         u.setFullName(rs.getString("full_name"));
         u.setPhone(rs.getString("phone"));
+        u.setAddress(rs.getString("address"));
+        u.setIdentificationNumber(rs.getString("identification_number"));
         u.setRoleCode(rs.getString("role_code"));
         u.setDepartmentCode(rs.getString("department_code"));
         u.setStatusCode(rs.getString("status_code"));
@@ -52,6 +54,19 @@ public class UserRepository extends BaseRepository implements IUserRepository {
     }
 
     @Override
+    public List<User> findActiveByRole(String roleCode) {
+        String sql = "SELECT * FROM users WHERE role_code = ? AND status_code = 'ACTIVE' ORDER BY full_name";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, roleCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<User> list = new ArrayList<>();
+                while (rs.next()) list.add(map(rs));
+                return list;
+            }
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
     public long insert(User u) {
         String sql = "INSERT INTO users (email, password_hash, full_name, phone, role_code, department_code, status_code) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -70,12 +85,15 @@ public class UserRepository extends BaseRepository implements IUserRepository {
     }
 
     @Override
-    public void updateProfile(long userId, String fullName, String phone) {
-        String sql = "UPDATE users SET full_name = ?, phone = ?, updated_at = SYSUTCDATETIME() WHERE user_id = ?";
+    public void updateProfile(long userId, String fullName, String phone, String address, String identificationNumber) {
+        String sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, identification_number = ?, "
+                   + "updated_at = SYSUTCDATETIME() WHERE user_id = ?";
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, fullName);
             ps.setString(2, phone);
-            ps.setLong(3, userId);
+            ps.setString(3, address);
+            ps.setString(4, identificationNumber);
+            ps.setLong(5, userId);
             ps.executeUpdate();
         } catch (SQLException e) { throw wrap(e); }
     }

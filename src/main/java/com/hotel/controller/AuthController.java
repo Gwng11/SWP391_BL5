@@ -6,6 +6,7 @@ import com.hotel.service.AuthService;
 import com.hotel.ultis.Constants;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -16,14 +17,19 @@ import java.io.IOException;
 @WebServlet(urlPatterns = { "/login", "/logout", "/register", "/verify", "/forgot-password", "/reset-password" })
 public class AuthController extends BaseController {
 
-    private final AuthService authService = new AuthService();
+    private final AuthService authService;
+
+    public AuthController() { this(new AuthService()); }
+
+    AuthController(AuthService authService) { this.authService = authService; }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         if ("/logout".equals(path)) {
-            req.getSession().invalidate();
-            resp.sendRedirect(req.getContextPath() + "/home");
+            var session = req.getSession(false);
+            if (session != null) session.invalidate();
+            resp.sendRedirect(req.getContextPath() + "/login");
         } else if ("/verify".equals(path)) {
             boolean ok = authService.verifyEmail(req.getParameter("token"));
             req.setAttribute(ok ? "msg" : "err",
@@ -48,11 +54,13 @@ public class AuthController extends BaseController {
         try {
             if ("/login".equals(path)) {
                 User u = authService.login(req.getParameter("email"), req.getParameter("password"));
-                req.getSession().setAttribute(Constants.SESSION_USER, u);
-                String target = (String) req.getSession().getAttribute("redirectAfterLogin");
-                req.getSession().removeAttribute("redirectAfterLogin");
+                HttpSession session = req.getSession();
+                req.changeSessionId();
+                session.setAttribute(Constants.SESSION_USER, u);
+                String target = (String) session.getAttribute("redirectAfterLogin");
+                session.removeAttribute("redirectAfterLogin");
                 if (Constants.ROLE_CUSTOMER.equals(u.getRoleCode())) {
-                    req.getSession().setAttribute(Constants.SESSION_CUSTOMER,
+                    session.setAttribute(Constants.SESSION_CUSTOMER,
                             new CustomerRepository().findByUserId(u.getUserId()));
                 }
 
@@ -63,10 +71,8 @@ public class AuthController extends BaseController {
                     resp.sendRedirect(req.getContextPath() + destination);
                 } else if (Constants.ROLE_CUSTOMER.equals(u.getRoleCode())) {
                     resp.sendRedirect(req.getContextPath() + "/home");
-                } else if (Constants.ROLE_SERVICE_STAFF.equals(u.getRoleCode())) {
-                    resp.sendRedirect(req.getContextPath() + "/staff/service-requests");
                 } else {
-                    resp.sendRedirect(req.getContextPath() + "/reception/checkin");
+                    resp.sendRedirect(req.getContextPath() + destinationFor(u));
                 }
             } else if ("/register".equals(path)) {
                 authService.register(req.getParameter("email"), req.getParameter("password"),
@@ -97,7 +103,20 @@ public class AuthController extends BaseController {
             else if ("/reset-password".equals(path))
                 view = "/WEB-INF/views/reset-password.jsp";
             req.getRequestDispatcher(view).forward(req, resp);
+        } catch (RuntimeException e) {
+            req.setAttribute("err", Constants.MSG_SYSTEM_ERROR);
+            req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
         }
+    }
+
+    static String destinationFor(User user) {
+        return switch (user.getRoleCode()) {
+            case Constants.ROLE_MANAGER -> "/manager/dashboard";
+            case Constants.ROLE_SERVICE_STAFF -> "/staff/service-requests";
+            case Constants.ROLE_RECEPTIONIST -> "/reception/checkin";
+            case Constants.ROLE_ADMIN -> "/reception/checkin";
+            default -> "/home";
+        };
     }
 
     private boolean isSafeLocalPath(String path) {

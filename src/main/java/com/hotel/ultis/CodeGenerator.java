@@ -21,4 +21,5 @@ public final class CodeGenerator {
     public static String bookingCode()  { return "BK" + LocalDateTime.now().format(FMT) + random(6); }   // varchar(30)
     public static String customerCode() { return "CUS" + LocalDateTime.now().format(FMT) + random(5); }  // varchar(20)
     public static String invoiceNumber(){ return "INV" + LocalDateTime.now().format(FMT) + random(6); }  // varchar(30)
+    public static String maintenanceTicketCode(){ return "MT" + LocalDateTime.now().format(FMT) + random(6); }
 }

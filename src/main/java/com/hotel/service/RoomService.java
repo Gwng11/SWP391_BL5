@@ -22,17 +22,28 @@ import java.util.Map;
 /** F02 - Tìm phòng trống, F03 - Chi tiết phòng */
 public class RoomService {
 
-    private final IRoomTypeRepository roomTypeRepo = new RoomTypeRepository();
-    private final IRoomRepository roomRepo = new RoomRepository();
-    private final IRoomRateRepository rateRepo = new RoomRateRepository();
-    private final IReservationRepository reservationRepo = new ReservationRepository();
+    private final IRoomTypeRepository roomTypeRepo;
+    private final IRoomRepository roomRepo;
+    private final IRoomRateRepository rateRepo;
+    private final IReservationRepository reservationRepo;
+
+    public RoomService() {
+        this(new RoomTypeRepository(), new RoomRepository(), new RoomRateRepository(), new ReservationRepository());
+    }
+
+    public RoomService(IRoomTypeRepository roomTypeRepo, IRoomRepository roomRepo,
+                       IRoomRateRepository rateRepo, IReservationRepository reservationRepo) {
+        this.roomTypeRepo=roomTypeRepo;this.roomRepo=roomRepo;this.rateRepo=rateRepo;this.reservationRepo=reservationRepo;
+    }
 
     public List<RoomType> getAllActiveTypes() {
         return roomTypeRepo.findAllActive();
     }
 
     public RoomType getTypeDetail(long roomTypeId) {
-        return roomTypeRepo.findById(roomTypeId);
+        RoomType type=roomTypeRepo.findById(roomTypeId);
+        if(type==null||!type.isActive())throw new IllegalArgumentException("Loại phòng không còn được kinh doanh");
+        return type;
     }
 
     /**
@@ -85,6 +96,8 @@ public class RoomService {
     /** Kiểm tra 1 loại phòng còn đủ số lượng không (dùng lại khi tạo/sửa đơn) */
     public boolean isAvailable(long roomTypeId, LocalDate checkIn, LocalDate checkOut,
                                int quantity, Long excludeReservationId) {
+        RoomType type=roomTypeRepo.findById(roomTypeId);
+        if(type==null||!type.isActive())return false;
         if (rateRepo.hasStopSell(roomTypeId, checkIn, checkOut)) return false;
         int total = roomRepo.countSellableByType(roomTypeId);
         int sold = reservationRepo.countSoldRooms(roomTypeId, checkIn, checkOut, excludeReservationId);

@@ -22,12 +22,24 @@ import java.util.Map;
 public class AuthService {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final int LOCK_MINUTES = 15;
+    private static final int LOCK_MINUTES = 30;
 
-    private final IUserRepository userRepo = new UserRepository();
-    private final IUserTokenRepository tokenRepo = new UserTokenRepository();
-    private final ICustomerRepository customerRepo = new CustomerRepository();
-    private final EmailService emailService = new EmailService();
+    private final IUserRepository userRepo;
+    private final IUserTokenRepository tokenRepo;
+    private final ICustomerRepository customerRepo;
+    private final EmailService emailService;
+
+    public AuthService() {
+        this(new UserRepository(), new UserTokenRepository(), new CustomerRepository(), new EmailService());
+    }
+
+    public AuthService(IUserRepository userRepo, IUserTokenRepository tokenRepo,
+                       ICustomerRepository customerRepo, EmailService emailService) {
+        this.userRepo = userRepo;
+        this.tokenRepo = tokenRepo;
+        this.customerRepo = customerRepo;
+        this.emailService = emailService;
+    }
 
     /** Đăng ký tài khoản CUSTOMER: tạo user + customer + gửi email xác thực */
     public User register(String email, String rawPassword, String fullName, String phone, String appBaseUrl) {
@@ -77,20 +89,25 @@ public class AuthService {
 
     /** Đăng nhập: sai quá MAX_FAILED_ATTEMPTS lần thì khóa tạm LOCK_MINUTES phút */
     public User login(String email, String rawPassword) {
+        if (ValidationUtil.isBlank(email) || ValidationUtil.isBlank(rawPassword))
+            throw new IllegalArgumentException(Constants.MSG_LOGIN_REQUIRED);
         User u = userRepo.findByEmail(email == null ? "" : email.trim().toLowerCase());
-        if (u == null) throw new IllegalArgumentException("Email hoặc mật khẩu không đúng");
+        if (u == null) throw new IllegalArgumentException(Constants.MSG_INVALID_LOGIN);
         if ("LOCKED".equals(u.getStatusCode()) || "INACTIVE".equals(u.getStatusCode()))
-            throw new IllegalArgumentException("Tài khoản đã bị khóa hoặc ngừng hoạt động");
+            throw new IllegalArgumentException(Constants.MSG_ACCOUNT_INACTIVE);
         LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
         if (u.getLockedUntil() != null && u.getLockedUntil().isAfter(nowUtc))
-            throw new IllegalArgumentException("Tài khoản tạm khóa do đăng nhập sai nhiều lần. Thử lại sau");
+            throw new IllegalArgumentException(Constants.MSG_ACCOUNT_LOCKED);
 
         if (!PasswordUtil.verify(rawPassword, u.getPasswordHash())) {
             int attempts = u.getFailedLoginAttempts() + 1;
             LocalDateTime lockedUntil = attempts >= MAX_FAILED_ATTEMPTS ? nowUtc.plusMinutes(LOCK_MINUTES) : null;
             userRepo.recordLoginFailure(u.getUserId(), attempts, lockedUntil);
-            throw new IllegalArgumentException("Email hoặc mật khẩu không đúng");
+            if (lockedUntil != null) throw new IllegalArgumentException(Constants.MSG_ACCOUNT_LOCKED);
+            throw new IllegalArgumentException(Constants.MSG_INVALID_LOGIN);
         }
+        if (Constants.ROLE_CUSTOMER.equals(u.getRoleCode()) && u.getEmailVerifiedAt() == null)
+            throw new IllegalArgumentException("Please verify your email address before logging in.");
         userRepo.recordLoginSuccess(u.getUserId());
         return u;
     }
@@ -98,7 +115,7 @@ public class AuthService {
     /** Quên mật khẩu: gửi link reset (không tiết lộ email có tồn tại hay không) */
     public void forgotPassword(String email, String appBaseUrl) {
         User u = userRepo.findByEmail(email == null ? "" : email.trim().toLowerCase());
-        if (u == null) return;
+        if (u == null || !Constants.ROLE_CUSTOMER.equals(u.getRoleCode())) return;
         String raw = issueToken(u.getUserId(), Constants.TK_PASSWORD_RESET, 60);
         String link = appBaseUrl + "/reset-password?token=" + raw;
         emailService.send(Constants.EV_PASSWORD_RESET, u.getEmail(),

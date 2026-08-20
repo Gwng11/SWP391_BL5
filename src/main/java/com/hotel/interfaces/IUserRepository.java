@@ -7,8 +7,9 @@ import java.util.List;
 public interface IUserRepository {
     User findByEmail(String email);
     User findById(long userId);
+    List<User> findActiveByRole(String roleCode);
     long insert(User u);
-    void updateProfile(long userId, String fullName, String phone);
+    void updateProfile(long userId, String fullName, String phone, String address, String identificationNumber);
     void updatePassword(long userId, String passwordHash);
     void recordLoginSuccess(long userId);
     void recordLoginFailure(long userId, int failedAttempts, LocalDateTime lockedUntil);

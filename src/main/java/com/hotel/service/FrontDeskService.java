@@ -9,12 +9,14 @@ import com.hotel.entity.RoomAssignment;
 import com.hotel.interfaces.IInvoiceItemRepository;
 import com.hotel.interfaces.IInvoiceRepository;
 import com.hotel.interfaces.IReservationRepository;
+import com.hotel.interfaces.IReservationGuestRepository;
 import com.hotel.interfaces.IReservationRoomRepository;
 import com.hotel.interfaces.IRoomAssignmentRepository;
 import com.hotel.interfaces.IRoomRepository;
 import com.hotel.repository.InvoiceItemRepository;
 import com.hotel.repository.InvoiceRepository;
 import com.hotel.repository.ReservationRepository;
+import com.hotel.repository.ReservationGuestRepository;
 import com.hotel.repository.ReservationRoomRepository;
 import com.hotel.repository.RoomAssignmentRepository;
 import com.hotel.repository.RoomRepository;
@@ -31,15 +33,24 @@ import java.util.Map;
 /** F10 Check-in, F11 Gán/đổi phòng, F12 Quản lý kỳ ở, F13 Check-out */
 public class FrontDeskService {
 
-    private final IReservationRepository reservationRepo = new ReservationRepository();
-    private final IReservationRoomRepository resRoomRepo = new ReservationRoomRepository();
-    private final IRoomAssignmentRepository assignmentRepo = new RoomAssignmentRepository();
-    private final IRoomRepository roomRepo = new RoomRepository();
-    private final IInvoiceRepository invoiceRepo = new InvoiceRepository();
-    private final IInvoiceItemRepository invoiceItemRepo = new InvoiceItemRepository();
-    private final com.hotel.interfaces.IReservationGuestRepository guestRepo =
-            new com.hotel.repository.ReservationGuestRepository();
-    private final PaymentService paymentService = new PaymentService();
+    private final IReservationRepository reservationRepo;
+    private final IReservationRoomRepository resRoomRepo;
+    private final IRoomAssignmentRepository assignmentRepo;
+    private final IRoomRepository roomRepo;
+    private final IInvoiceRepository invoiceRepo;
+    private final IInvoiceItemRepository invoiceItemRepo;
+    private final IReservationGuestRepository guestRepo;
+    private final PaymentService paymentService;
+
+    public FrontDeskService(){this(new ReservationRepository(),new ReservationRoomRepository(),new RoomAssignmentRepository(),new RoomRepository(),new InvoiceRepository(),new InvoiceItemRepository(),new ReservationGuestRepository(),new PaymentService());}
+    public FrontDeskService(IReservationRepository reservationRepo,IReservationRoomRepository resRoomRepo,
+                            IRoomAssignmentRepository assignmentRepo,IRoomRepository roomRepo,
+                            IInvoiceRepository invoiceRepo,IInvoiceItemRepository invoiceItemRepo,
+                            PaymentService paymentService){this(reservationRepo,resRoomRepo,assignmentRepo,roomRepo,invoiceRepo,invoiceItemRepo,new ReservationGuestRepository(),paymentService);}
+    public FrontDeskService(IReservationRepository reservationRepo,IReservationRoomRepository resRoomRepo,
+                            IRoomAssignmentRepository assignmentRepo,IRoomRepository roomRepo,
+                            IInvoiceRepository invoiceRepo,IInvoiceItemRepository invoiceItemRepo,
+                            IReservationGuestRepository guestRepo,PaymentService paymentService){this.reservationRepo=reservationRepo;this.resRoomRepo=resRoomRepo;this.assignmentRepo=assignmentRepo;this.roomRepo=roomRepo;this.invoiceRepo=invoiceRepo;this.invoiceItemRepo=invoiceItemRepo;this.guestRepo=guestRepo;this.paymentService=paymentService;}
 
     /** F10: check-in - yêu cầu đơn CONFIRMED và đã nộp đủ cọc */
     public void checkIn(long reservationId, long byUserId) {
@@ -125,7 +136,7 @@ public class FrontDeskService {
         if (room == null || room.getRoomTypeId() != rr.getRoomTypeId())
             throw new IllegalArgumentException("Phòng không thuộc loại phòng đã đặt");
         if (!"AVAILABLE".equals(room.getOperationalStatus())
-                || !("CLEAN".equals(room.getCleaningStatus()) || "INSPECTED".equals(room.getCleaningStatus())))
+                || !("READY".equals(room.getCleaningStatus()) || "INSPECTED".equals(room.getCleaningStatus())))
             throw new IllegalStateException("Phòng chưa sẵn sàng (bẩn/bảo trì/đang dùng)");
         // Unique index UX_room_assignments_current_room trong DB chặn double-assign lần cuối
         assignmentRepo.assign(reservationRoomId, roomId, byUserId);
@@ -136,7 +147,7 @@ public class FrontDeskService {
         Room room = roomRepo.findById(newRoomId);
         if (room == null) throw new IllegalArgumentException("Phòng mới không tồn tại");
         if (!"AVAILABLE".equals(room.getOperationalStatus())
-                || !("CLEAN".equals(room.getCleaningStatus()) || "INSPECTED".equals(room.getCleaningStatus())))
+                || !("READY".equals(room.getCleaningStatus()) || "INSPECTED".equals(room.getCleaningStatus())))
             throw new IllegalStateException("Phòng mới chưa sẵn sàng");
         assignmentRepo.changeRoom(roomAssignmentId, newRoomId, byUserId, reason);
     }
@@ -191,7 +202,7 @@ public class FrontDeskService {
 
     /**
      * F13: check-out - yêu cầu hóa đơn cuối đã thanh toán đủ (F14 thực hiện trước).
-     * Trả phòng: assignment đóng lại, phòng AVAILABLE + DIRTY (chờ housekeeping F17).
+     * Trả phòng: assignment đóng lại, phòng DIRTY; loại phòng inactive giữ OUT_OF_SERVICE.
      */
     public void checkOut(long reservationId, long byUserId) {
         Reservation r = reservationRepo.findById(reservationId);

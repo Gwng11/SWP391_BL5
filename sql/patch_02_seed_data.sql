@@ -5,9 +5,21 @@
 --   manager@hotel.vn      / Manager@123     (MANAGER)
 --   receptionist@hotel.vn / Recep@123       (RECEPTIONIST)
 --   staff@hotel.vn        / Staff@123       (SERVICE_STAFF - GENERAL_SERVICE)
+--   manager.demo@hotel.vn / Manager@123     (MANAGER)
 --   customer@test.vn      / Customer@123    (CUSTOMER, đã xác thực email)
 -- =====================================================================
 USE [SingleHotelManagementDB]
+GO
+
+-- Manager test account is inserted independently so rerunning an older seed
+-- that already contains ADMIN does not skip it.
+IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'manager.demo@hotel.vn')
+INSERT INTO users (email, password_hash, full_name, phone, role_code, department_code, status_code, email_verified_at) VALUES
+('manager.demo@hotel.vn', '65536:QR/p4a/n/2EORqdpGsUmVA==:SyBaOtLf651q/DgvEASfbsoFAjj3FmhbMG7wXYFPfx4=', N'Quản lý khách sạn Demo', '0900000004', 'MANAGER', NULL, 'ACTIVE', SYSUTCDATETIME());
+ELSE
+UPDATE users
+SET full_name = N'Quản lý khách sạn Demo'
+WHERE email = 'manager.demo@hotel.vn';
 GO
 
 -- Required when inserting into tables that have filtered indexes.
@@ -31,6 +43,11 @@ INSERT INTO users (email, password_hash, full_name, phone, role_code, department
 ('customer@test.vn',      '65536:PUc8F/jYWpQ79CzcTU96gw==:vOv0AAX35PUtuXIzg1aq7iYtEUihQgxvbd37yR7ro5c=', N'Nguyễn Văn Khách', '0912345678', 'CUSTOMER', NULL, 'ACTIVE', SYSUTCDATETIME());
 GO
 
+-- Normalize Unicode display names when an older sqlcmd run used a non-UTF-8 input code page.
+UPDATE users SET full_name=N'Quản trị hệ thống' WHERE email='admin@hotel.vn';
+UPDATE users SET full_name=N'Lễ tân Mai Anh' WHERE email='receptionist@hotel.vn';
+UPDATE users SET full_name=N'Nhân viên Văn Bình' WHERE email='staff@hotel.vn';
+UPDATE users SET full_name=N'Nguyễn Văn Khách' WHERE email='customer@test.vn';
 IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'manager@hotel.vn')
 INSERT INTO users (email, password_hash, full_name, phone, role_code, department_code, status_code, email_verified_at)
 VALUES ('manager@hotel.vn',
@@ -43,6 +60,9 @@ IF NOT EXISTS (SELECT 1 FROM customers WHERE email = 'customer@test.vn')
 INSERT INTO customers (user_id, customer_code, full_name, email, phone, nationality)
 SELECT user_id, 'CUS000001', N'Nguyễn Văn Khách', 'customer@test.vn', '0912345678', N'Việt Nam'
 FROM users WHERE email = 'customer@test.vn';
+ELSE
+UPDATE customers SET full_name=N'Nguyễn Văn Khách', nationality=N'Việt Nam'
+WHERE email='customer@test.vn';
 GO
 
 -- F21/F02: loại phòng
