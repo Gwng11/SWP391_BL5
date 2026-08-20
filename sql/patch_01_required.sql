@@ -37,3 +37,5 @@ GO
 -- Khuyến nghị cho web app
 ALTER DATABASE SingleHotelManagementDB SET AUTO_CLOSE OFF;
 GO
+
+SELECT * from  dbo.user_tokens ;

@@ -15,17 +15,27 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** F15 - Khách yêu cầu dịch vụ, F16 - Nhân viên xử lý yêu cầu */
 public class ServiceRequestService {
 
     private final IHotelServiceRepository hotelServiceRepo = new HotelServiceRepository();
     private final IServiceRequestRepository requestRepo = new ServiceRequestRepository();
     private final IReservationRepository reservationRepo = new ReservationRepository();
 
-    /** F15: danh mục dịch vụ đang mở */
+    /** F15: Danh mục dịch vụ đang mở (có hỗ trợ tìm kiếm) */
     public List<HotelService> getCatalog() { return hotelServiceRepo.findAllActive(); }
 
-    /** F15: tạo yêu cầu dịch vụ (khách đang ở mới được yêu cầu) */
+    public List<HotelService> searchCatalog(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return hotelServiceRepo.findAllActive();
+        }
+        return hotelServiceRepo.searchActive(keyword.trim());
+    }
+
+    public HotelService getServiceById(long id) {
+        return hotelServiceRepo.findById(id);
+    }
+
+    /** F15: Tạo yêu cầu dịch vụ */
     public long createRequest(long reservationId, long hotelServiceId, BigDecimal quantity,
                               LocalDateTime scheduledAt, String notes) {
         Reservation r = reservationRepo.findById(reservationId);
@@ -53,13 +63,9 @@ public class ServiceRequestService {
     public List<ServiceRequest> getWorkQueue(String status) { return requestRepo.findWorkQueue(status); }
     public ServiceRequest getById(long id) { return requestRepo.findById(id); }
 
-    /** F16: phân công nhân viên */
     public void assign(long serviceRequestId, long staffUserId) { requestRepo.assign(serviceRequestId, staffUserId); }
-
-    /** F16: bắt đầu thực hiện */
     public void start(long serviceRequestId) { requestRepo.start(serviceRequestId); }
 
-    /** F16: hoàn tất - cộng tiền dịch vụ vào tổng của đơn (chi tiết sẽ lên hóa đơn ở F14) */
     public void complete(long serviceRequestId) {
         ServiceRequest sr = requestRepo.findById(serviceRequestId);
         if (sr == null) throw new IllegalArgumentException("Yêu cầu không tồn tại");
@@ -67,6 +73,5 @@ public class ServiceRequestService {
         reservationRepo.addServiceTotal(sr.getReservationId(), sr.getTotalAmount());
     }
 
-    /** F16: hủy yêu cầu */
     public void cancel(long serviceRequestId, String note) { requestRepo.cancel(serviceRequestId, note); }
 }

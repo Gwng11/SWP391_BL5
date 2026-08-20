@@ -94,3 +94,8 @@ INSERT INTO email_templates (template_code, template_name, event_code, subject_t
  N'Hóa đơn {{invoice_number}} - Đơn {{booking_code}}',
  N'<p>Chào {{full_name}},</p><p>Hóa đơn <b>{{invoice_number}}</b>: tổng {{total_amount}} đ, đã thanh toán {{paid_amount}} đ. Cảm ơn quý khách!</p>');
 GO
+
+
+select * from dbo.users; 
+
+ALTER TABLE hotel_services ADD image_url VARCHAR(255) NULL;

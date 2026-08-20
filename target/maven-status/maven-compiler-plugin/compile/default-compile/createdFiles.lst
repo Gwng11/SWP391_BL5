@@ -10,6 +10,7 @@ com\hotel\interfaces\IHotelServiceRepository.class
 com\hotel\service\RoomService.class
 com\hotel\entity\EmailLog.class
 com\hotel\ultis\ValidationUtil.class
+com\hotel\controller\ServiceDetailController.class
 com\hotel\repository\RoomTypeRepository.class
 com\hotel\repository\CustomerRepository.class
 com\hotel\interfaces\IHotelProfileRepository.class
