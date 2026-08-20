@@ -33,15 +33,18 @@ import java.util.Map;
 /** F10 Check-in, F11 Gán/đổi phòng, F12 Quản lý kỳ ở, F13 Check-out */
 public class FrontDeskService {
 
-    private final IReservationRepository reservationRepo = new ReservationRepository();
-    private final IReservationRoomRepository resRoomRepo = new ReservationRoomRepository();
-    private final IRoomAssignmentRepository assignmentRepo = new RoomAssignmentRepository();
-    private final IRoomRepository roomRepo = new RoomRepository();
-    private final IInvoiceRepository invoiceRepo = new InvoiceRepository();
-    private final IInvoiceItemRepository invoiceItemRepo = new InvoiceItemRepository();
-    private final PaymentService paymentService = new PaymentService();
-    private final ServiceRequestService serviceRequestService = new ServiceRequestService();
+    private IReservationRepository reservationRepo = new ReservationRepository();
+    private IReservationRoomRepository resRoomRepo = new ReservationRoomRepository();
+    private IRoomAssignmentRepository assignmentRepo = new RoomAssignmentRepository();
+    private IRoomRepository roomRepo = new RoomRepository();
+    private IInvoiceRepository invoiceRepo = new InvoiceRepository();
+    private IInvoiceItemRepository invoiceItemRepo = new InvoiceItemRepository();
+    private PaymentService paymentService = new PaymentService();
+    private ServiceRequestService serviceRequestService = new ServiceRequestService();
+    private IReservationGuestRepository guestRepo = new ReservationGuestRepository();
 
+    // Constructor mặc định cho Controller / Servlet
+    public FrontDeskService() {}
     /** F10: check-in - yêu cầu đơn CONFIRMED và đã nộp đủ cọc */
     public void checkIn(long reservationId, long byUserId) {
         Reservation r = reservationRepo.findById(reservationId);
