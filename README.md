@@ -82,6 +82,17 @@ Khách đăng ký (F04) → xác thực email → tìm phòng (F02) → xem chi 
 - **Email**: template lấy từ `email_templates` (placeholder `{{key}}`), mọi lần gửi đều ghi `email_logs` (SENT/FAILED).
 - **Transaction**: tạo đơn (reservation + rooms + guests), gán/đổi/trả phòng đều chạy trong 1 transaction JDBC.
 
+### 4b. Luồng Walk-in tại quầy
+
+Lễ tân mở `/reception/walkin`, tra khách theo CCCD/hộ chiếu, chọn một phòng vật lý
+đang `AVAILABLE` và `CLEAN/INSPECTED`, nhập số đêm và thu tối thiểu 30% tiền cọc.
+Một lần xác nhận sẽ tạo đơn `WALK_IN`, ghi payment, chuyển đơn sang `CONFIRMED`,
+check-in và gán phòng đã chọn. Nếu check-in hoặc gán phòng gặp tranh chấp phút cuối,
+đơn và payment vẫn được giữ để lễ tân xử lý tiếp tại màn Check-in/Gán phòng.
+
+Việc tạo đơn kiểm tra lại tồn phòng trong cùng transaction bằng `UPDLOCK/HOLDLOCK`,
+khóa theo thứ tự `room_type_id`, nên luồng online và walk-in không thể cùng bán phòng cuối.
+
 ## 5. Ghi chú
 
 - Package tiện ích đặt tên `ultis` theo đúng cấu trúc bạn mô tả (nếu muốn đổi thành `utils`: đổi tên thư mục + sửa `package`/`import`).

@@ -31,16 +31,16 @@ public class RoomController extends BaseController {
             req.getRequestDispatcher("/WEB-INF/views/room-detail.jsp").forward(req, resp);
             return;
         }
-        // F02: form tìm kiếm + kết quả
-        LocalDate checkIn = dateParam(req, "checkIn");
-        LocalDate checkOut = dateParam(req, "checkOut");
-        if(checkIn==null)checkIn=LocalDate.now().plusDays(1);
-        if(checkOut==null)checkOut=checkIn.plusDays(1);
+        // F02: form tìm kiếm + kết quả; parse dữ liệu trong try để lỗi nhập liệu không thành HTTP 500.
         int adults = intParam(req, "adults", 1);
         int children = intParam(req, "children", 0);
-        req.setAttribute("checkIn",checkIn);req.setAttribute("checkOut",checkOut);
-        req.setAttribute("adults",adults);req.setAttribute("children",children);
         try {
+            LocalDate checkIn = dateParam(req, "checkIn");
+            LocalDate checkOut = dateParam(req, "checkOut");
+            if(checkIn==null)checkIn=LocalDate.now().plusDays(1);
+            if(checkOut==null)checkOut=checkIn.plusDays(1);
+            req.setAttribute("checkIn",checkIn);req.setAttribute("checkOut",checkOut);
+            req.setAttribute("adults",adults);req.setAttribute("children",children);
             List<RoomAvailability> allResults=roomService.searchAvailability(checkIn,checkOut,adults,children);
             PageSlice<RoomAvailability> page=PageSlice.of(allResults,intParam(req,"page",1),PAGE_SIZE);
             req.setAttribute("results",page.items());req.setAttribute("currentPage",page.currentPage());

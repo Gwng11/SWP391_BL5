@@ -14,6 +14,8 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /** F06, F07, F10, F12, F13 - Đặt phòng */
 public class ReservationRepository extends BaseRepository implements IReservationRepository {
@@ -66,6 +68,7 @@ public class ReservationRepository extends BaseRepository implements IReservatio
         try (Connection cn = getConnection()) {
             cn.setAutoCommit(false);
             try {
+                lockAndCheckAvailability(cn, r, rooms);
                 long reservationId;
                 try (PreparedStatement ps = cn.prepareStatement(insRes, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setLong(1, r.getCustomerId());
@@ -118,13 +121,57 @@ public class ReservationRepository extends BaseRepository implements IReservatio
                 }
                 cn.commit();
                 return reservationId;
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 cn.rollback();
-                throw ex;
+                if (ex instanceof SQLException) throw (SQLException) ex;
+                throw (RuntimeException) ex;
             } finally {
                 cn.setAutoCommit(true);
             }
         } catch (SQLException e) { throw wrap(e); }
+    }
+
+    /**
+     * Serialize sales per room type and re-check inventory inside the same
+     * transaction that inserts the reservation. Lock order is room_type_id to
+     * avoid deadlocks when one reservation contains multiple room types.
+     */
+    private void lockAndCheckAvailability(Connection cn, Reservation reservation,
+                                          List<ReservationRoom> rooms) throws SQLException {
+        Map<Long, Integer> requestedByType = new TreeMap<>();
+        for (ReservationRoom room : rooms) {
+            requestedByType.merge(room.getRoomTypeId(), room.getQuantity(), Integer::sum);
+        }
+
+        String sql = "SELECT "
+                + "(SELECT COUNT(*) FROM rooms p WHERE p.room_type_id = rt.room_type_id "
+                + " AND p.is_active = 1 AND p.operational_status <> 'OUT_OF_SERVICE') AS total_rooms, "
+                + "(SELECT COALESCE(SUM(rr.quantity), 0) FROM reservation_rooms rr "
+                + " JOIN reservations r WITH (HOLDLOCK) ON r.reservation_id = rr.reservation_id "
+                + " WHERE rr.room_type_id = rt.room_type_id "
+                + " AND r.status_code IN ('PENDING','CONFIRMED','CHECKED_IN') "
+                + " AND r.check_in_date < ? AND r.check_out_date > ?) AS sold_rooms, "
+                + "(SELECT COUNT(*) FROM room_rates rate WHERE rate.room_type_id = rt.room_type_id "
+                + " AND rate.rate_date >= ? AND rate.rate_date < ? AND rate.stop_sell = 1) AS stop_sell "
+                + "FROM room_types rt WITH (UPDLOCK, HOLDLOCK) WHERE rt.room_type_id = ? AND rt.is_active = 1";
+
+        try (PreparedStatement ps = cn.prepareStatement(sql)) {
+            for (Map.Entry<Long, Integer> entry : requestedByType.entrySet()) {
+                ps.setDate(1, Date.valueOf(reservation.getCheckOutDate()));
+                ps.setDate(2, Date.valueOf(reservation.getCheckInDate()));
+                ps.setDate(3, Date.valueOf(reservation.getCheckInDate()));
+                ps.setDate(4, Date.valueOf(reservation.getCheckOutDate()));
+                ps.setLong(5, entry.getKey());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) throw new IllegalArgumentException("Loại phòng không tồn tại hoặc đã ngừng bán");
+                    if (rs.getInt("stop_sell") > 0)
+                        throw new IllegalStateException("Loại phòng đang tạm ngừng bán trong khoảng ngày đã chọn");
+                    int available = rs.getInt("total_rooms") - rs.getInt("sold_rooms");
+                    if (available < entry.getValue())
+                        throw new IllegalStateException("Không còn đủ phòng trống; vui lòng tải lại danh sách phòng");
+                }
+            }
+        }
     }
 
     @Override
@@ -173,7 +220,8 @@ public class ReservationRepository extends BaseRepository implements IReservatio
 
     @Override
     public List<Reservation> searchByCodeOrCustomer(String keyword, String statusCode) {
-        String sql = BASE_SELECT + "WHERE (r.booking_code LIKE ? OR c.full_name LIKE ? OR c.phone LIKE ?) "
+        String sql = BASE_SELECT.replace("SELECT r.*", "SELECT TOP (100) r.*")
+                   + "WHERE (r.booking_code LIKE ? OR c.full_name LIKE ? OR c.phone LIKE ?) "
                    + (statusCode != null ? "AND r.status_code = ? " : "")
                    + "ORDER BY r.booked_at DESC";
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -203,6 +251,37 @@ public class ReservationRepository extends BaseRepository implements IReservatio
             ps.setDate(3, Date.valueOf(checkIn));
             if (excludeReservationId != null) ps.setLong(4, excludeReservationId);
             try (ResultSet rs = ps.executeQuery()) { rs.next(); return rs.getInt(1); }
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
+    public int cancelExpiredPending(int holdHours) {
+        // Đơn PENDING quá hạn giữ chỗ mà chưa nộp đủ cọc → tự hủy để trả tồn phòng
+        String sql = "UPDATE reservations SET status_code = 'CANCELLED', "
+                   + "cancellation_reason = N'H\u1ebft h\u1ea1n gi\u1eef ch\u1ed7 - qu\u00e1 h\u1ea1n ch\u01b0a \u0111\u1eb7t c\u1ecdc', "
+                   + "updated_at = SYSUTCDATETIME() "
+                   + "WHERE status_code = 'PENDING' AND deposit_required > 0 "
+                   + "AND booked_at < DATEADD(HOUR, -?, SYSUTCDATETIME()) "
+                   + "AND (SELECT COALESCE(SUM(p.amount), 0) FROM payments p "
+                   + "     WHERE p.reservation_id = reservations.reservation_id "
+                   + "     AND p.status_code = 'SUCCESS' AND p.payment_type = 'DEPOSIT') < deposit_required";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, holdHours);
+            return ps.executeUpdate();
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
+    public void markNoShow(long reservationId) {
+        // Chỉ đánh dấu không đến cho đơn CONFIRMED đã qua ngày nhận phòng
+        String sql = "UPDATE reservations SET status_code = 'NO_SHOW', updated_at = SYSUTCDATETIME() "
+                   + "WHERE reservation_id = ? AND status_code = 'CONFIRMED' "
+                   + "AND check_in_date < CAST(GETDATE() AS date)";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, reservationId);
+            if (ps.executeUpdate() == 0)
+                throw new IllegalStateException(
+                        "Chỉ đánh dấu KHÔNG ĐẾN cho đơn CONFIRMED đã qua ngày nhận phòng");
         } catch (SQLException e) { throw wrap(e); }
     }
 

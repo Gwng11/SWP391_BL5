@@ -1,15 +1,20 @@
--- =====================================================================
--- PATCH BẮT BUỘC chạy trước khi dùng code (F04, F15)
--- =====================================================================
 USE [SingleHotelManagementDB]
 GO
 
--- F04: cờ xác thực email
+-- 1. Bổ sung các cột cho bảng users (chống dò pass & xác thực email)
+IF COL_LENGTH('dbo.users', 'failed_login_attempts') IS NULL
+    ALTER TABLE dbo.users ADD failed_login_attempts int NOT NULL CONSTRAINT DF_users_failed_attempts DEFAULT 0;
+GO
+
+IF COL_LENGTH('dbo.users', 'locked_until') IS NULL
+    ALTER TABLE dbo.users ADD locked_until datetime2(0) NULL;
+GO
+
 IF COL_LENGTH('dbo.users', 'email_verified_at') IS NULL
     ALTER TABLE dbo.users ADD email_verified_at datetime2(0) NULL;
 GO
 
--- F04: bảng token xác thực email / reset mật khẩu
+-- 2. Tạo bảng user_tokens (quản lý token verify email & reset password)
 IF OBJECT_ID('dbo.user_tokens') IS NULL
 BEGIN
     CREATE TABLE dbo.user_tokens (
@@ -29,11 +34,11 @@ BEGIN
 END
 GO
 
--- F15: giờ hẹn thực hiện dịch vụ
+-- 3. Bổ sung cột scheduled_at cho bảng service_requests (giờ hẹn làm dịch vụ)
 IF COL_LENGTH('dbo.service_requests', 'scheduled_at') IS NULL
     ALTER TABLE dbo.service_requests ADD scheduled_at datetime2(0) NULL;
 GO
 
--- Khuyến nghị cho web app
+-- Khuyến nghị cho web app: tránh SQL Server đóng/mở DB liên tục gây chậm
 ALTER DATABASE SingleHotelManagementDB SET AUTO_CLOSE OFF;
 GO

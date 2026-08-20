@@ -137,4 +137,29 @@ public class UserRepository extends BaseRepository implements IUserRepository {
             ps.executeUpdate();
         } catch (SQLException e) { throw wrap(e); }
     }
+
+    /** Danh sách SERVICE_STAFF đang hoạt động, kèm số việc ASSIGNED/IN_PROGRESS. */
+    @Override
+    public List<User> findActiveServiceStaffWithWorkload(String departmentCode) {
+        String sql = "SELECT u.*, COALESCE(w.cnt, 0) AS active_task_count "
+                + "FROM users u LEFT JOIN ("
+                + "SELECT assigned_staff_user_id, COUNT(*) cnt FROM service_requests "
+                + "WHERE status_code IN ('ASSIGNED','IN_PROGRESS') GROUP BY assigned_staff_user_id"
+                + ") w ON w.assigned_staff_user_id = u.user_id "
+                + "WHERE u.role_code = 'SERVICE_STAFF' AND u.status_code = 'ACTIVE' "
+                + "AND u.department_code = ? "
+                + "ORDER BY COALESCE(w.cnt, 0), u.full_name";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, departmentCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<User> users = new ArrayList<>();
+                while (rs.next()) {
+                    User user = map(rs);
+                    user.setActiveTaskCount(rs.getInt("active_task_count"));
+                    users.add(user);
+                }
+                return users;
+            }
+        } catch (SQLException e) { throw wrap(e); }
+    }
 }

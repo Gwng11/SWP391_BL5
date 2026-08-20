@@ -2,6 +2,7 @@
 -- DỮ LIỆU MẪU (chạy SAU patch_01_required.sql)
 -- Tài khoản test (mật khẩu ghi bên cạnh):
 --   admin@hotel.vn        / Admin@123       (ADMIN)
+--   manager@hotel.vn      / Manager@123     (MANAGER)
 --   receptionist@hotel.vn / Recep@123       (RECEPTIONIST)
 --   staff@hotel.vn        / Staff@123       (SERVICE_STAFF - GENERAL_SERVICE)
 --   manager.demo@hotel.vn / Manager@123     (MANAGER)
@@ -47,6 +48,11 @@ UPDATE users SET full_name=N'Quản trị hệ thống' WHERE email='admin@hotel
 UPDATE users SET full_name=N'Lễ tân Mai Anh' WHERE email='receptionist@hotel.vn';
 UPDATE users SET full_name=N'Nhân viên Văn Bình' WHERE email='staff@hotel.vn';
 UPDATE users SET full_name=N'Nguyễn Văn Khách' WHERE email='customer@test.vn';
+IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'manager@hotel.vn')
+INSERT INTO users (email, password_hash, full_name, phone, role_code, department_code, status_code, email_verified_at)
+VALUES ('manager@hotel.vn',
+        '65536:bMM2lgiA60SoQsyOLgoHGA==:ei9PfrptPXMvh+C2zYsRMLyMP/8AGtOm9+a+hoJJomM=',
+        N'Hotel Manager', '0900000005', 'MANAGER', NULL, 'ACTIVE', SYSUTCDATETIME());
 GO
 
 -- Customer profile gắn với user customer

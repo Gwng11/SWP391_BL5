@@ -4,6 +4,7 @@ import com.hotel.entity.Customer;
 import com.hotel.entity.Reservation;
 import com.hotel.entity.ReservationGuest;
 import com.hotel.entity.User;
+import com.hotel.service.CustomerService;
 import com.hotel.service.ReservationService;
 import com.hotel.service.RoomService;
 import com.hotel.ultis.Constants;
@@ -26,16 +27,63 @@ public class BookingController extends BaseController {
 
     private final ReservationService reservationService = new ReservationService();
     private final RoomService roomService = new RoomService();
+    private final CustomerService customerService = new CustomerService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setAttribute("roomType", roomService.getTypeDetail(longParam(req, "roomTypeId")));
+        Long roomTypeId = longParamOrNull(req, "roomTypeId");
+        var roomType = roomTypeId == null ? null : roomService.getTypeDetail(roomTypeId);
+        if (roomType == null) { resp.sendRedirect(req.getContextPath() + "/rooms"); return; }
+        req.setAttribute("roomType", roomType);
+        // Lễ tân đặt hộ: tìm khách theo SĐT/CCCD/tên thay vì nhập ID tay
+        User me = currentUser(req);
+        if (me != null && !Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
+            String q = req.getParameter("q");
+            if (q != null && !q.isBlank()) req.setAttribute("customerResults", customerService.search(q));
+            Long selectedId = longParamOrNull(req, "customerId");
+            if (selectedId != null) req.setAttribute("selectedCustomer", customerService.getById(selectedId));
+        }
         req.getRequestDispatcher("/WEB-INF/views/booking.jsp").forward(req, resp);
+    }
+
+    /** Chuỗi query giữ ngữ cảnh đặt phòng (ngày, số khách) khi tìm/tạo khách */
+    private String bookingContext(HttpServletRequest req) {
+        StringBuilder sb = new StringBuilder("roomTypeId=" + req.getParameter("roomTypeId"));
+        for (String p : new String[]{"checkIn", "checkOut", "quantity", "adults", "children"}) {
+            String v = req.getParameter(p);
+            if (v != null && !v.isBlank()) sb.append("&").append(p).append("=").append(v);
+        }
+        return sb.toString();
+    }
+
+    /** Lễ tân tạo nhanh hồ sơ khách ngay trong trang đặt phòng, tạo xong tự chọn luôn */
+    private void quickCreateCustomer(HttpServletRequest req, HttpServletResponse resp, User me) throws IOException {
+        try {
+            Customer c = new Customer();
+            c.setFullName(req.getParameter("newFullName"));
+            String phone = req.getParameter("newPhone");
+            String docType = req.getParameter("newDocType");
+            String docNo = req.getParameter("newDocNumber");
+            c.setPhone(phone == null || phone.isBlank() ? null : phone.trim());
+            c.setIdDocumentType(docType == null || docType.isBlank() ? null : docType.trim());
+            c.setIdDocumentNumber(docNo == null || docNo.isBlank() ? null : docNo.trim());
+            long newId = customerService.createWalkIn(c, me.getUserId());
+            resp.sendRedirect(req.getContextPath() + "/booking?" + bookingContext(req) + "&customerId=" + newId);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            resp.sendRedirect(req.getContextPath() + "/booking?" + bookingContext(req)
+                    + "&q=&err=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         User me = currentUser(req);
+        // Lễ tân tạo nhanh hồ sơ khách ngay trong trang đặt phòng
+        if ("createCustomer".equals(req.getParameter("action"))
+                && !Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
+            quickCreateCustomer(req, resp, me);
+            return;
+        }
         try {
             LocalDate checkIn = dateParam(req, "checkIn");
             LocalDate checkOut = dateParam(req, "checkOut");
@@ -50,10 +98,15 @@ public class BookingController extends BaseController {
             String source;
             if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
                 Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
+                if (c == null)
+                    throw new IllegalStateException("Tài khoản chưa có hồ sơ khách hàng, vui lòng liên hệ lễ tân");
                 customerId = c.getCustomerId();
                 source = "ONLINE";
             } else {
-                customerId = longParam(req, "customerId");
+                Long picked = longParamOrNull(req, "customerId");
+                if (picked == null)
+                    throw new IllegalArgumentException("Chưa chọn khách hàng — hãy tìm và chọn khách trước khi đặt phòng");
+                customerId = picked;
                 createdBy = me.getUserId();
                 source = "RECEPTIONIST";
             }
@@ -76,7 +129,11 @@ public class BookingController extends BaseController {
             resp.sendRedirect(req.getContextPath() + "/reservation?id=" + r.getReservationId() + "&created=1");
         } catch (IllegalArgumentException | IllegalStateException e) {
             req.setAttribute("err", e.getMessage());
-            req.setAttribute("roomType", roomService.getTypeDetail(longParam(req, "roomTypeId")));
+            Long rtId = longParamOrNull(req, "roomTypeId");
+            if (rtId != null) req.setAttribute("roomType", roomService.getTypeDetail(rtId));
+            Long pickedId = longParamOrNull(req, "customerId");
+            if (pickedId != null && !Constants.ROLE_CUSTOMER.equals(me.getRoleCode()))
+                req.setAttribute("selectedCustomer", customerService.getById(pickedId));
             req.getRequestDispatcher("/WEB-INF/views/booking.jsp").forward(req, resp);
         }
     }

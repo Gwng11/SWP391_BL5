@@ -57,6 +57,9 @@ public class RoomService {
         if (checkIn.isBefore(LocalDate.now()))
             throw new IllegalArgumentException("Ngày nhận phòng không được ở quá khứ");
 
+        // Giải phóng tồn phòng đang bị giữ bởi các đơn PENDING quá hạn chưa đặt cọc
+        reservationRepo.cancelExpiredPending(com.hotel.ultis.Constants.PENDING_HOLD_HOURS);
+
         int nights = (int) ChronoUnit.DAYS.between(checkIn, checkOut);
         List<RoomAvailability> results = new ArrayList<>();
         for (RoomType t : roomTypeRepo.findAllActive()) {

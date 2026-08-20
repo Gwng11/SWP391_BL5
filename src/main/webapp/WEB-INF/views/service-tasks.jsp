@@ -12,37 +12,60 @@
     </select>
     <button class="btn" type="submit">Lọc</button>
   </form>
+
   <table style="margin-top:12px">
     <tr><th>#</th><th>Đơn</th><th>Dịch vụ</th><th>SL</th><th>Tiền</th><th>Hẹn lúc</th><th>Trạng thái</th><th>NV phụ trách</th><th>Thao tác</th></tr>
     <c:forEach var="s" items="${requests}">
       <tr>
         <td>${s.serviceRequestId}</td><td>${s.bookingCode}</td><td>${s.serviceName}</td>
         <td>${s.quantity} ${s.unitName}</td><td><fmt:formatNumber value="${s.totalAmount}"/> đ</td>
-        <td>${s.scheduledAt}</td><td><span class="badge">${s.statusCode}</span></td><td>${s.staffName}</td>
+        <td>${s.scheduledAt}</td><td><span class="badge">${s.statusCode}</span></td><td><c:out value="${s.staffName}"/></td>
         <td>
           <c:if test="${s.statusCode == 'PENDING'}">
-            <form method="post" style="display:inline-flex;gap:4px" action="${pageContext.request.contextPath}/staff/service-requests">
-              <input type="hidden" name="id" value="${s.serviceRequestId}">
-              <input type="hidden" name="action" value="assign">
-              <input type="number" name="staffUserId" placeholder="ID NV (trống = tôi)" style="width:130px">
-              <button class="btn" type="submit">Phân công</button>
-            </form>
+            <c:choose>
+              <c:when test="${isDispatcher}">
+                <form method="post" style="display:inline-flex;gap:4px" action="${pageContext.request.contextPath}/staff/service-requests">
+                  <input type="hidden" name="id" value="${s.serviceRequestId}">
+                  <input type="hidden" name="action" value="assign">
+                  <select name="staffUserId" required>
+                    <option value="">-- chọn nhân viên --</option>
+                    <c:forEach var="st" items="${staffList}">
+                      <option value="${st.userId}">${st.fullName} — ${st.activeTaskCount} việc đang làm</option>
+                    </c:forEach>
+                  </select>
+                  <button class="btn" type="submit">Gán</button>
+                </form>
+                <form method="post" style="display:inline" action="${pageContext.request.contextPath}/staff/service-requests">
+                  <input type="hidden" name="id" value="${s.serviceRequestId}">
+                  <input type="hidden" name="action" value="assignAuto">
+                  <button class="btn" type="submit">Gán tự động</button>
+                </form>
+              </c:when>
+              <c:otherwise>
+                <form method="post" style="display:inline" action="${pageContext.request.contextPath}/staff/service-requests">
+                  <input type="hidden" name="id" value="${s.serviceRequestId}">
+                  <input type="hidden" name="action" value="claim">
+                  <button class="btn" type="submit">Tự nhận việc</button>
+                </form>
+              </c:otherwise>
+            </c:choose>
           </c:if>
-          <c:if test="${s.statusCode == 'ASSIGNED'}">
+
+          <c:if test="${s.statusCode == 'ASSIGNED' && (isDispatcher || s.assignedStaffUserId == sessionScope.currentUser.userId)}">
             <form method="post" style="display:inline" action="${pageContext.request.contextPath}/staff/service-requests">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="start">
               <button class="btn" type="submit">Bắt đầu</button>
             </form>
           </c:if>
-          <c:if test="${s.statusCode == 'ASSIGNED' || s.statusCode == 'IN_PROGRESS'}">
+          <c:if test="${(s.statusCode == 'ASSIGNED' || s.statusCode == 'IN_PROGRESS') && (isDispatcher || s.assignedStaffUserId == sessionScope.currentUser.userId)}">
             <form method="post" style="display:inline" action="${pageContext.request.contextPath}/staff/service-requests">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="complete">
               <button class="btn btn-success" type="submit">Hoàn tất</button>
             </form>
           </c:if>
-          <c:if test="${s.statusCode != 'COMPLETED' && s.statusCode != 'CANCELLED'}">
+          <c:if test="${isDispatcher && s.statusCode != 'COMPLETED' && s.statusCode != 'CANCELLED'}">
             <form method="post" style="display:inline" action="${pageContext.request.contextPath}/staff/service-requests"
                   onsubmit="return confirm('Hủy yêu cầu này?')">
               <input type="hidden" name="id" value="${s.serviceRequestId}">

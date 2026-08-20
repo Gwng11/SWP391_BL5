@@ -9,6 +9,7 @@ public interface IRoomRepository {
     /** F11: phòng sạch, trống, chưa gán cho ai - sẵn sàng để assign */
     List<Room> findAssignableRooms(long roomTypeId);
     List<Room> findAll(Long roomTypeId, Integer floorNumber, String operationalStatus);
+    List<Room> findAllAssignableRooms();
     Room findById(long roomId);
     long insert(Room room);
     void update(Room room);

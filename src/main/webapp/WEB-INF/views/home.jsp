@@ -5,6 +5,8 @@
   <p>${hotel.description}</p>
   <p>📍 ${hotel.address} &nbsp; ☎ ${hotel.phone} &nbsp; ✉ ${hotel.email}</p>
   <p>🕐 Nhận phòng từ <b>${hotel.checkInTime}</b> — Trả phòng trước <b>${hotel.checkOutTime}</b></p>
+  <p>📋 <b>Chính sách đặt phòng:</b> đặt cọc 30% để xác nhận đơn; đơn chưa đặt cọc tự hủy sau 24 giờ;
+     hủy đơn sau khi đã cọc hoặc không đến nhận phòng sẽ <b>không được hoàn cọc</b>.</p>
 </div>
 <div class="card">
   <h3>Các loại phòng</h3>

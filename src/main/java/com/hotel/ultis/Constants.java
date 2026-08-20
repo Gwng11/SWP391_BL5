@@ -9,6 +9,7 @@ public final class Constants {
     // Thuế & tỉ lệ đặt cọc
     public static final BigDecimal TAX_RATE = new BigDecimal("0.10");     // 10% VAT
     public static final BigDecimal DEPOSIT_RATE = new BigDecimal("0.30"); // cọc 30%
+    public static final int PENDING_HOLD_HOURS = 24; // đơn PENDING giữ chỗ tối đa 24h nếu chưa cọc
 
     // users.role_code
     public static final String ROLE_CUSTOMER = "CUSTOMER";

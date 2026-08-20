@@ -22,12 +22,21 @@ public abstract class BaseController extends HttpServlet {
     protected long longParam(HttpServletRequest req, String name) {
         String v = req.getParameter(name);
         if (v == null || v.isEmpty()) throw new IllegalArgumentException("Thiếu tham số " + name);
-        return Long.parseLong(v);
+        try {
+            return Long.parseLong(v.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Giá trị không hợp lệ: " + name);
+        }
     }
 
     protected Long longParamOrNull(HttpServletRequest req, String name) {
         String v = req.getParameter(name);
-        return (v == null || v.isEmpty()) ? null : Long.parseLong(v);
+        if (v == null || v.isEmpty()) return null;
+        try {
+            return Long.parseLong(v.trim());
+        } catch (NumberFormatException e) {
+            return null; // tham số tùy chọn hỏng định dạng → coi như không truyền
+        }
     }
 
     protected int intParam(HttpServletRequest req, String name, int defaultValue) {
@@ -37,12 +46,22 @@ public abstract class BaseController extends HttpServlet {
 
     protected LocalDate dateParam(HttpServletRequest req, String name) {
         String v = req.getParameter(name);
-        return (v == null || v.isEmpty()) ? null : LocalDate.parse(v); // yyyy-MM-dd từ <input type=date>
+        if (v == null || v.isEmpty()) return null;
+        try {
+            return LocalDate.parse(v.trim()); // yyyy-MM-dd từ <input type=date>
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new IllegalArgumentException("Ngày không hợp lệ (định dạng yyyy-MM-dd): " + v);
+        }
     }
 
     protected BigDecimal decimalParam(HttpServletRequest req, String name) {
         String v = req.getParameter(name);
-        return (v == null || v.isEmpty()) ? null : new BigDecimal(v);
+        if (v == null || v.isEmpty()) return null;
+        try {
+            return new BigDecimal(v.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Số tiền/số lượng không hợp lệ: " + v);
+        }
     }
 
     protected LocalDateTime dateTimeParam(HttpServletRequest req, String name) {
