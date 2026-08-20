@@ -6,14 +6,14 @@
   <table>
     <tr><th>Mã đơn</th><th>Khách</th><th>Trả dự kiến</th><th></th></tr>
     <c:forEach var="rv" items="${stays}">
-      <tr><td>${rv.bookingCode}</td><td>${rv.customerName}</td><td>${rv.checkOutDate}</td>
+      <tr><td>${rv.bookingCode}</td><td><c:out value="${rv.customerName}"/></td><td>${rv.checkOutDate}</td>
           <td><a class="btn" href="?id=${rv.reservationId}">Xem chi phí</a></td></tr>
     </c:forEach>
   </table>
 </div>
 <c:if test="${r != null}">
 <div class="card">
-  <h3>Đơn ${r.bookingCode} — ${r.customerName}</h3>
+  <h3>Đơn ${r.bookingCode} — <c:out value="${r.customerName}"/></h3>
   <c:choose>
     <c:when test="${invoice == null || invoice.statusCode == 'DRAFT'}">
       <p class="err">Chưa phát hành hóa đơn cuối.
@@ -24,7 +24,7 @@
          — Tổng <fmt:formatNumber value="${invoice.totalAmount}"/> đ, đã trả <fmt:formatNumber value="${invoice.paidAmount}"/> đ</p>
       <table><tr><th>Mục</th><th>Loại</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr>
       <c:forEach var="i" items="${items}">
-        <tr><td>${i.description}</td><td>${i.itemType}</td><td>${i.quantity}</td>
+        <tr><td><c:out value="${i.description}"/></td><td>${i.itemType}</td><td>${i.quantity}</td>
             <td><fmt:formatNumber value="${i.unitPrice}"/> đ</td><td><fmt:formatNumber value="${i.amount}"/> đ</td></tr>
       </c:forEach></table>
       <form method="post" action="${pageContext.request.contextPath}/reception/checkout" style="margin-top:12px"

@@ -3,6 +3,7 @@ package com.hotel.service;
 import com.hotel.entity.HotelService;
 import com.hotel.entity.Reservation;
 import com.hotel.entity.ServiceRequest;
+import com.hotel.entity.User;
 import com.hotel.interfaces.IHotelServiceRepository;
 import com.hotel.interfaces.IReservationRepository;
 import com.hotel.interfaces.IServiceRequestRepository;

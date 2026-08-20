@@ -28,6 +28,8 @@ public class ProfileController extends BaseController {
         User me = currentUser(req);
         try {
             if ("changePassword".equals(req.getParameter("action"))) {
+                if (Constants.ROLE_MANAGER.equals(me.getRoleCode()))
+                    throw new IllegalStateException(Constants.MSG_NO_PERMISSION);
                 authService.changePassword(me.getUserId(),
                         req.getParameter("oldPassword"), req.getParameter("newPassword"));
                 req.setAttribute("msg", "Đổi mật khẩu thành công");
@@ -43,7 +45,8 @@ public class ProfileController extends BaseController {
                     extra.setNationality(req.getParameter("nationality"));
                     extra.setAddress(req.getParameter("address"));
                 }
-                userService.updateProfile(me.getUserId(), req.getParameter("fullName"), req.getParameter("phone"), extra);
+                userService.updateProfile(me.getUserId(), req.getParameter("fullName"), req.getParameter("phone"),
+                        req.getParameter("address"), req.getParameter("identificationNumber"), extra);
                 // refresh session
                 req.getSession().setAttribute(Constants.SESSION_USER, userService.getUser(me.getUserId()));
                 req.getSession().setAttribute(Constants.SESSION_CUSTOMER, userService.getCustomerProfile(me.getUserId()));

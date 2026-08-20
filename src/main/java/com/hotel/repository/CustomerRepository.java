@@ -52,6 +52,16 @@ public class CustomerRepository extends BaseRepository implements ICustomerRepos
     }
 
     @Override
+    public Customer findByDocument(String documentType, String documentNumber) {
+        String sql = "SELECT * FROM customers WHERE id_document_type = ? AND id_document_number = ?";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, documentType);
+            ps.setString(2, documentNumber);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
     public List<Customer> search(String keyword) {
         String sql = "SELECT TOP 50 * FROM customers WHERE full_name LIKE ? OR email LIKE ? "
                    + "OR phone LIKE ? OR customer_code LIKE ? OR id_document_number LIKE ? "

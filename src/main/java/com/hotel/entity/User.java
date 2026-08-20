@@ -8,6 +8,8 @@ public class User {
     private String passwordHash;
     private String fullName;
     private String phone;
+    private String address;
+    private String identificationNumber;
     private String roleCode;
     private String departmentCode;
     private String statusCode;
@@ -17,6 +19,8 @@ public class User {
     private int failedLoginAttempts;
     private LocalDateTime lockedUntil;
     private LocalDateTime emailVerifiedAt;
+    /** Số yêu cầu dịch vụ ASSIGNED/IN_PROGRESS; không phải cột của bảng users. */
+    private int activeTaskCount;
 
     public long getUserId() { return userId; }
     public void setUserId(long userId) { this.userId = userId; }
@@ -28,6 +32,10 @@ public class User {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getIdentificationNumber() { return identificationNumber; }
+    public void setIdentificationNumber(String identificationNumber) { this.identificationNumber = identificationNumber; }
     public String getRoleCode() { return roleCode; }
     public void setRoleCode(String roleCode) { this.roleCode = roleCode; }
     public String getDepartmentCode() { return departmentCode; }
@@ -46,4 +54,6 @@ public class User {
     public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
     public LocalDateTime getEmailVerifiedAt() { return emailVerifiedAt; }
     public void setEmailVerifiedAt(LocalDateTime emailVerifiedAt) { this.emailVerifiedAt = emailVerifiedAt; }
+    public int getActiveTaskCount() { return activeTaskCount; }
+    public void setActiveTaskCount(int activeTaskCount) { this.activeTaskCount = activeTaskCount; }
 }
