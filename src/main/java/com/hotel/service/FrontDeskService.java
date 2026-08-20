@@ -34,6 +34,7 @@ public class FrontDeskService {
     private final IInvoiceRepository invoiceRepo = new InvoiceRepository();
     private final IInvoiceItemRepository invoiceItemRepo = new InvoiceItemRepository();
     private final PaymentService paymentService = new PaymentService();
+    private final ServiceRequestService serviceRequestService = new ServiceRequestService();
 
     /** F10: check-in - yêu cầu đơn CONFIRMED và đã nộp đủ cọc */
     public void checkIn(long reservationId, long byUserId) {
@@ -128,12 +129,24 @@ public class FrontDeskService {
         if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Đơn không ở trạng thái CHECKED_IN");
+
         Invoice inv = invoiceRepo.findByReservation(reservationId);
         if (inv == null || !Constants.INV_PAID.equals(inv.getStatusCode()))
-            throw new IllegalStateException("Chưa phát hành/thanh toán đủ hóa đơn cuối (F14) trước khi check-out");
+            throw new IllegalStateException("Chưa phát hành/thanh toán đủ hóa đơn cuối trước khi check-out");
+
+        // 1. Lấy danh sách các phòng đang được gán cho đơn này
+        List<RoomAssignment> currentAssignments = assignmentRepo.findCurrentByReservation(reservationId);
+
+        // 2. Thực hiện check-out & giải phóng phòng (Phòng sẽ tự động sang AVAILABLE + DIRTY trong DB)
         reservationRepo.checkOut(reservationId, byUserId);
         assignmentRepo.releaseAllForReservation(reservationId, "Checked out");
+
+        // 3. Tự động sinh Task dọn phòng cho đội Buồng phòng (Housekeeping)
+        for (RoomAssignment ra : currentAssignments) {
+            serviceRequestService.createHousekeepingTask(reservationId, r.getCustomerId(), ra.getRoomNumber());
+        }
     }
+
 
     Invoice getOrCreateDraftInvoice(Reservation r, long byUserId) {
         Invoice inv = invoiceRepo.findByReservation(r.getReservationId());
