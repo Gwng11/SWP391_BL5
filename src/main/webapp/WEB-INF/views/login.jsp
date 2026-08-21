@@ -4,7 +4,7 @@
   <h2>Đăng nhập</h2>
   <form method="post" action="${pageContext.request.contextPath}/login">
     <input type="hidden" name="redirect" value="${not empty redirect ? redirect : param.redirect}">
-    <label>Email</label><input type="email" name="email" style="width:100%" required>
+    <label>Email</label><input type="email" name="email" value="<c:out value='${param.email}'/>" style="width:100%" required>
     <label>Mật khẩu</label><input type="password" name="password" style="width:100%" required>
     <p><button class="btn" type="submit" style="width:100%">Đăng nhập</button></p>
   </form>
