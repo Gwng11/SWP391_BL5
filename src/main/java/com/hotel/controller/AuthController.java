@@ -114,7 +114,7 @@ public class AuthController extends BaseController {
             case Constants.ROLE_MANAGER -> "/manager/dashboard";
             case Constants.ROLE_SERVICE_STAFF -> "/staff/service-requests";
             case Constants.ROLE_RECEPTIONIST -> "/reception/checkin";
-            case Constants.ROLE_ADMIN -> "/reception/checkin";
+            case Constants.ROLE_ADMIN -> "/admin/dashboard";
             default -> "/home";
         };
     }

@@ -6,89 +6,627 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hotel Management</title>
+<title>Hotel Management System</title>
+<!-- Google Fonts: Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-:root{--ink:#243242;--nav:#17324d;--accent:#167d87;--line:#dce4ea;--muted:#637180;--surface:#fff;--bg:#f4f7f8}
-*{box-sizing:border-box}
-body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-nav{background:var(--nav);padding:10px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px #10263a33}
-nav a{color:#ecf0f1;text-decoration:none;font-size:14px}
-nav a:hover{color:#f1c40f}
-.container{max-width:1220px;margin:24px auto;padding:0 18px}
-.card{background:#fff;border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
-th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left}
-th{background:#f8f9fa}
-.btn{display:inline-block;background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;text-decoration:none;font-size:14px}
-.btn:hover{filter:brightness(1.08)}
-.btn-danger{background:#c0392b}.btn-success{background:#27ae60}
-.btn-muted{background:#687887}.btn-small{padding:5px 9px;font-size:12px}
-input,select,textarea,button{font:inherit}
-input,select,textarea{padding:7px;border:1px solid #ccc;border-radius:5px;font-size:14px;margin:2px 0}
-input:focus,select:focus,textarea:focus,button:focus,a:focus{outline:3px solid #61c6cf;outline-offset:2px}
-label{font-size:13px;color:#636e72;display:block;margin-top:8px}
-.err{background:#fdecea;color:#c0392b;padding:10px;border-radius:5px;margin-bottom:12px}
-.msg{background:#eafaf1;color:#1e8449;padding:10px;border-radius:5px;margin-bottom:12px}
-.badge{padding:2px 8px;border-radius:10px;font-size:12px;background:#dfe6e9}
-h2{margin-top:0}
-.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}.page-head h1{margin:0;font-size:28px}
-.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}.col-1{grid-column:span 1}.col-2{grid-column:span 2}.col-3{grid-column:span 3}.col-4{grid-column:span 4}.col-5{grid-column:span 5}.col-6{grid-column:span 6}.col-7{grid-column:span 7}.col-8{grid-column:span 8}.col-9{grid-column:span 9}.col-10{grid-column:span 10}.col-11{grid-column:span 11}.col-12{grid-column:span 12}
-.kpi{border-top:4px solid var(--accent);min-height:128px}.kpi .value{font-size:30px;font-weight:700;margin:8px 0}.kpi .label{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
-.nav-card{color:var(--ink);text-decoration:none;border:1px solid var(--line);transition:.15s}.nav-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px #17324d1a}.nav-card h3{margin:0 0 8px}.muted{color:var(--muted)}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}.form-grid .full{grid-column:1/-1}.form-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}.inline{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}.inline label{margin:0}.table-wrap{overflow-x:auto}.pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:16px}.empty{padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:8px}.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.image-tile{border:1px solid var(--line);border-radius:8px;padding:8px}.image-tile img{width:100%;height:120px;object-fit:cover;border-radius:5px;background:#edf1f3}.danger-text{color:#a93226}.status-READY,.status-COMPLETED,.status-CLOSED{background:#d5f5e3}.status-BLOCKED,.status-OUT_OF_SERVICE,.status-FAIL{background:#fadbd8}.status-IN_PROGRESS,.status-ASSIGNED{background:#d6eaf8}
-@media(max-width:800px){nav{position:static;padding:10px 14px;gap:12px}.container{margin:16px auto}.col-1,.col-2,.col-3,.col-4,.col-5,.col-6,.col-7,.col-8,.col-9,.col-10,.col-11,.col-12{grid-column:span 12}.form-grid{grid-template-columns:1fr}.page-head h1{font-size:23px}th,td{white-space:nowrap}}
+:root {
+  --bk-navy: #003580;
+  --bk-navy-dark: #00224f;
+  --bk-blue: #006ce4;
+  --bk-blue-hover: #0057b8;
+  --bk-blue-light: #f0f6ff;
+  --bk-gold: #ffb700;
+  --bk-gold-light: #fff9e6;
+  --bk-gold-border: #febb02;
+  --bk-bg: #f5f7fa;
+  --bk-surface: #ffffff;
+  --bk-text: #1a1a1a;
+  --bk-muted: #595959;
+  --bk-light-muted: #8c8c8c;
+  --bk-border: #e7e7e7;
+  --bk-border-dark: #d9d9d9;
+  --bk-radius: 8px;
+  --bk-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --bk-shadow-md: 0 4px 16px rgba(0, 53, 128, 0.08);
+  --bk-shadow-lg: 0 8px 24px rgba(0, 53, 128, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  background: var(--bk-bg);
+  color: var(--bk-text);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* Booking Top Bar Header */
+header.bk-header {
+  background-color: var(--bk-navy);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.bk-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.bk-top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bk-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+
+.bk-brand .logo-icon {
+  background: var(--bk-blue);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 18px;
+}
+
+.bk-brand span.logo-gold {
+  color: var(--bk-gold);
+}
+
+.bk-user-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bk-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.bk-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bk-gold);
+  color: var(--bk-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.bk-nav-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0;
+  scrollbar-width: none;
+}
+
+.bk-nav-bar::-webkit-scrollbar { display: none; }
+
+.bk-nav-item {
+  color: #ffffff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.bk-nav-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bk-nav-item.active {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.bk-logout-btn {
+  color: #ffcbd1;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.bk-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ffffff;
+}
+
+/* Page Layout & Container */
+.container {
+  max-width: 1280px;
+  margin: 28px auto;
+  padding: 0 24px;
+}
+
+/* Booking Hero Header Section */
+.bk-page-header {
+  background: linear-gradient(135deg, var(--bk-navy) 0%, #004cb8 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--bk-shadow-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.bk-page-title h1 {
+  margin: 0 0 6px 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.bk-page-title p {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 13px;
+}
+
+/* Booking Search Box Container */
+.bk-search-box {
+  background: var(--bk-surface);
+  border: 3px solid var(--bk-gold);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: var(--bk-shadow-sm);
+  margin-bottom: 24px;
+}
+
+.bk-search-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.bk-search-input-wrap {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+/* Card & Panels */
+.card {
+  background: var(--bk-surface);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--bk-shadow-sm);
+  border: 1px solid var(--bk-border);
+}
+
+.card h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--bk-text);
+  margin-top: 0;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+}
+
+/* KPI / Stat Cards */
+.bk-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.bk-kpi-card {
+  background: var(--bk-surface);
+  border-radius: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--bk-border);
+  border-left: 4px solid var(--bk-blue);
+  box-shadow: var(--bk-shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bk-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bk-shadow-md);
+}
+
+.bk-kpi-card.kpi-gold { border-left-color: var(--bk-gold-border); }
+.bk-kpi-card.kpi-green { border-left-color: #10b981; }
+.bk-kpi-card.kpi-red { border-left-color: #ef4444; }
+
+.bk-kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--bk-text);
+  margin: 4px 0 2px 0;
+  line-height: 1.2;
+}
+
+.bk-kpi-label {
+  color: var(--bk-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Form Controls */
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: block;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--bk-border-dark);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--bk-text);
+  background-color: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--bk-blue);
+  box-shadow: 0 0 0 3px rgba(0, 108, 228, 0.15);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bk-blue);
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--bk-blue-hover);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 108, 228, 0.25);
+}
+
+.btn-secondary {
+  background: var(--bk-navy);
+  color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background: var(--bk-navy-dark);
+}
+
+.btn-muted {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-muted:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.btn-success {
+  background: #059669;
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background: #047857;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.btn-gold {
+  background: var(--bk-gold);
+  color: var(--bk-navy);
+  font-weight: 700;
+}
+
+.btn-gold:hover {
+  background: #f5b000;
+}
+
+/* Data Tables */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  background: #ffffff;
+}
+
+th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--bk-border);
+  text-align: left;
+}
+
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: var(--bk-text);
+}
+
+tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.badge-role {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+.badge-role.ROLE_ADMIN { background: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
+.badge-role.ROLE_MANAGER { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+.badge-role.ROLE_RECEPTIONIST { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+.badge-role.ROLE_SERVICE_STAFF { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.badge-role.ROLE_CUSTOMER { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+
+.status-ACTIVE, .status-SENT, .status-READY, .status-COMPLETED {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.status-LOCKED, .status-FAILED, .status-BLOCKED {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.status-INACTIVE, .status-QUEUED {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+/* Notifications Alerts */
+.err {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  box-shadow: var(--bk-shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.msg {
+  background: #ecfdf5;
+  border-left: 4px solid #10b981;
+  color: #065f46;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  box-shadow: var(--bk-shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Grid System */
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; }
+.col-1 { grid-column: span 1; } .col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; } .col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; } .col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; } .col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; } .col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; } .col-12 { grid-column: span 12; }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+.inline { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.inline label { margin: 0; }
+.empty { padding: 32px 16px; text-align: center; color: var(--bk-muted); font-size: 14px; }
+.muted { color: var(--bk-muted); }
+.danger-text { color: #dc2626; font-weight: 500; }
+
+@media (max-width: 900px) {
+  .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
+    grid-column: span 12;
+  }
+  .form-grid { grid-template-columns: 1fr; }
+  .bk-top-nav { flex-direction: column; height: auto; padding: 12px 0; gap: 12px; }
+}
 </style>
 </head>
 <body>
-<nav>
-  <a href="${pageContext.request.contextPath}/home"><b>🏨 Hotel</b></a>
-  <c:if test="${empty sessionScope.currentUser || sessionScope.currentUser.roleCode == 'CUSTOMER'}">
-    <a href="${pageContext.request.contextPath}/rooms">Tìm phòng</a>
-  </c:if>
-  <c:if test="${empty sessionScope.currentUser}">
-    <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
-    <a href="${pageContext.request.contextPath}/register">Đăng ký</a>
-  </c:if>
-  <c:if test="${not empty sessionScope.currentUser}">
-    <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}">
-      <a href="${pageContext.request.contextPath}/my-reservations">Đơn của tôi</a>
-      <a href="${pageContext.request.contextPath}/services">Dịch vụ</a>
-    </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
-      <a href="${pageContext.request.contextPath}/reception/walkin">Walk-in</a>
-      <a href="${pageContext.request.contextPath}/reception/customers">Khách hàng</a>
-      <a href="${pageContext.request.contextPath}/reception/reservations">Đơn đặt phòng</a>
-      <a href="${pageContext.request.contextPath}/reception/checkin">Check-in</a>
-      <a href="${pageContext.request.contextPath}/reception/stays">Đang ở</a>
-      <a href="${pageContext.request.contextPath}/reception/checkout">Check-out</a>
-    </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF' || sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
-      <a href="${pageContext.request.contextPath}/staff/service-requests">Yêu cầu DV</a>
-    </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF'}">
-      <a href="${pageContext.request.contextPath}/staff/housekeeping">Housekeeping</a>
-      <a href="${pageContext.request.contextPath}/staff/maintenance">Bảo trì</a>
-    </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'MANAGER'}">
-      <a href="${pageContext.request.contextPath}/manager/dashboard">Dashboard</a>
-      <a href="${pageContext.request.contextPath}/manager/rooms">Phòng</a>
-      <a href="${pageContext.request.contextPath}/manager/room-types">Loại phòng</a>
-      <a href="${pageContext.request.contextPath}/manager/pricing">Giá</a>
-      <a href="${pageContext.request.contextPath}/manager/housekeeping">Housekeeping</a>
-      <a href="${pageContext.request.contextPath}/manager/maintenance">Bảo trì</a>
-      <a href="${pageContext.request.contextPath}/manager/reports">Báo cáo</a>
-    </c:if>
-    <c:if test="${sessionScope.currentUser.roleCode == 'ADMIN'}">
-      <a href="${pageContext.request.contextPath}/admin/users">Tài khoản nhân viên</a>
-      <a href="${pageContext.request.contextPath}/admin/templates">Mẫu email</a>
-      <a href="${pageContext.request.contextPath}/admin/email-logs">Logs email</a>
-    </c:if>
-    <a href="${pageContext.request.contextPath}/profile">👤 ${sessionScope.currentUser.fullName}</a>
-    <a href="${pageContext.request.contextPath}/logout">Thoát</a>
-  </c:if>
-</nav>
+
+<header class="bk-header">
+  <div class="bk-header-inner">
+    <div class="bk-top-nav">
+      <a href="${pageContext.request.contextPath}/home" class="bk-brand">
+        <span class="logo-icon">🏨</span>
+        <span>Booking<span class="logo-gold">.hotel</span></span>
+      </a>
+
+      <c:if test="${not empty sessionScope.currentUser}">
+        <div class="bk-user-section">
+          <div class="bk-user-badge">
+            <div class="bk-user-avatar">${sessionScope.currentUser.fullName.substring(0, 1)}</div>
+            <span><c:out value="${sessionScope.currentUser.fullName}"/> (${sessionScope.currentUser.roleCode})</span>
+          </div>
+          <a href="${pageContext.request.contextPath}/profile" class="bk-nav-item" style="padding: 4px 10px;">👤 Hồ sơ</a>
+          <a href="${pageContext.request.contextPath}/logout" class="bk-logout-btn">Thoát</a>
+        </div>
+      </c:if>
+    </div>
+
+    <!-- Navigation Menu Bar -->
+    <nav class="bk-nav-bar">
+      <c:if test="${empty sessionScope.currentUser || sessionScope.currentUser.roleCode != 'ADMIN'}">
+        <a href="${pageContext.request.contextPath}/home" class="bk-nav-item">🏠 Trang chủ</a>
+      </c:if>
+      
+      <c:if test="${empty sessionScope.currentUser || sessionScope.currentUser.roleCode == 'CUSTOMER'}">
+        <a href="${pageContext.request.contextPath}/rooms" class="bk-nav-item">🛏️ Tìm phòng</a>
+      </c:if>
+      
+      <c:if test="${empty sessionScope.currentUser}">
+        <a href="${pageContext.request.contextPath}/login" class="bk-nav-item">🔑 Đăng nhập</a>
+        <a href="${pageContext.request.contextPath}/register" class="bk-nav-item">✨ Đăng ký</a>
+      </c:if>
+      
+      <c:if test="${not empty sessionScope.currentUser}">
+        <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}">
+          <a href="${pageContext.request.contextPath}/my-reservations" class="bk-nav-item">📋 Đơn của tôi</a>
+          <a href="${pageContext.request.contextPath}/services" class="bk-nav-item">🛎️ Dịch vụ</a>
+        </c:if>
+        
+        <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
+          <a href="${pageContext.request.contextPath}/reception/walkin" class="bk-nav-item">🚶 Walk-in</a>
+          <a href="${pageContext.request.contextPath}/reception/customers" class="bk-nav-item">👥 Khách hàng</a>
+          <a href="${pageContext.request.contextPath}/reception/reservations" class="bk-nav-item">📑 Đơn đặt phòng</a>
+          <a href="${pageContext.request.contextPath}/reception/checkin" class="bk-nav-item">🔑 Check-in</a>
+          <a href="${pageContext.request.contextPath}/reception/stays" class="bk-nav-item">🏨 Đang ở</a>
+          <a href="${pageContext.request.contextPath}/reception/checkout" class="bk-nav-item">🚪 Check-out</a>
+        </c:if>
+        
+        <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF' || sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
+          <a href="${pageContext.request.contextPath}/staff/service-requests" class="bk-nav-item">🛎️ Yêu cầu DV</a>
+        </c:if>
+        
+        <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF'}">
+          <a href="${pageContext.request.contextPath}/staff/housekeeping" class="bk-nav-item">🧹 Housekeeping</a>
+          <a href="${pageContext.request.contextPath}/staff/maintenance" class="bk-nav-item">🔧 Bảo trì</a>
+        </c:if>
+        
+        <c:if test="${sessionScope.currentUser.roleCode == 'MANAGER'}">
+          <a href="${pageContext.request.contextPath}/manager/dashboard" class="bk-nav-item">📊 Dashboard</a>
+          <a href="${pageContext.request.contextPath}/manager/rooms" class="bk-nav-item">🚪 Phòng</a>
+          <a href="${pageContext.request.contextPath}/manager/room-types" class="bk-nav-item">🏷️ Loại phòng</a>
+          <a href="${pageContext.request.contextPath}/manager/pricing" class="bk-nav-item">💵 Giá phòng</a>
+          <a href="${pageContext.request.contextPath}/manager/housekeeping" class="bk-nav-item">🧹 Housekeeping</a>
+          <a href="${pageContext.request.contextPath}/manager/maintenance" class="bk-nav-item">🔧 Bảo trì</a>
+          <a href="${pageContext.request.contextPath}/manager/reports" class="bk-nav-item">📈 Báo cáo</a>
+        </c:if>
+        
+        <c:if test="${sessionScope.currentUser.roleCode == 'ADMIN'}">
+          <a href="${pageContext.request.contextPath}/admin/dashboard" class="bk-nav-item ${pageContext.request.requestURI.contains('admin-dashboard') ? 'active' : ''}">📊 Dashboard</a>
+          <a href="${pageContext.request.contextPath}/admin/users" class="bk-nav-item ${pageContext.request.requestURI.contains('admin-users') ? 'active' : ''}">👤 Quản lý Tài khoản</a>
+          <a href="${pageContext.request.contextPath}/admin/templates" class="bk-nav-item ${pageContext.request.requestURI.contains('admin-templates') ? 'active' : ''}">📧 Mẫu Email</a>
+          <a href="${pageContext.request.contextPath}/admin/email-logs" class="bk-nav-item ${pageContext.request.requestURI.contains('admin-email-logs') ? 'active' : ''}">📜 Nhật ký Email</a>
+        </c:if>
+      </c:if>
+    </nav>
+  </div>
+</header>
+
 <div class="container">
-<c:if test="${not empty param.err}"><div class="err">${param.err}</div></c:if>
-<c:if test="${not empty err}"><div class="err">${err}</div></c:if>
-<c:if test="${not empty param.msg}"><div class="msg">${param.msg}</div></c:if>
-<c:if test="${not empty msg}"><div class="msg">${msg}</div></c:if>
+<c:if test="${not empty param.err}"><div class="err"><span>⚠️</span> <div>${param.err}</div></div></c:if>
+<c:if test="${not empty err}"><div class="err"><span>⚠️</span> <div>${err}</div></div></c:if>
+<c:if test="${not empty param.msg}"><div class="msg"><span>✅</span> <div>${param.msg}</div></div></c:if>
+<c:if test="${not empty msg}"><div class="msg"><span>✅</span> <div>${msg}</div></div></c:if>
+
