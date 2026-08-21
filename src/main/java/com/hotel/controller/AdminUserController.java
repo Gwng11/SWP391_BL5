@@ -92,8 +92,8 @@ public class AdminUserController extends BaseController {
             } else if ("sendResetLink".equals(action)) {
                 long userId = longParam(req, "userId");
 
-                adminService.sendResetPasswordLink(userId, baseUrl(req));
-                redirect(req, resp, "/admin/users?edit=" + userId, "msg", "Đã gửi link đặt lại mật khẩu đến email của nhân viên!");
+                adminService.resetAndSendPasswordByEmail(userId);
+                redirect(req, resp, "/admin/users?edit=" + userId, "msg", "Đã cấp mật khẩu mới và gửi thông tin qua email của nhân viên!");
             } else if ("delete".equals(action)) {
                 long userId = longParam(req, "userId");
                 User current = currentUser(req);
@@ -107,7 +107,8 @@ public class AdminUserController extends BaseController {
             req.setAttribute("err", e.getMessage());
             doGet(req, resp);
         } catch (Exception e) {
-            req.setAttribute("err", Constants.MSG_SYSTEM_ERROR);
+            e.printStackTrace();
+            req.setAttribute("err", e.getMessage() != null ? e.getMessage() : e.toString());
             doGet(req, resp);
         }
     }

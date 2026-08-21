@@ -549,7 +549,7 @@ tbody tr:last-child td {
     <div class="bk-top-nav">
       <a href="${pageContext.request.contextPath}/home" class="bk-brand">
         <span class="logo-icon">🏨</span>
-        <span>Booking<span class="logo-gold">.hotel</span></span>
+        <span>Hotel Management<span class="logo-gold"> System</span></span>
       </a>
 
       <c:if test="${not empty sessionScope.currentUser}">

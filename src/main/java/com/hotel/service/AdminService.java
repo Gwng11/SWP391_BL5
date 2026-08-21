@@ -12,6 +12,7 @@ import com.hotel.repository.UserRepository;
 import com.hotel.ultis.PasswordUtil;
 import com.hotel.ultis.ValidationUtil;
 import com.hotel.ultis.EmailUtil;
+import com.hotel.ultis.Constants;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -107,6 +108,49 @@ public class AdminService {
             throw new IllegalArgumentException("Mật khẩu mới phải tối thiểu 8 ký tự, gồm chữ và số");
         }
         userRepo.updatePassword(userId, PasswordUtil.hash(newPassword));
+
+        User u = userRepo.findById(userId);
+        if (u != null) {
+            EmailTemplate tpl = templateRepo.findActiveByEvent(Constants.EV_PASSWORD_RESET);
+            if (tpl != null && !tpl.getBodyHtml().contains("{{message_content}}")) {
+                tpl.setSubjectTemplate("Thông báo bảo mật tài khoản - Hotel Management System");
+                tpl.setBodyHtml("<p>Chào <b>{{full_name}}</b>,</p>{{message_content}}");
+                templateRepo.update(tpl);
+            }
+
+            String msgContent = "<p>Quản trị viên đã đặt lại mật khẩu mới cho tài khoản của bạn.</p>" +
+                                "<p>Mật khẩu mới đăng nhập của bạn là: <strong style='font-size:16px; color:#003580;'>" + newPassword + "</strong></p>" +
+                                "<p>Vui lòng đăng nhập và tiến hành thay đổi mật khẩu ngay để đảm bảo an toàn.</p>";
+
+            EmailService emailService = new EmailService();
+            emailService.send(Constants.EV_PASSWORD_RESET, u.getEmail(), 
+                java.util.Map.of("full_name", u.getFullName(), "message_content", msgContent),
+                u.getUserId(), null, null, null, null);
+        }
+    }
+
+    public void resetAndSendPasswordByEmail(long userId) {
+        User u = userRepo.findById(userId);
+        if (u == null) throw new IllegalArgumentException("Tài khoản không tồn tại");
+
+        String newPassword = java.util.UUID.randomUUID().toString().substring(0, 8) + "a1";
+        userRepo.updatePassword(userId, PasswordUtil.hash(newPassword));
+
+        EmailTemplate tpl = templateRepo.findActiveByEvent(Constants.EV_PASSWORD_RESET);
+        if (tpl != null && !tpl.getBodyHtml().contains("{{message_content}}")) {
+            tpl.setSubjectTemplate("Thông báo bảo mật tài khoản - Hotel Management System");
+            tpl.setBodyHtml("<p>Chào <b>{{full_name}}</b>,</p>{{message_content}}");
+            templateRepo.update(tpl);
+        }
+
+        String msgContent = "<p>Quản trị viên đã đặt lại mật khẩu mới cho tài khoản của bạn.</p>" +
+                            "<p>Mật khẩu mới đăng nhập của bạn là: <strong style='font-size:16px; color:#003580;'>" + newPassword + "</strong></p>" +
+                            "<p>Vui lòng đăng nhập và tiến hành thay đổi mật khẩu ngay để đảm bảo an toàn.</p>";
+
+        EmailService emailService = new EmailService();
+        emailService.send(Constants.EV_PASSWORD_RESET, u.getEmail(), 
+            java.util.Map.of("full_name", u.getFullName(), "message_content", msgContent),
+            u.getUserId(), null, null, null, null);
     }
 
     public void sendResetPasswordLink(long userId, String appBaseUrl) {

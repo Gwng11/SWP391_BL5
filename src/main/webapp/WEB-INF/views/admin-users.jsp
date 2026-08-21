@@ -217,12 +217,12 @@
 
           <!-- Send Email Reset Link Section -->
           <div style="margin-top: 20px; padding: 14px; background: var(--bk-gold-light); border: 1px solid var(--bk-gold-border); border-radius: 8px;">
-            <h3 style="font-size: 14px; font-weight: 700; color: #92400e; margin-top: 0; margin-bottom: 6px;">📧 Khôi phục qua Email</h3>
-            <p style="font-size: 13px; color: #78350f; margin-bottom: 10px;">Gửi thư điện tử chứa đường dẫn tự thiết lập mật khẩu đến địa chỉ <b><c:out value="${editUser.email}"/></b></p>
+            <h3 style="font-size: 14px; font-weight: 700; color: #92400e; margin-top: 0; margin-bottom: 6px;">📧 Cấp lại Mật khẩu qua Email</h3>
+            <p style="font-size: 13px; color: #78350f; margin-bottom: 10px;">Hệ thống tự động sinh một mật khẩu mới ngẫu nhiên và gửi trực tiếp đến địa chỉ email <b><c:out value="${editUser.email}"/></b>.</p>
             <form method="post" action="${pageContext.request.contextPath}/admin/users">
               <input type="hidden" name="action" value="sendResetLink">
               <input type="hidden" name="userId" value="${editUser.userId}">
-              <button class="btn btn-gold btn-small" type="submit">📩 Gửi link đặt lại mật khẩu</button>
+              <button class="btn btn-gold btn-small" type="submit">📩 Cấp & gửi mật khẩu mới</button>
             </form>
           </div>
         </c:when>
@@ -237,27 +237,27 @@
 
             <div class="full">
               <label>📧 Email Đăng nhập *</label>
-              <input type="email" name="email" required placeholder="nhanvien@bookinghotel.vn">
+              <input type="email" name="email" value="<c:out value='${param.email}'/>" required placeholder="nhanvien@bookinghotel.vn">
             </div>
 
             <div class="full">
               <label>👤 Họ và tên *</label>
-              <input name="fullName" required placeholder="Nguyễn Văn A">
+              <input name="fullName" value="<c:out value='${param.fullName}'/>" required placeholder="Nguyễn Văn A">
             </div>
 
             <div>
               <label>📞 Số điện thoại</label>
-              <input name="phone" placeholder="0901234567">
+              <input name="phone" value="<c:out value='${param.phone}'/>" placeholder="0901234567">
             </div>
 
             <div>
               <label>🪪 Định danh (CCCD/Passport)</label>
-              <input name="identificationNumber" placeholder="001090001234">
+              <input name="identificationNumber" value="<c:out value='${param.identificationNumber}'/>" placeholder="001090001234">
             </div>
 
             <div class="full">
               <label>🏠 Địa chỉ</label>
-              <input name="address" placeholder="123 Nguyễn Huệ, Q.1, TP.HCM">
+              <input name="address" value="<c:out value='${param.address}'/>" placeholder="123 Nguyễn Huệ, Q.1, TP.HCM">
             </div>
 
             <div>
@@ -265,7 +265,7 @@
               <select name="roleCode" required>
                 <c:forEach var="r" items="${roles}">
                   <c:if test="${r != 'CUSTOMER'}">
-                    <option value="${r}" ${r == 'RECEPTIONIST' ? 'selected' : ''}>${r}</option>
+                    <option value="${r}" ${(not empty param.roleCode ? param.roleCode == r : r == 'RECEPTIONIST') ? 'selected' : ''}>${r}</option>
                   </c:if>
                 </c:forEach>
               </select>
@@ -276,7 +276,7 @@
               <select name="departmentCode">
                 <option value="">-- Chọn bộ phận --</option>
                 <c:forEach var="d" items="${departments}">
-                  <option value="${d}">${d}</option>
+                  <option value="${d}" ${param.departmentCode == d ? 'selected' : ''}>${d}</option>
                 </c:forEach>
               </select>
             </div>

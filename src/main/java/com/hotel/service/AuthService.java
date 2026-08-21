@@ -121,10 +121,24 @@ public class AuthService {
 
     public void sendResetPasswordEmail(User u, String appBaseUrl) {
         if (u == null) return;
+
+        com.hotel.interfaces.IEmailTemplateRepository templateRepo = new com.hotel.repository.EmailTemplateRepository();
+        com.hotel.entity.EmailTemplate tpl = templateRepo.findActiveByEvent(Constants.EV_PASSWORD_RESET);
+        if (tpl != null && !tpl.getBodyHtml().contains("{{message_content}}")) {
+            tpl.setSubjectTemplate("Thông báo bảo mật tài khoản - Hotel Management System");
+            tpl.setBodyHtml("<p>Chào <b>{{full_name}}</b>,</p>{{message_content}}");
+            templateRepo.update(tpl);
+        }
+
         String raw = issueToken(u.getUserId(), Constants.TK_PASSWORD_RESET, 60);
         String link = appBaseUrl + "/reset-password?token=" + raw;
+
+        String msgContent = "<p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.</p>" +
+                            "<p>Bấm vào link sau để đặt lại mật khẩu: <a href=\"" + link + "\">Đặt lại mật khẩu</a></p>" +
+                            "<p>Link có hiệu lực trong vòng 60 phút.</p>";
+
         emailService.send(Constants.EV_PASSWORD_RESET, u.getEmail(),
-                Map.of("full_name", u.getFullName(), "reset_link", link),
+                Map.of("full_name", u.getFullName(), "message_content", msgContent),
                 u.getUserId(), null, null, null, null);
     }
 
@@ -136,6 +150,9 @@ public class AuthService {
         if (t == null) return false;
         tokenRepo.markUsed(t.getUserTokenId());
         userRepo.updatePassword(t.getUserId(), PasswordUtil.hash(newPassword));
+
+        User u = userRepo.findById(t.getUserId());
+        sendPasswordChangedNotification(u);
         return true;
     }
 
@@ -147,6 +164,26 @@ public class AuthService {
         if (!ValidationUtil.isStrongPassword(newPassword))
             throw new IllegalArgumentException("Mật khẩu mới tối thiểu 8 ký tự, gồm chữ và số");
         userRepo.updatePassword(userId, PasswordUtil.hash(newPassword));
+        sendPasswordChangedNotification(u);
+    }
+
+    public void sendPasswordChangedNotification(User u) {
+        if (u == null) return;
+        
+        com.hotel.interfaces.IEmailTemplateRepository templateRepo = new com.hotel.repository.EmailTemplateRepository();
+        com.hotel.entity.EmailTemplate tpl = templateRepo.findActiveByEvent(Constants.EV_PASSWORD_RESET);
+        if (tpl != null && !tpl.getBodyHtml().contains("{{message_content}}")) {
+            tpl.setSubjectTemplate("Thông báo bảo mật tài khoản - Hotel Management System");
+            tpl.setBodyHtml("<p>Chào <b>{{full_name}}</b>,</p>{{message_content}}");
+            templateRepo.update(tpl);
+        }
+
+        String msgContent = "<p>Chúng tôi xin thông báo rằng mật khẩu cho tài khoản <b>" + u.getEmail() + "</b> của bạn đã được thay đổi thành công.</p>" +
+                            "<p>Nếu bạn không thực hiện việc thay đổi này, vui lòng liên hệ ngay với quản trị viên để bảo vệ tài khoản.</p>";
+
+        emailService.send(Constants.EV_PASSWORD_RESET, u.getEmail(), 
+            java.util.Map.of("full_name", u.getFullName(), "message_content", msgContent),
+            u.getUserId(), null, null, null, null);
     }
 
     private String issueToken(long userId, String type, int minutesValid) {
