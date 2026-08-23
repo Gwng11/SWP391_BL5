@@ -21,6 +21,8 @@
     .lux-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     .lux-card-title { font-size: 1.2rem; font-weight: 600; margin-top: 0; margin-bottom: 16px; color: #0b1b42; }
 
+    .lux-search-box { display: flex; gap: 8px; margin-bottom: 16px; }
+
     .lux-table { width: 100%; border-collapse: collapse; }
     .lux-table th, .lux-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
     .lux-table th { background: #f8fafc; color: #475569; font-weight: 600; }
@@ -69,6 +71,16 @@
                 <!-- Bảng Danh sách Dịch vụ -->
                 <div class="lux-card">
                     <h3 class="lux-card-title">Danh sách dịch vụ hiện có</h3>
+
+                    <!-- Thanh tìm kiếm dịch vụ -->
+                    <form method="get" action="${pageContext.request.contextPath}/manager/services" class="lux-search-box">
+                        <input type="text" name="q" value="${keyword}" placeholder="Nhập tên dịch vụ cần tìm..." class="lux-form-control">
+                        <button type="submit" class="lux-btn">Tìm</button>
+                        <c:if test="${not empty keyword}">
+                            <a href="${pageContext.request.contextPath}/manager/services" class="lux-btn lux-btn-secondary">Tất cả</a>
+                        </c:if>
+                    </form>
+
                     <table class="lux-table">
                         <thead>
                         <tr>
@@ -128,6 +140,13 @@
                                 </td>
                             </tr>
                         </c:forEach>
+                        <c:if test="${empty services}">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #888; padding: 20px;">
+                                    Không tìm thấy dịch vụ nào phù hợp.
+                                </td>
+                            </tr>
+                        </c:if>
                         </tbody>
                     </table>
                 </div>
