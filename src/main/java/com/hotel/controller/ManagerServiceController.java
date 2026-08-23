@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-/** Quản lý danh mục dịch vụ dành cho Manager (CRUD + Ảnh image_url + Bật/Tắt) */
+/** Quản lý danh mục dịch vụ dành cho Manager (CRUD + Ảnh image_url + Bật/Tắt + Tìm kiếm) */
 @WebServlet(urlPatterns = {"/manager/services"})
 public class ManagerServiceController extends BaseController {
 
@@ -18,8 +18,18 @@ public class ManagerServiceController extends BaseController {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        List<HotelService> services = hotelServiceRepo.findAll();
+        String keyword = req.getParameter("q");
+        List<HotelService> services;
+
+        if (keyword != null && !keyword.isBlank()) {
+            // Gọi phương thức searchActive có sẵn trong HotelServiceRepository
+            services = hotelServiceRepo.searchActive(keyword.trim());
+        } else {
+            services = hotelServiceRepo.findAll();
+        }
+
         req.setAttribute("services", services);
+        req.setAttribute("keyword", keyword);
 
         Long editId = longParamOrNull(req, "id");
         if (editId != null) {
