@@ -34,8 +34,18 @@ BEGIN
 END
 GO
 
--- 3. Thời gian khách mong muốn sử dụng dịch vụ. requested_for_at là tên cột
--- thống nhất giữa SRS, Java và schema gốc.
+-- 3. Chuẩn hóa khóa chính và thời gian yêu cầu dịch vụ cho các database cũ.
+-- sp_rename giữ nguyên dữ liệu, identity, PK và FK đang tham chiếu tới cột.
+IF COL_LENGTH('dbo.service_requests', 'service_request_id') IS NULL
+   AND COL_LENGTH('dbo.service_requests', 'request_id') IS NOT NULL
+    EXEC sp_rename 'dbo.service_requests.request_id', 'service_request_id', 'COLUMN';
+GO
+
+IF COL_LENGTH('dbo.service_requests', 'service_request_id') IS NULL
+    THROW 51000, 'service_requests must contain service_request_id after schema normalization.', 1;
+GO
+
+-- requested_for_at là tên cột thống nhất giữa SRS, Java và schema gốc.
 IF COL_LENGTH('dbo.service_requests', 'requested_for_at') IS NULL
     ALTER TABLE dbo.service_requests ADD requested_for_at datetime2(0) NULL;
 GO

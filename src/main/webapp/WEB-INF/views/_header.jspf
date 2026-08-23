@@ -594,8 +594,12 @@ tbody tr:last-child td {
           <a href="${pageContext.request.contextPath}/reception/checkout" class="bk-nav-item">🚪 Check-out</a>
         </c:if>
         
-        <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF' || sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
-          <a href="${pageContext.request.contextPath}/staff/service-requests" class="bk-nav-item">🛎️ Yêu cầu DV</a>
+        <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
+          <a href="${pageContext.request.contextPath}/reception/service-requests" class="bk-nav-item">🛎️ Yêu cầu DV</a>
+        </c:if>
+
+        <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF'}">
+          <a href="${pageContext.request.contextPath}/staff/service-requests" class="bk-nav-item">🛎️ Việc dịch vụ</a>
         </c:if>
         
         <c:if test="${sessionScope.currentUser.roleCode == 'SERVICE_STAFF'}">
