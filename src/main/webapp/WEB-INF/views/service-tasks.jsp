@@ -10,7 +10,7 @@
   </div>
 </div>
 
-<form method="get" action="${pageContext.request.contextPath}/staff/service-requests" class="card"
+<form method="get" action="${pageContext.request.contextPath}${taskUrl}" class="card"
       style="display:flex;gap:8px;align-items:center">
   <label>Trạng thái</label>
   <select name="status">
@@ -43,7 +43,7 @@
         <td style="max-width:240px;white-space:pre-wrap"><c:out value="${s.notes}"/></td>
         <td>
           <c:if test="${isDispatcher && (s.statusCode == 'PENDING' || s.statusCode == 'ASSIGNED')}">
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="assign">
               <select name="staffUserId" required>
@@ -56,12 +56,12 @@
             </form>
           </c:if>
           <c:if test="${isDispatcher && s.statusCode == 'PENDING'}">
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="assignAuto">
               <button class="btn btn-muted" type="submit">Tự động gán</button>
             </form>
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="reschedule">
               <input type="datetime-local" name="requestedForAt" required>
@@ -70,7 +70,7 @@
             </form>
           </c:if>
           <c:if test="${isDispatcher && s.statusCode != 'COMPLETED' && s.statusCode != 'CANCELLED'}">
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="cancel">
               <input name="note" maxlength="400" placeholder="Lý do hủy">
@@ -78,19 +78,19 @@
             </form>
           </c:if>
           <c:if test="${!isDispatcher && s.statusCode == 'ASSIGNED'}">
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="start">
               <button class="btn" type="submit">Bắt đầu</button>
             </form>
           </c:if>
           <c:if test="${!isDispatcher && (s.statusCode == 'ASSIGNED' || s.statusCode == 'IN_PROGRESS')}">
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="complete">
               <button class="btn btn-success" type="submit">Hoàn tất</button>
             </form>
-            <form method="post" action="${pageContext.request.contextPath}/staff/service-requests">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="unable">
               <input name="reason" maxlength="400" required placeholder="Lý do không thể thực hiện">

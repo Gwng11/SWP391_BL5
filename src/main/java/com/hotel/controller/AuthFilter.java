@@ -17,7 +17,7 @@ import java.util.Set;
  * - Ép UTF-8 cho mọi request
  * - /manager/*   : MANAGER only
  * - /reception/* : RECEPTIONIST only
- * - /staff/*     : SERVICE_STAFF (service requests are also available to RECEPTIONIST)
+ * - /staff/*     : SERVICE_STAFF
  * - /profile, /my-reservations, /booking, /services : phải đăng nhập
  */
 @WebFilter(urlPatterns = { "/*" })
@@ -45,14 +45,14 @@ public class AuthFilter implements Filter {
             if (!hasRole(user, Constants.ROLE_MANAGER)) { deny(req, res); return; }
         } else if (path.startsWith("/reception/")) {
             if (!authenticated(req, res, user, path)) return;
-            if (!hasRole(user, Constants.ROLE_RECEPTIONIST, Constants.ROLE_ADMIN)) { deny(req, res); return; }
+            boolean serviceRequests = path.startsWith("/reception/service-requests");
+            boolean allowed = serviceRequests
+                    ? hasRole(user, Constants.ROLE_RECEPTIONIST)
+                    : hasRole(user, Constants.ROLE_RECEPTIONIST, Constants.ROLE_ADMIN);
+            if (!allowed) { deny(req, res); return; }
         } else if (path.startsWith("/staff/")) {
             if (!authenticated(req, res, user, path)) return;
-            boolean serviceRequest = path.startsWith("/staff/service-requests");
-            boolean allowed = serviceRequest
-                    ? hasRole(user, Constants.ROLE_SERVICE_STAFF, Constants.ROLE_RECEPTIONIST)
-                    : hasRole(user, Constants.ROLE_SERVICE_STAFF);
-            if (!allowed) { deny(req, res); return; }
+            if (!hasRole(user, Constants.ROLE_SERVICE_STAFF)) { deny(req, res); return; }
         } else if (path.startsWith("/service-detail")) {
             if (!authenticated(req, res, user, path)) return;
         } else if (user == null && LOGIN_REQUIRED_PREFIX.stream().anyMatch(path::startsWith)) {

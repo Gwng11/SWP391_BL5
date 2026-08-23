@@ -52,7 +52,7 @@ NetBeans/IntelliJ: mở project Maven → Run trên Tomcat 10.1.
 | F13 Check-out | `/reception/checkout` | CheckOutController | FrontDeskService |
 | F14 Hóa đơn & TT cuối | `/reception/invoice?reservationId=` | InvoiceController | InvoiceService |
 | F15 Yêu cầu dịch vụ | `/services` | ServiceController | ServiceRequestService |
-| F16 Xử lý yêu cầu DV | `/staff/service-requests` | ServiceTaskController | ServiceRequestService |
+| F16 Xử lý yêu cầu DV | `/reception/service-requests`, `/staff/service-requests` | ServiceTaskController | ServiceRequestService |
 | F17 Housekeeping tasks | `/manager/housekeeping`, `/staff/housekeeping` | HousekeepingController | ManagerService |
 | F18 Inspect rooms | action trong `/staff/housekeeping` | HousekeepingController | ManagerService |
 | F19 Maintenance issues | `/manager/maintenance`, `/staff/maintenance` | MaintenanceController | ManagerService |

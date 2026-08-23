@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /** F16 - Xử lý yêu cầu dịch vụ: phân công / bắt đầu / hoàn tất / hủy */
-@WebServlet(urlPatterns = {"/staff/service-requests"})
+@WebServlet(urlPatterns = {"/reception/service-requests", "/staff/service-requests"})
 public class ServiceTaskController extends BaseController {
 
     private final ServiceRequestService serviceRequestService = new ServiceRequestService();
@@ -25,6 +25,7 @@ public class ServiceTaskController extends BaseController {
         req.setAttribute("isDispatcher", dispatcher);
         if (dispatcher) req.setAttribute("staffList", serviceRequestService.getAssignableStaff());
         req.setAttribute("statusFilter", status);
+        req.setAttribute("taskUrl", taskUrl(me));
         req.getRequestDispatcher("/WEB-INF/views/service-tasks.jsp").forward(req, resp);
     }
 
@@ -62,9 +63,9 @@ public class ServiceTaskController extends BaseController {
             } else {
                 throw new IllegalArgumentException("Hành động không hợp lệ");
             }
-            resp.sendRedirect(req.getContextPath() + "/staff/service-requests");
+            resp.sendRedirect(req.getContextPath() + taskUrl(me));
         } catch (IllegalArgumentException | IllegalStateException e) {
-            resp.sendRedirect(req.getContextPath() + "/staff/service-requests?err="
+            resp.sendRedirect(req.getContextPath() + taskUrl(me) + "?err="
                     + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         }
     }
@@ -76,5 +77,10 @@ public class ServiceTaskController extends BaseController {
     private void requireDispatcher(User user) {
         if (!isDispatcher(user))
             throw new IllegalStateException("Chỉ lễ tân/quản lý được phân công yêu cầu");
+    }
+
+    private String taskUrl(User user) {
+        return Constants.ROLE_RECEPTIONIST.equals(user.getRoleCode())
+                ? "/reception/service-requests" : "/staff/service-requests";
     }
 }
