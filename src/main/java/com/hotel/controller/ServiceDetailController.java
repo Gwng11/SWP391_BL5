@@ -2,8 +2,6 @@ package com.hotel.controller;
 
 import com.hotel.entity.Customer;
 import com.hotel.entity.HotelService;
-import com.hotel.entity.Reservation;
-import com.hotel.service.ReservationService;
 import com.hotel.service.ServiceRequestService;
 import com.hotel.ultis.Constants;
 import jakarta.servlet.ServletException;
@@ -12,32 +10,36 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /** F15 - Trang chi tiết dịch vụ & Gửi yêu cầu đặt dịch vụ */
 @WebServlet(urlPatterns = {"/service-detail"})
 public class ServiceDetailController extends BaseController {
 
     private final ServiceRequestService serviceRequestService = new ServiceRequestService();
-    private final ReservationService reservationService = new ReservationService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         long serviceId = longParam(req, "id");
-        HotelService service = serviceRequestService.getServiceById(serviceId);
-        if (service == null || !service.isActive()) {
+        var me = currentUser(req);
+        if (!(Constants.ROLE_CUSTOMER.equals(me.getRoleCode())
+                || Constants.ROLE_RECEPTIONIST.equals(me.getRoleCode()))) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        HotelService service = serviceRequestService.getActiveService(serviceId);
+        if (service == null) {
             resp.sendRedirect(req.getContextPath() + "/services?err="
                     + java.net.URLEncoder.encode("Dịch vụ không tồn tại hoặc đã ngưng phục vụ", java.nio.charset.StandardCharsets.UTF_8));
             return;
         }
         req.setAttribute("service", service);
 
-        Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
-        if (c != null) {
-            List<Reservation> active = reservationService.getByCustomer(c.getCustomerId()).stream()
-                    .filter(r -> Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
-                    .collect(java.util.stream.Collectors.toList());
-            req.setAttribute("activeReservations", active);
+        Long reservationId = longParamOrNull(req, "reservationId");
+        try {
+            Customer customer = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
+            req.setAttribute("currentStay", serviceRequestService.resolveCurrentStay(me, customer, reservationId));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            req.setAttribute("stayError", e.getMessage());
         }
         req.getRequestDispatcher("/WEB-INF/views/service-detail.jsp").forward(req, resp);
     }
@@ -45,19 +47,31 @@ public class ServiceDetailController extends BaseController {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            String scheduled = req.getParameter("scheduledAt");
-            LocalDateTime scheduledAt = (scheduled == null || scheduled.isEmpty()) ? null : LocalDateTime.parse(scheduled);
+            var me = currentUser(req);
+            Customer customer = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
+            String requestedFor = req.getParameter("requestedForAt");
+            LocalDateTime requestedForAt;
+            try {
+                requestedForAt = requestedFor == null || requestedFor.isBlank()
+                        ? null : LocalDateTime.parse(requestedFor);
+            } catch (java.time.DateTimeException e) {
+                throw new IllegalArgumentException("Thời gian mong muốn không hợp lệ");
+            }
 
             serviceRequestService.createRequest(
-                    longParam(req, "reservationId"),
+                    me,
+                    customer,
+                    longParamOrNull(req, "reservationId"),
                     longParam(req, "hotelServiceId"),
                     decimalParam(req, "quantity"),
-                    scheduledAt,
+                    requestedForAt,
                     req.getParameter("notes"));
             resp.sendRedirect(req.getContextPath() + "/services?ok=1");
         } catch (IllegalArgumentException | IllegalStateException e) {
             long serviceId = longParam(req, "hotelServiceId");
-            resp.sendRedirect(req.getContextPath() + "/service-detail?id=" + serviceId + "&err="
+            Long reservationId = longParamOrNull(req, "reservationId");
+            String context = reservationId == null ? "" : "&reservationId=" + reservationId;
+            resp.sendRedirect(req.getContextPath() + "/service-detail?id=" + serviceId + context + "&err="
                     + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         }
     }

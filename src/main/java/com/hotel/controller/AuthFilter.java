@@ -50,9 +50,11 @@ public class AuthFilter implements Filter {
             if (!authenticated(req, res, user, path)) return;
             boolean serviceRequest = path.startsWith("/staff/service-requests");
             boolean allowed = serviceRequest
-                    ? hasRole(user, Constants.ROLE_SERVICE_STAFF, Constants.ROLE_RECEPTIONIST, Constants.ROLE_ADMIN)
+                    ? hasRole(user, Constants.ROLE_SERVICE_STAFF, Constants.ROLE_RECEPTIONIST)
                     : hasRole(user, Constants.ROLE_SERVICE_STAFF);
             if (!allowed) { deny(req, res); return; }
+        } else if (path.startsWith("/service-detail")) {
+            if (!authenticated(req, res, user, path)) return;
         } else if (user == null && LOGIN_REQUIRED_PREFIX.stream().anyMatch(path::startsWith)) {
             redirectToLogin(req, res, path);
             return;
