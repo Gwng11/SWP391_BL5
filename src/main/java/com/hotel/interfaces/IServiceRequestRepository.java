@@ -9,9 +9,12 @@ public interface IServiceRequestRepository {
     List<ServiceRequest> findByReservation(long reservationId);
     /** F16: hàng đợi công việc; statusCode = null → tất cả trạng thái chưa hủy */
     List<ServiceRequest> findWorkQueue(String statusCode);
+    List<ServiceRequest> findAssignedToStaff(long staffUserId, String statusCode);
     void assign(long serviceRequestId, long staffUserId);
-    void start(long serviceRequestId);
-    void complete(long serviceRequestId);
+    void start(long serviceRequestId, long staffUserId);
+    void completeAndAddCharge(long serviceRequestId, long staffUserId);
+    void reportUnable(long serviceRequestId, long staffUserId, String reason);
+    void reschedule(long serviceRequestId, java.time.LocalDateTime requestedForAt, String note);
     void cancel(long serviceRequestId, String note);
     /** F14: các yêu cầu COMPLETED chưa được đưa vào hóa đơn */
     List<ServiceRequest> findCompletedNotInvoiced(long reservationId);

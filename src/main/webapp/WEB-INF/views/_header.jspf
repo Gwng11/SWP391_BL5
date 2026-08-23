@@ -608,6 +608,7 @@ tbody tr:last-child td {
           <a href="${pageContext.request.contextPath}/manager/rooms" class="bk-nav-item">🚪 Phòng</a>
           <a href="${pageContext.request.contextPath}/manager/room-types" class="bk-nav-item">🏷️ Loại phòng</a>
           <a href="${pageContext.request.contextPath}/manager/pricing" class="bk-nav-item">💵 Giá phòng</a>
+          <a href="${pageContext.request.contextPath}/manager/services" class="bk-nav-item">🛎️ Dịch vụ</a>
           <a href="${pageContext.request.contextPath}/manager/housekeeping" class="bk-nav-item">🧹 Housekeeping</a>
           <a href="${pageContext.request.contextPath}/manager/maintenance" class="bk-nav-item">🔧 Bảo trì</a>
           <a href="${pageContext.request.contextPath}/manager/reports" class="bk-nav-item">📈 Báo cáo</a>

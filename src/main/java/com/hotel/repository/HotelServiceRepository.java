@@ -118,4 +118,29 @@ public class HotelServiceRepository extends BaseRepository implements IHotelServ
             ps.executeUpdate();
         } catch (SQLException e) { throw wrap(e); }
     }
+
+    @Override
+    public int countServiceRequests(long hotelServiceId) {
+        String sql = "SELECT COUNT(*) FROM service_requests WHERE hotel_service_id = ?";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, hotelServiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) { throw wrap(e); }
+    }
+
+    @Override
+    public void delete(long hotelServiceId) {
+        String sql = "DELETE FROM hotel_services WHERE hotel_service_id = ? "
+                + "AND NOT EXISTS (SELECT 1 FROM service_requests WHERE hotel_service_id = ?)";
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, hotelServiceId);
+            ps.setLong(2, hotelServiceId);
+            if (ps.executeUpdate() == 0) {
+                throw new IllegalStateException("Không thể xóa dịch vụ đã có lịch sử yêu cầu");
+            }
+        } catch (SQLException e) { throw wrap(e); }
+    }
 }

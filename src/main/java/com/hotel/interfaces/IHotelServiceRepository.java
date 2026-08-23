@@ -11,4 +11,6 @@ public interface IHotelServiceRepository {
     long insert(HotelService service);               // <-- THÊM MỚI: Tạo dịch vụ mới (CRUD Manager)
     void update(HotelService service);               // <-- THÊM MỚI: Sửa thông tin dịch vụ (CRUD Manager)
     void toggleActive(long hotelServiceId, boolean active); // <-- THÊM MỚI: Ẩn/Hiện dịch vụ
+    int countServiceRequests(long hotelServiceId);
+    void delete(long hotelServiceId);
 }

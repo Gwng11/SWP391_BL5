@@ -34,9 +34,28 @@ BEGIN
 END
 GO
 
--- 3. Bổ sung cột scheduled_at cho bảng service_requests (giờ hẹn làm dịch vụ)
-IF COL_LENGTH('dbo.service_requests', 'scheduled_at') IS NULL
-    ALTER TABLE dbo.service_requests ADD scheduled_at datetime2(0) NULL;
+-- 3. Thời gian khách mong muốn sử dụng dịch vụ. requested_for_at là tên cột
+-- thống nhất giữa SRS, Java và schema gốc.
+IF COL_LENGTH('dbo.service_requests', 'requested_for_at') IS NULL
+    ALTER TABLE dbo.service_requests ADD requested_for_at datetime2(0) NULL;
+GO
+
+IF COL_LENGTH('dbo.service_requests', 'scheduled_at') IS NOT NULL
+    EXEC sp_executesql N'UPDATE dbo.service_requests
+        SET requested_for_at = COALESCE(requested_for_at, scheduled_at, requested_at)
+        WHERE requested_for_at IS NULL';
+ELSE
+    UPDATE dbo.service_requests
+    SET requested_for_at = requested_at
+    WHERE requested_for_at IS NULL;
+GO
+
+ALTER TABLE dbo.service_requests ALTER COLUMN requested_for_at datetime2(0) NOT NULL;
+GO
+
+IF OBJECT_ID('dbo.CK_service_requests_requested_for', 'C') IS NULL
+    ALTER TABLE dbo.service_requests ADD CONSTRAINT CK_service_requests_requested_for
+        CHECK (requested_for_at >= requested_at);
 GO
 
 -- Khuyến nghị cho web app: tránh SQL Server đóng/mở DB liên tục gây chậm

@@ -14,7 +14,7 @@ public class ServiceRequest {
     private BigDecimal totalAmount;
     private String statusCode;
     private LocalDateTime requestedAt;
-    private LocalDateTime scheduledAt;
+    private LocalDateTime requestedForAt;
     private LocalDateTime assignedAt;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
@@ -44,8 +44,8 @@ public class ServiceRequest {
     public void setStatusCode(String statusCode) { this.statusCode = statusCode; }
     public LocalDateTime getRequestedAt() { return requestedAt; }
     public void setRequestedAt(LocalDateTime requestedAt) { this.requestedAt = requestedAt; }
-    public LocalDateTime getScheduledAt() { return scheduledAt; }
-    public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
+    public LocalDateTime getRequestedForAt() { return requestedForAt; }
+    public void setRequestedForAt(LocalDateTime requestedForAt) { this.requestedForAt = requestedForAt; }
     public LocalDateTime getAssignedAt() { return assignedAt; }
     public void setAssignedAt(LocalDateTime assignedAt) { this.assignedAt = assignedAt; }
     public LocalDateTime getStartedAt() { return startedAt; }

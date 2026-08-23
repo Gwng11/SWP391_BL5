@@ -64,6 +64,7 @@
             <c:if test="${param.ok == 'created'}"><div class="lux-alert lux-alert-success">Thêm dịch vụ thành công!</div></c:if>
             <c:if test="${param.ok == 'updated'}"><div class="lux-alert lux-alert-success">Cập nhật dịch vụ thành công!</div></c:if>
             <c:if test="${param.ok == 'toggled'}"><div class="lux-alert lux-alert-success">Đã thay đổi trạng thái dịch vụ!</div></c:if>
+            <c:if test="${param.ok == 'deleted'}"><div class="lux-alert lux-alert-success">Đã xóa dịch vụ chưa có lịch sử yêu cầu.</div></c:if>
             <c:if test="${not empty param.err}"><div class="lux-alert lux-alert-error">${param.err}</div></c:if>
 
             <div class="lux-layout-two-col">
@@ -128,6 +129,12 @@
                                             <button type="submit" class="lux-btn lux-btn-sm lux-btn-secondary">
                                                     ${s.active ? 'Ẩn' : 'Hiện'}
                                             </button>
+                                        </form>
+                                        <form method="post" action="${pageContext.request.contextPath}/manager/services" style="display:inline;"
+                                              onsubmit="return confirm('Chỉ dịch vụ chưa có lịch sử yêu cầu mới được xóa. Tiếp tục?')">
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="hotelServiceId" value="${s.hotelServiceId}">
+                                            <button type="submit" class="lux-btn lux-btn-sm" style="background:#b91c1c">Xóa</button>
                                         </form>
                                     </div>
                                 </td>

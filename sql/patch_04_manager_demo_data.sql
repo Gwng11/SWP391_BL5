@@ -267,7 +267,7 @@ BEGIN TRY
     INSERT INTO service_requests
         (reservation_id, customer_id, hotel_service_id, assigned_staff_user_id,
          quantity, unit_price_snapshot, total_amount, status_code, requested_at,
-         assigned_at, started_at, completed_at, notes, scheduled_at)
+         assigned_at, started_at, completed_at, notes, requested_for_at)
     VALUES
     (@StayReservationId,@CustomerId,@SpaId,@StaffId,1,500000,500000,'COMPLETED',@TodayAt8,DATEADD(hour,1,@TodayAt8),DATEADD(hour,2,@TodayAt8),DATEADD(hour,3,@TodayAt8),N'MGR-DEMO: Spa đã hoàn tất',DATEADD(hour,2,@TodayAt8)),
     (@StayReservationId,@CustomerId,@LaundryId,@StaffId,3,50000,150000,'IN_PROGRESS',DATEADD(hour,1,@TodayAt8),DATEADD(hour,2,@TodayAt8),DATEADD(hour,3,@TodayAt8),NULL,N'MGR-DEMO: Giặt ủi đang xử lý',DATEADD(hour,4,@TodayAt8)),

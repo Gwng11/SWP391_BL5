@@ -1,8 +1,7 @@
 package com.hotel.controller;
 
 import com.hotel.entity.HotelService;
-import com.hotel.interfaces.IHotelServiceRepository;
-import com.hotel.repository.HotelServiceRepository;
+import com.hotel.service.HotelServiceManagementService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,26 +13,17 @@ import java.util.List;
 @WebServlet(urlPatterns = {"/manager/services"})
 public class ManagerServiceController extends BaseController {
 
-    private final IHotelServiceRepository hotelServiceRepo = new HotelServiceRepository();
+    private final HotelServiceManagementService hotelServiceService = new HotelServiceManagementService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String keyword = req.getParameter("q");
-        List<HotelService> services;
-
-        if (keyword != null && !keyword.isBlank()) {
-            // Gọi phương thức searchActive có sẵn trong HotelServiceRepository
-            services = hotelServiceRepo.searchActive(keyword.trim());
-        } else {
-            services = hotelServiceRepo.findAll();
-        }
-
+        List<HotelService> services = hotelServiceService.findAll();
         req.setAttribute("services", services);
         req.setAttribute("keyword", keyword);
 
         Long editId = longParamOrNull(req, "id");
         if (editId != null) {
-            req.setAttribute("editService", hotelServiceRepo.findById(editId));
+            req.setAttribute("editService", hotelServiceService.findById(editId));
         }
 
         req.getRequestDispatcher("/WEB-INF/views/service-management.jsp").forward(req, resp);
@@ -53,7 +43,7 @@ public class ManagerServiceController extends BaseController {
                 s.setUnitName(req.getParameter("unitName"));
                 s.setUnitPrice(decimalParam(req, "unitPrice"));
                 s.setImageUrl(req.getParameter("imageUrl"));
-                hotelServiceRepo.insert(s);
+                hotelServiceService.create(s);
                 resp.sendRedirect(req.getContextPath() + "/manager/services?ok=created");
 
             } else if ("update".equals(action)) {
@@ -65,14 +55,19 @@ public class ManagerServiceController extends BaseController {
                 s.setUnitName(req.getParameter("unitName"));
                 s.setUnitPrice(decimalParam(req, "unitPrice"));
                 s.setImageUrl(req.getParameter("imageUrl"));
-                hotelServiceRepo.update(s);
+                hotelServiceService.update(s);
                 resp.sendRedirect(req.getContextPath() + "/manager/services?ok=updated");
 
             } else if ("toggle".equals(action)) {
                 long id = longParam(req, "hotelServiceId");
                 boolean active = Boolean.parseBoolean(req.getParameter("active"));
-                hotelServiceRepo.toggleActive(id, active);
+                hotelServiceService.setActive(id, active);
                 resp.sendRedirect(req.getContextPath() + "/manager/services?ok=toggled");
+            } else if ("delete".equals(action)) {
+                hotelServiceService.deleteIfSafe(longParam(req, "hotelServiceId"));
+                resp.sendRedirect(req.getContextPath() + "/manager/services?ok=deleted");
+            } else {
+                throw new IllegalArgumentException("Hành động không hợp lệ");
             }
         } catch (Exception e) {
             resp.sendRedirect(req.getContextPath() + "/manager/services?err="

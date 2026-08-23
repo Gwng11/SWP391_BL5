@@ -84,6 +84,7 @@
 
               <!-- 4. Quick Links -->
               <div style="display:flex; gap:6px; margin-top:4px;">
+                <a class="btn btn-small" href="${pageContext.request.contextPath}/services?reservationId=${rv.reservationId}">🛎️ Yêu cầu dịch vụ</a>
                 <a class="btn btn-small btn-muted" href="${pageContext.request.contextPath}/reception/assign?reservationId=${rv.reservationId}">🔑 Xếp phòng</a>
                 <a class="btn btn-small btn-success" href="${pageContext.request.contextPath}/reception/invoice?reservationId=${rv.reservationId}">💳 Hóa đơn / Trả phòng</a>
               </div>
