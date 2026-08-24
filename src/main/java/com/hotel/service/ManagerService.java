@@ -160,12 +160,14 @@ public class ManagerService {
     public void inspectHousekeeping(long taskId,long staffId,boolean passed,String notes){if(!passed&&ValidationUtil.isBlank(notes))throw new IllegalArgumentException("Cần ghi rõ vấn đề khi inspection thất bại");getHousekeepingTask(taskId);housekeepingRepo.inspect(taskId,staffId,passed,trim(notes),CodeGenerator.maintenanceTicketCode());}
 
     public List<MaintenanceTicket> getMaintenanceTickets(String status,String priority,Long roomId,Long staffId){return maintenanceRepo.findAll(status,priority,roomId,staffId);}
+    public List<MaintenanceTicket> getMaintenanceWorkQueue(String status,String priority,Long roomId,long staffId){return maintenanceRepo.findStaffWorkQueue(status,priority,roomId,staffId);}
     public MaintenanceTicket getMaintenanceTicket(long id){MaintenanceTicket t=maintenanceRepo.findById(id);if(t==null)throw new IllegalArgumentException("Maintenance issue không tồn tại");return t;}
     public long reportMaintenance(long roomId,long reporterId,String title,String description,String priority,Long staffId){
         getRoom(roomId);if(ValidationUtil.isBlank(title)||ValidationUtil.isBlank(description))throw new IllegalArgumentException("Tiêu đề và mô tả là bắt buộc");if(title.trim().length()>150)throw new IllegalArgumentException("Tiêu đề tối đa 150 ký tự");validatePriority(priority);if(staffId!=null)requireStaff(staffId);
         MaintenanceTicket t=new MaintenanceTicket();t.setRoomId(roomId);t.setReportedByUserId(reporterId);t.setAssignedStaffUserId(staffId);t.setTicketCode(CodeGenerator.maintenanceTicketCode());t.setTitle(title.trim());t.setDescription(description.trim());t.setPriorityCode(priority);return maintenanceRepo.insert(t);
     }
     public void assignMaintenance(long id,String priority,long staffId){getMaintenanceTicket(id);validatePriority(priority);requireStaff(staffId);maintenanceRepo.assign(id,priority,staffId);}
+    public void claimMaintenance(long id,long staffId){requireStaff(staffId);maintenanceRepo.claim(id,staffId);}
     public void startMaintenance(long id,long staffId){getMaintenanceTicket(id);maintenanceRepo.start(id,staffId);}
     public void resolveMaintenance(long id,long staffId,String note){if(ValidationUtil.isBlank(note))throw new IllegalArgumentException("Repair note là bắt buộc");getMaintenanceTicket(id);maintenanceRepo.resolve(id,staffId,note.trim());}
     public void reopenMaintenance(long id,Long staffId){getMaintenanceTicket(id);if(staffId!=null)requireStaff(staffId);maintenanceRepo.reopen(id,staffId);}

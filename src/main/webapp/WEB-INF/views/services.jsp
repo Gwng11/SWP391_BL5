@@ -90,7 +90,7 @@
               <c:url var="detailUrl" value="/service-detail"><c:param name="id" value="${s.hotelServiceId}"/><c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' && not empty currentStay}"><c:param name="reservationId" value="${currentStay.reservationId}"/></c:if></c:url>
               <div class="service-footer">
                 <div><div class="price-from">Giá dịch vụ</div><div class="service-price"><fmt:formatNumber value="${s.unitPrice}"/> đ <small>/ <c:out value="${s.unitName}"/></small></div></div>
-                <c:choose><c:when test="${not empty currentStay}"><a class="btn" href="${detailUrl}">Chọn dịch vụ →</a></c:when><c:otherwise><span class="unavailable-note">Cần có kỳ lưu trú đang hoạt động để yêu cầu.</span></c:otherwise></c:choose>
+                <c:choose><c:when test="${not empty currentStay}"><a class="btn" href="${detailUrl}">Chọn dịch vụ →</a></c:when><c:otherwise><span class="unavailable-note">Cần có đơn đã xác nhận hoặc kỳ lưu trú đang hoạt động để yêu cầu.</span></c:otherwise></c:choose>
               </div>
             </div>
           </article>

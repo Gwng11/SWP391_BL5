@@ -56,31 +56,50 @@ public class ServiceRequestService {
     }
 
     /**
-     * Customer dùng kỳ ở CHECKED_IN duy nhất của chính mình. Receptionist nhận
-     * reservationId từ màn hình kỳ ở; người dùng không phải chọn lại trong form dịch vụ.
+     * Customer dùng kỳ ở CHECKED_IN hiện tại; nếu chưa check-in thì dùng đơn
+     * CONFIRMED duy nhất của chính mình. Receptionist nhận reservationId từ màn
+     * hình kỳ ở; người dùng không phải chọn lại trong form dịch vụ.
      */
     public Reservation resolveCurrentStay(User actor, Customer customer, Long reservationContextId) {
         requireRequestActor(actor);
         if (Constants.ROLE_CUSTOMER.equals(actor.getRoleCode())) {
             if (customer == null) throw new IllegalStateException("Không tìm thấy hồ sơ khách hàng hiện tại");
-            List<Reservation> stays = reservationRepo.findByCustomer(customer.getCustomerId()).stream()
+            List<Reservation> eligible = reservationRepo.findByCustomer(customer.getCustomerId()).stream()
+                    .filter(this::isServiceEligibleReservation)
+                    .toList();
+            List<Reservation> activeStays = eligible.stream()
                     .filter(r -> Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
                     .toList();
-            if (stays.isEmpty()) throw new IllegalStateException("Bạn chưa có kỳ lưu trú đang hoạt động");
-            if (stays.size() > 1) {
-                throw new IllegalStateException("Không thể xác định duy nhất kỳ lưu trú; vui lòng liên hệ lễ tân");
+            if (activeStays.size() == 1) return activeStays.get(0);
+            if (activeStays.size() > 1) {
+                throw new IllegalStateException("Không thể xác định duy nhất kỳ lưu trú đang hoạt động; vui lòng liên hệ lễ tân");
             }
-            return stays.get(0);
+            List<Reservation> confirmed = eligible.stream()
+                    .filter(r -> Constants.RES_CONFIRMED.equals(r.getStatusCode()))
+                    .toList();
+            if (confirmed.isEmpty()) {
+                throw new IllegalStateException("Bạn chưa có đơn đã xác nhận hoặc kỳ lưu trú đang hoạt động");
+            }
+            if (confirmed.size() > 1) {
+                throw new IllegalStateException("Bạn có nhiều đơn đã xác nhận; vui lòng liên hệ lễ tân để yêu cầu dịch vụ cho đúng đơn");
+            }
+            return confirmed.get(0);
         }
 
         if (reservationContextId == null) {
             throw new IllegalStateException("Vui lòng mở danh mục dịch vụ từ màn hình kỳ lưu trú");
         }
         Reservation stay = reservationRepo.findById(reservationContextId);
-        if (stay == null || !Constants.RES_CHECKED_IN.equals(stay.getStatusCode())) {
-            throw new IllegalStateException("Kỳ lưu trú không tồn tại hoặc không còn hoạt động");
+        if (stay == null || !isServiceEligibleReservation(stay)) {
+            throw new IllegalStateException("Đơn đặt phòng không tồn tại, chưa xác nhận hoặc không còn hoạt động");
         }
         return stay;
+    }
+
+    private boolean isServiceEligibleReservation(Reservation reservation) {
+        return reservation != null
+                && (Constants.RES_CONFIRMED.equals(reservation.getStatusCode())
+                    || Constants.RES_CHECKED_IN.equals(reservation.getStatusCode()));
     }
 
     public long createRequest(User actor, Customer customer, Long reservationContextId,
