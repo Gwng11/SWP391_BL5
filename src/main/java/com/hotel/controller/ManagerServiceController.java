@@ -9,8 +9,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-/** Quản lý danh mục dịch vụ dành cho Manager (CRUD + Ảnh image_url + Bật/Tắt + Tìm kiếm) */
-@WebServlet(urlPatterns = {"/manager/services"})
+/**
+ * Quản lý danh mục dịch vụ dành cho Manager (CRUD + Ảnh image_url + Bật/Tắt +
+ * Tìm kiếm)
+ */
+@WebServlet(urlPatterns = { "/manager/services" })
 public class ManagerServiceController extends BaseController {
 
     private final HotelServiceManagementService hotelServiceService = new HotelServiceManagementService();
@@ -19,7 +22,6 @@ public class ManagerServiceController extends BaseController {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<HotelService> services = hotelServiceService.findAll();
         req.setAttribute("services", services);
-        req.setAttribute("keyword", keyword);
 
         Long editId = longParamOrNull(req, "id");
         if (editId != null) {
