@@ -41,6 +41,8 @@ public class ServiceTaskController extends BaseController {
             } else if ("assignAuto".equals(action)) {
                 requireDispatcher(me);
                 serviceRequestService.assignAuto(id);
+            } else if ("claim".equals(action)) {
+                serviceRequestService.claim(id, me);
             } else if ("start".equals(action)) {
                 serviceRequestService.start(id, me);
             } else if ("complete".equals(action)) {

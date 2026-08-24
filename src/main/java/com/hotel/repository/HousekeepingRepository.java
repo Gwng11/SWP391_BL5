@@ -59,6 +59,37 @@ public class HousekeepingRepository extends BaseRepository implements IHousekeep
     }
 
     @Override
+    public List<HousekeepingTask> findStaffWorkQueue(String statusCode, Long roomId, long staffUserId) {
+        StringBuilder sql = new StringBuilder(SELECT
+                + "WHERE ((h.status_code='PENDING' AND h.assigned_staff_user_id IS NULL) "
+                + "OR h.assigned_staff_user_id=?) ");
+        List<Object> params = new ArrayList<>();
+        params.add(staffUserId);
+        if (statusCode != null && !statusCode.isBlank()) {
+            sql.append("AND h.status_code=? ");
+            params.add(statusCode);
+        }
+        if (roomId != null) {
+            sql.append("AND h.room_id=? ");
+            params.add(roomId);
+        }
+        sql.append("ORDER BY CASE h.status_code WHEN 'PENDING' THEN 1 WHEN 'ASSIGNED' THEN 2 "
+                + "WHEN 'IN_PROGRESS' THEN 3 ELSE 4 END, "
+                + "CASE h.priority_code WHEN 'URGENT' THEN 1 WHEN 'HIGH' THEN 2 "
+                + "WHEN 'NORMAL' THEN 3 ELSE 4 END, COALESCE(h.scheduled_at,h.created_at)");
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+            try (ResultSet rs = ps.executeQuery()) {
+                List<HousekeepingTask> list = new ArrayList<>();
+                while (rs.next()) list.add(map(rs));
+                return list;
+            }
+        } catch (SQLException e) {
+            throw wrap(e);
+        }
+    }
+
+    @Override
     public HousekeepingTask findById(long taskId) {
         try(Connection cn=getConnection(); PreparedStatement ps=cn.prepareStatement(SELECT+"WHERE h.housekeeping_task_id=?")){
             ps.setLong(1,taskId); try(ResultSet rs=ps.executeQuery()){ return rs.next()?map(rs):null; }
@@ -97,6 +128,15 @@ public class HousekeepingRepository extends BaseRepository implements IHousekeep
         String sql="UPDATE housekeeping_tasks SET assigned_staff_user_id=?,status_code='ASSIGNED',updated_at=SYSUTCDATETIME() "
                 +"WHERE housekeeping_task_id=? AND status_code IN ('PENDING','ASSIGNED','IN_PROGRESS')";
         executeTaskUpdate(sql,staffUserId,taskId,"Task không thể phân công/reassign");
+    }
+
+    @Override
+    public void claim(long taskId, long staffUserId) {
+        String sql = "UPDATE housekeeping_tasks SET assigned_staff_user_id=?,status_code='ASSIGNED',"
+                + "updated_at=SYSUTCDATETIME() WHERE housekeeping_task_id=? "
+                + "AND status_code='PENDING' AND assigned_staff_user_id IS NULL";
+        executeTaskUpdate(sql, staffUserId, taskId,
+                "Task đã được nhân viên khác nhận hoặc không còn chờ xử lý");
     }
 
     @Override

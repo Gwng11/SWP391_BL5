@@ -83,6 +83,12 @@ public class ServiceRequestRepository extends BaseRepository implements IService
     }
 
     @Override
+    public List<ServiceRequest> findByCustomer(long customerId) {
+        return queryList(JOIN_SQL + "WHERE sr.customer_id = ? ORDER BY sr.requested_at DESC",
+                ps -> ps.setLong(1, customerId));
+    }
+
+    @Override
     public List<ServiceRequest> findWorkQueue(String statusCode) {
         String sql = JOIN_SQL
                 + (statusCode == null || statusCode.isBlank() ? "" : "WHERE sr.status_code = ? ")
@@ -95,13 +101,26 @@ public class ServiceRequestRepository extends BaseRepository implements IService
 
     @Override
     public List<ServiceRequest> findAssignedToStaff(long staffUserId, String statusCode) {
-        String sql = JOIN_SQL + "WHERE sr.assigned_staff_user_id = ? "
+        String sql = JOIN_SQL
+                + "WHERE ((sr.status_code = 'PENDING' AND sr.assigned_staff_user_id IS NULL) "
+                + "OR sr.assigned_staff_user_id = ?) "
                 + (statusCode == null || statusCode.isBlank() ? "" : "AND sr.status_code = ? ")
-                + "ORDER BY sr.requested_for_at, sr.requested_at";
+                + "ORDER BY CASE sr.status_code WHEN 'PENDING' THEN 0 WHEN 'ASSIGNED' THEN 1 "
+                + "WHEN 'IN_PROGRESS' THEN 2 ELSE 3 END, sr.requested_for_at, sr.requested_at";
         return queryList(sql, ps -> {
             ps.setLong(1, staffUserId);
             if (statusCode != null && !statusCode.isBlank()) ps.setString(2, statusCode);
         });
+    }
+
+    @Override
+    public void claim(long serviceRequestId, long staffUserId) {
+        String sql = "UPDATE service_requests SET assigned_staff_user_id = ?, "
+                + "status_code = 'ASSIGNED', assigned_at = SYSUTCDATETIME(), started_at = NULL "
+                + "WHERE service_request_id = ? AND status_code = 'PENDING' "
+                + "AND assigned_staff_user_id IS NULL";
+        updateState(sql, "Yêu cầu đã được nhân viên khác nhận hoặc không còn chờ xử lý",
+                staffUserId, serviceRequestId);
     }
 
     @Override

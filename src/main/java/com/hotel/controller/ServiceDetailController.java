@@ -66,7 +66,9 @@ public class ServiceDetailController extends BaseController {
                     decimalParam(req, "quantity"),
                     requestedForAt,
                     req.getParameter("notes"));
-            resp.sendRedirect(req.getContextPath() + "/services?ok=1");
+            String successPath = Constants.ROLE_CUSTOMER.equals(me.getRoleCode())
+                    ? "/my-service-requests?created=1" : "/services?ok=1";
+            resp.sendRedirect(req.getContextPath() + successPath);
         } catch (IllegalArgumentException | IllegalStateException e) {
             long serviceId = longParam(req, "hotelServiceId");
             Long reservationId = longParamOrNull(req, "reservationId");
