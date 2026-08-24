@@ -24,7 +24,9 @@ public class PaymentService {
     private final ICustomerRepository customerRepo = new CustomerRepository();
     private final EmailService emailService = new EmailService();
 
-    public List<Payment> getByReservation(long reservationId) { return paymentRepo.findByReservation(reservationId); }
+    public List<Payment> getByReservation(long reservationId) {
+        return paymentRepo.findByReservation(reservationId);
+    }
 
     public BigDecimal getDepositPaid(long reservationId) {
         return paymentRepo.sumSuccess(reservationId, Constants.PAY_DEPOSIT);
@@ -42,20 +44,23 @@ public class PaymentService {
 
     /**
      * F08: ghi nhận đặt cọc.
-     * methodCode: CASH (lễ tân thu) hoặc ONLINE (giả lập cổng thanh toán trả về thành công).
+     * methodCode: CASH (lễ tân thu) hoặc ONLINE (giả lập cổng thanh toán trả về
+     * thành công).
      * Đủ cọc → đơn chuyển CONFIRMED + gửi email biên nhận.
      */
     public Payment payDeposit(long reservationId, BigDecimal amount, String methodCode, Long recordedByUserId) {
         Reservation r = reservationRepo.findById(reservationId);
-        if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
+        if (r == null)
+            throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_PENDING.equals(r.getStatusCode()) && !Constants.RES_CONFIRMED.equals(r.getStatusCode()))
             throw new IllegalStateException("Đơn không ở trạng thái nhận đặt cọc");
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Số tiền không hợp lệ");
-        // V9: không cho thu vượt phần còn phải thu của cả đơn (tính mọi khoản SUCCESS đã nhận)
+        // V9: không cho thu vượt phần còn phải thu của cả đơn (tính mọi khoản SUCCESS
+        // đã nhận)
         BigDecimal remaining = r.getTotalAmount().subtract(getTotalPaid(reservationId));
         if (amount.compareTo(remaining) > 0)
-            throw new IllegalArgumentException("Số tiền vượt phần còn phải thu của đơn (tối đa "
+            throw new IllegalArgumentException("Số tiền vượt phần còn phải thu của đơn(tối đa "
                     + remaining.toPlainString() + " đ)");
 
         Payment p = new Payment();
@@ -84,7 +89,8 @@ public class PaymentService {
 
     private void sendReceipt(Reservation r, Payment p) {
         Customer c = customerRepo.findById(r.getCustomerId());
-        if (c == null || c.getEmail() == null || c.getEmail().isEmpty()) return;
+        if (c == null || c.getEmail() == null || c.getEmail().isEmpty())
+            return;
         Map<String, String> params = new HashMap<>();
         params.put("full_name", c.getFullName());
         params.put("booking_code", r.getBookingCode());
