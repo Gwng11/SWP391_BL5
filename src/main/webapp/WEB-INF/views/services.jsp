@@ -18,6 +18,8 @@
   .service-shop .service-toolbar { display:flex;justify-content:space-between;align-items:center;gap:18px;margin:30px 0 20px; }
   .service-shop .service-toolbar h2 { margin:0;color:var(--svc-ink);font-size:25px; }
   .service-shop .service-toolbar p { margin:5px 0 0;color:#718096;font-size:13px; }
+  .service-shop .toolbar-actions { display:flex;align-items:center;gap:9px; }
+  .service-shop .my-requests-link { flex:none;padding:10px 14px;border:1px solid #bdd4ee;border-radius:999px;color:var(--svc-blue);text-decoration:none;font-size:12px;font-weight:800;white-space:nowrap; }
   .service-shop .service-search { display:flex;align-items:center;gap:8px;min-width:340px;padding:6px;border:1px solid #d7e2ef;border-radius:999px;background:#fff;box-shadow:0 5px 16px rgba(29,55,88,.07); }
   .service-shop .service-search input { flex:1;min-width:0;border:0;background:transparent;box-shadow:none;padding-left:12px; }
   .service-shop .service-search input:focus { outline:0;box-shadow:none; }
@@ -42,7 +44,7 @@
   .service-shop .unavailable-note { max-width:145px;color:#7a8798;font-size:11px;line-height:1.35;text-align:right; }
   .service-shop .catalog-empty { padding:50px 20px;text-align:center;border:1px dashed #bdd0e5;border-radius:16px;background:#f8fbff;color:#68778a; }
   @media(max-width:980px){.service-shop .service-grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:700px){.service-shop .service-hero{padding:27px 23px}.service-shop .service-hero h1{font-size:27px}.service-shop .service-toolbar{align-items:stretch;flex-direction:column}.service-shop .service-search{min-width:0;width:100%}.service-shop .service-grid{grid-template-columns:1fr}}
+  @media(max-width:700px){.service-shop .service-hero{padding:27px 23px}.service-shop .service-hero h1{font-size:27px}.service-shop .service-toolbar{align-items:stretch;flex-direction:column}.service-shop .toolbar-actions{align-items:stretch;flex-direction:column}.service-shop .my-requests-link{text-align:center}.service-shop .service-search{min-width:0;width:100%}.service-shop .service-grid{grid-template-columns:1fr}}
 </style>
 
 <div class="service-shop">
@@ -62,11 +64,14 @@
 
   <div class="service-toolbar">
     <div><h2>Dịch vụ nổi bật</h2><p>Chỉ hiển thị các dịch vụ đang hoạt động và có thể yêu cầu.</p></div>
-    <form method="get" action="${pageContext.request.contextPath}/services" class="service-search">
-      <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' && not empty currentStay}"><input type="hidden" name="reservationId" value="${currentStay.reservationId}"></c:if>
-      <input name="q" value="<c:out value='${keyword}'/>" placeholder="Tìm theo tên dịch vụ" aria-label="Tìm dịch vụ">
-      <button class="btn" type="submit">Tìm kiếm</button>
-    </form>
+    <div class="toolbar-actions">
+      <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}"><a class="my-requests-link" href="${pageContext.request.contextPath}/my-service-requests">Dịch vụ của tôi</a></c:if>
+      <form method="get" action="${pageContext.request.contextPath}/services" class="service-search">
+        <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' && not empty currentStay}"><input type="hidden" name="reservationId" value="${currentStay.reservationId}"></c:if>
+        <input name="q" value="<c:out value='${keyword}'/>" placeholder="Tìm theo tên dịch vụ" aria-label="Tìm dịch vụ">
+        <button class="btn" type="submit">Tìm kiếm</button>
+      </form>
+    </div>
   </div>
 
   <c:choose>

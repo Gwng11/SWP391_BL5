@@ -145,6 +145,7 @@ public class ManagerService {
 
     public List<User> getServiceStaff(){return userRepo.findActiveByRole(Constants.ROLE_SERVICE_STAFF);}
     public List<HousekeepingTask> getHousekeepingTasks(String status,Long roomId,Long staffId){return housekeepingRepo.findAll(status,roomId,staffId);}
+    public List<HousekeepingTask> getHousekeepingWorkQueue(String status,Long roomId,long staffId){return housekeepingRepo.findStaffWorkQueue(status,roomId,staffId);}
     public HousekeepingTask getHousekeepingTask(long id){HousekeepingTask t=housekeepingRepo.findById(id);if(t==null)throw new IllegalArgumentException("Housekeeping task không tồn tại");return t;}
     public long createHousekeepingTask(long roomId,Long reservationId,Long staffId,String type,String priority,LocalDateTime scheduled,String notes,long managerId){
         Room room=getRoom(roomId);validateTaskType(type);validatePriority(priority);if(staffId!=null)requireStaff(staffId);
@@ -153,6 +154,7 @@ public class ManagerService {
         HousekeepingTask task=new HousekeepingTask();task.setRoomId(roomId);task.setReservationId(reservationId);task.setAssignedStaffUserId(staffId);task.setCreatedByUserId(managerId);task.setTaskType(type);task.setPriorityCode(priority);task.setScheduledAt(scheduled);task.setNotes(trim(notes));return housekeepingRepo.insert(task);
     }
     public void assignHousekeeping(long taskId,long staffId){getHousekeepingTask(taskId);requireStaff(staffId);housekeepingRepo.assign(taskId,staffId);}
+    public void claimHousekeeping(long taskId,long staffId){requireStaff(staffId);housekeepingRepo.claim(taskId,staffId);}
     public void startHousekeeping(long taskId,long staffId){getHousekeepingTask(taskId);housekeepingRepo.start(taskId,staffId);}
     public void completeCleaning(long taskId,long staffId,String notes){getHousekeepingTask(taskId);housekeepingRepo.completeCleaning(taskId,staffId,trim(notes));}
     public void inspectHousekeeping(long taskId,long staffId,boolean passed,String notes){if(!passed&&ValidationUtil.isBlank(notes))throw new IllegalArgumentException("Cần ghi rõ vấn đề khi inspection thất bại");getHousekeepingTask(taskId);housekeepingRepo.inspect(taskId,staffId,passed,trim(notes),CodeGenerator.maintenanceTicketCode());}

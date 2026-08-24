@@ -6,7 +6,7 @@
 <div class="bk-page-header">
   <div class="bk-page-title">
     <h1>📋 Yêu cầu dịch vụ</h1>
-    <p><c:out value="${isDispatcher ? 'Phân công và theo dõi yêu cầu của khách' : 'Các yêu cầu đã phân công cho bạn'}"/></p>
+    <p><c:out value="${isDispatcher ? 'Phân công và theo dõi yêu cầu của khách' : 'Nhận yêu cầu mới từ hàng đợi chung và xử lý công việc của bạn'}"/></p>
   </div>
 </div>
 
@@ -15,7 +15,7 @@
   <label>Trạng thái</label>
   <select name="status">
     <option value="">Tất cả</option>
-    <option value="PENDING" ${statusFilter == 'PENDING' ? 'selected' : ''}>Chờ phân công</option>
+    <option value="PENDING" ${statusFilter == 'PENDING' ? 'selected' : ''}>${isDispatcher ? 'Chờ phân công' : 'Chờ nhận việc'}</option>
     <option value="ASSIGNED" ${statusFilter == 'ASSIGNED' ? 'selected' : ''}>Đã phân công</option>
     <option value="IN_PROGRESS" ${statusFilter == 'IN_PROGRESS' ? 'selected' : ''}>Đang thực hiện</option>
     <option value="COMPLETED" ${statusFilter == 'COMPLETED' ? 'selected' : ''}>Hoàn tất</option>
@@ -42,6 +42,13 @@
         <td><c:out value="${empty s.staffName ? 'Chưa phân công' : s.staffName}"/></td>
         <td style="max-width:240px;white-space:pre-wrap"><c:out value="${s.notes}"/></td>
         <td>
+          <c:if test="${!isDispatcher && s.statusCode == 'PENDING'}">
+            <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
+              <input type="hidden" name="id" value="${s.serviceRequestId}">
+              <input type="hidden" name="action" value="claim">
+              <button class="btn btn-gold" type="submit">Nhận việc</button>
+            </form>
+          </c:if>
           <c:if test="${isDispatcher && (s.statusCode == 'PENDING' || s.statusCode == 'ASSIGNED')}">
             <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">

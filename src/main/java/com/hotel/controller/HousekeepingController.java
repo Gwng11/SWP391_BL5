@@ -22,8 +22,10 @@ public class HousekeepingController extends BaseController{
     @Override protected void doGet(HttpServletRequest req,HttpServletResponse resp)throws ServletException,IOException{
         User me=currentUser(req);boolean manager=Constants.ROLE_MANAGER.equals(me.getRoleCode());
         req.setAttribute("isManager",manager);
-        Long staffFilter=manager?longParamOrNull(req,"staffId"):Long.valueOf(me.getUserId());
-        try{req.setAttribute("tasks",service.getHousekeepingTasks(req.getParameter("status"),longParamOrNull(req,"roomId"),staffFilter));}
+        Long staffFilter=manager?longParamOrNull(req,"staffId"):null;
+        try{req.setAttribute("tasks",manager
+                    ?service.getHousekeepingTasks(req.getParameter("status"),longParamOrNull(req,"roomId"),staffFilter)
+                    :service.getHousekeepingWorkQueue(req.getParameter("status"),longParamOrNull(req,"roomId"),me.getUserId()));}
         catch(RuntimeException e){LOGGER.log(Level.WARNING,"Housekeeping task list failed",e);req.setAttribute("tasks",List.of());req.setAttribute("err","Không tải được danh sách housekeeping task. Bạn vẫn có thể tạo task mới bên dưới.");}
         try{req.setAttribute("rooms",service.getRooms(null,null,null));}
         catch(RuntimeException e){LOGGER.log(Level.WARNING,"Housekeeping room list failed",e);req.setAttribute("rooms",List.of());req.setAttribute("err","Không tải được danh sách phòng. Vui lòng thử lại.");}
@@ -40,7 +42,8 @@ public class HousekeepingController extends BaseController{
                 else if("assign".equals(action))service.assignHousekeeping(longParam(req,"taskId"),longParam(req,"staffId"));
                 else throw new IllegalStateException(Constants.MSG_NO_PERMISSION);
             }else{
-                if("start".equals(action))service.startHousekeeping(longParam(req,"taskId"),me.getUserId());
+                if("claim".equals(action))service.claimHousekeeping(longParam(req,"taskId"),me.getUserId());
+                else if("start".equals(action))service.startHousekeeping(longParam(req,"taskId"),me.getUserId());
                 else if("complete".equals(action))service.completeCleaning(longParam(req,"taskId"),me.getUserId(),req.getParameter("notes"));
                 else if("inspectPass".equals(action))service.inspectHousekeeping(longParam(req,"taskId"),me.getUserId(),true,req.getParameter("notes"));
                 else if("inspectFail".equals(action))service.inspectHousekeeping(longParam(req,"taskId"),me.getUserId(),false,req.getParameter("notes"));

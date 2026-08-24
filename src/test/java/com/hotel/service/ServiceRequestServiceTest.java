@@ -71,6 +71,23 @@ class ServiceRequestServiceTest {
     }
 
     @Test
+    void customerHistoryIsLoadedByAuthenticatedCustomerId() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+        ServiceRequest request = request(Constants.SR_COMPLETED);
+        when(requests.findByCustomer(9)).thenReturn(List.of(request));
+
+        assertEquals(List.of(request), service.getCustomerRequests(actor, customer));
+        verify(requests).findByCustomer(9);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.getCustomerRequests(user(2, Constants.ROLE_RECEPTIONIST), customer));
+        assertThrows(IllegalStateException.class,
+                () -> service.getCustomerRequests(actor, null));
+    }
+
+    @Test
     void receptionistUsesValidatedStayContextWithoutASelectionForm() {
         User actor = user(2, Constants.ROLE_RECEPTIONIST);
         Reservation stay = stay(17, 9);
@@ -106,15 +123,28 @@ class ServiceRequestServiceTest {
     @Test
     void staffActionsPassActorIdToAssignmentProtectedRepositoryMethods() {
         User staff = user(8, Constants.ROLE_SERVICE_STAFF);
+        service.claim(9, staff);
         service.start(10, staff);
         service.complete(10, staff);
         service.reportUnable(11, staff, "Thiếu thiết bị");
+        verify(requests).claim(9, 8);
         verify(requests).start(10, 8);
         verify(requests).completeAndAddCharge(10, 8);
         verify(requests).reportUnable(11, 8, "Thiếu thiết bị");
 
         User receptionist = user(2, Constants.ROLE_RECEPTIONIST);
+        assertThrows(IllegalStateException.class, () -> service.claim(9, receptionist));
         assertThrows(IllegalStateException.class, () -> service.complete(10, receptionist));
+    }
+
+    @Test
+    void staffWorkQueueUsesSharedPendingAndOwnAssignmentsRepositoryView() {
+        User staff = user(8, Constants.ROLE_SERVICE_STAFF);
+        ServiceRequest pending = request(Constants.SR_PENDING);
+        when(requests.findAssignedToStaff(8, null)).thenReturn(List.of(pending));
+
+        assertEquals(List.of(pending), service.getRequestsFor(staff, null));
+        verify(requests).findAssignedToStaff(8, null);
     }
 
     @Test

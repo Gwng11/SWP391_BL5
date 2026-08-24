@@ -127,8 +127,24 @@ public class ServiceRequestService {
         throw new IllegalStateException("Bạn không có quyền xem yêu cầu dịch vụ");
     }
 
+    /** Danh sách yêu cầu thuộc đúng hồ sơ Customer đang đăng nhập. */
+    public List<ServiceRequest> getCustomerRequests(User actor, Customer customer) {
+        if (actor == null || !Constants.ROLE_CUSTOMER.equals(actor.getRoleCode())) {
+            throw new IllegalStateException("Chỉ khách hàng được xem lịch sử dịch vụ của mình");
+        }
+        if (customer == null) {
+            throw new IllegalStateException("Không tìm thấy hồ sơ khách hàng hiện tại");
+        }
+        return requestRepo.findByCustomer(customer.getCustomerId());
+    }
+
     public List<User> getAssignableStaff() {
         return userRepo.findActiveServiceStaffWithWorkload(SERVICE_DEPARTMENT);
+    }
+
+    public void claim(long serviceRequestId, User actor) {
+        requireServiceStaff(actor);
+        requestRepo.claim(serviceRequestId, actor.getUserId());
     }
 
     public void assign(long serviceRequestId, long staffUserId) {

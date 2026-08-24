@@ -24,7 +24,8 @@ import java.util.Set;
 public class AuthFilter implements Filter {
 
     private static final Set<String> LOGIN_REQUIRED_PREFIX = Set.of(
-            "/profile", "/my-reservations", "/reservation", "/booking", "/services", "/deposit");
+            "/profile", "/my-reservations", "/my-service-requests", "/reservation",
+            "/booking", "/services", "/deposit");
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

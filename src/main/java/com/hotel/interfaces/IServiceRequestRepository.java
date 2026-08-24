@@ -7,9 +7,12 @@ public interface IServiceRequestRepository {
     long insert(ServiceRequest sr);
     ServiceRequest findById(long serviceRequestId);
     List<ServiceRequest> findByReservation(long reservationId);
+    /** Lịch sử yêu cầu của một khách hàng trên tất cả kỳ lưu trú. */
+    List<ServiceRequest> findByCustomer(long customerId);
     /** F16: hàng đợi công việc; statusCode = null → tất cả trạng thái chưa hủy */
     List<ServiceRequest> findWorkQueue(String statusCode);
     List<ServiceRequest> findAssignedToStaff(long staffUserId, String statusCode);
+    void claim(long serviceRequestId, long staffUserId);
     void assign(long serviceRequestId, long staffUserId);
     void start(long serviceRequestId, long staffUserId);
     void completeAndAddCharge(long serviceRequestId, long staffUserId);

@@ -582,7 +582,8 @@ tbody tr:last-child td {
       <c:if test="${not empty sessionScope.currentUser}">
         <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}">
           <a href="${pageContext.request.contextPath}/my-reservations" class="bk-nav-item">📋 Đơn của tôi</a>
-          <a href="${pageContext.request.contextPath}/services" class="bk-nav-item">🛎️ Dịch vụ</a>
+          <a href="${pageContext.request.contextPath}/services" class="bk-nav-item">🛎️ Đặt dịch vụ</a>
+          <a href="${pageContext.request.contextPath}/my-service-requests" class="bk-nav-item">📋 Dịch vụ của tôi</a>
         </c:if>
         
         <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}">
