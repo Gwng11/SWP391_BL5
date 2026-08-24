@@ -71,6 +71,51 @@ class ServiceRequestServiceTest {
     }
 
     @Test
+    void customerWithConfirmedReservationCanRequestServiceBeforeCheckIn() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+        Reservation confirmed = stay(17, 9);
+        confirmed.setStatusCode(Constants.RES_CONFIRMED);
+        when(reservations.findByCustomer(9)).thenReturn(List.of(confirmed));
+        when(services.findById(3)).thenReturn(hotelService(true));
+        when(requests.insert(any())).thenReturn(45L);
+
+        assertEquals(45L, service.createRequest(actor, customer, null, 3,
+                BigDecimal.ONE, LocalDateTime.now().plusDays(1), null));
+
+        ArgumentCaptor<ServiceRequest> captor = ArgumentCaptor.forClass(ServiceRequest.class);
+        verify(requests).insert(captor.capture());
+        assertEquals(17L, captor.getValue().getReservationId());
+    }
+
+    @Test
+    void activeStayIsPreferredOverConfirmedFutureReservation() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+        Reservation active = stay(17, 9);
+        Reservation confirmed = stay(18, 9);
+        confirmed.setStatusCode(Constants.RES_CONFIRMED);
+        when(reservations.findByCustomer(9)).thenReturn(List.of(confirmed, active));
+
+        assertSame(active, service.resolveCurrentStay(actor, customer, null));
+    }
+
+    @Test
+    void pendingReservationCannotRequestService() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+        Reservation pending = stay(17, 9);
+        pending.setStatusCode(Constants.RES_PENDING);
+        when(reservations.findByCustomer(9)).thenReturn(List.of(pending));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.resolveCurrentStay(actor, customer, null));
+    }
+
+    @Test
     void customerHistoryIsLoadedByAuthenticatedCustomerId() {
         User actor = user(5, Constants.ROLE_CUSTOMER);
         Customer customer = new Customer();
@@ -91,6 +136,7 @@ class ServiceRequestServiceTest {
     void receptionistUsesValidatedStayContextWithoutASelectionForm() {
         User actor = user(2, Constants.ROLE_RECEPTIONIST);
         Reservation stay = stay(17, 9);
+        stay.setStatusCode(Constants.RES_CONFIRMED);
         when(reservations.findById(17)).thenReturn(stay);
         assertSame(stay, service.resolveCurrentStay(actor, null, 17L));
         assertThrows(IllegalStateException.class,

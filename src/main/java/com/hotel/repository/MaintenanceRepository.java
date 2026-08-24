@@ -41,6 +41,25 @@ public class MaintenanceRepository extends BaseRepository implements IMaintenanc
     }
 
     @Override
+    public List<MaintenanceTicket> findStaffWorkQueue(String status,String priority,Long roomId,long staffId){
+        StringBuilder sql=new StringBuilder(SELECT
+                +"WHERE ((m.status_code='OPEN' AND m.assigned_staff_user_id IS NULL) "
+                +"OR m.assigned_staff_user_id=?) ");
+        List<Object> params=new ArrayList<>();params.add(staffId);
+        if(status!=null&&!status.isBlank()){sql.append("AND m.status_code=? ");params.add(status);}
+        if(priority!=null&&!priority.isBlank()){sql.append("AND m.priority_code=? ");params.add(priority);}
+        if(roomId!=null){sql.append("AND m.room_id=? ");params.add(roomId);}
+        sql.append("ORDER BY CASE m.status_code WHEN 'OPEN' THEN 1 WHEN 'ASSIGNED' THEN 2 "
+                +"WHEN 'IN_PROGRESS' THEN 3 ELSE 4 END, "
+                +"CASE m.priority_code WHEN 'URGENT' THEN 1 WHEN 'HIGH' THEN 2 "
+                +"WHEN 'NORMAL' THEN 3 ELSE 4 END,m.reported_at DESC");
+        try(Connection cn=getConnection();PreparedStatement ps=cn.prepareStatement(sql.toString())){
+            for(int i=0;i<params.size();i++)ps.setObject(i+1,params.get(i));
+            try(ResultSet rs=ps.executeQuery()){List<MaintenanceTicket> list=new ArrayList<>();while(rs.next())list.add(map(rs));return list;}
+        }catch(SQLException e){throw wrap(e);}
+    }
+
+    @Override
     public MaintenanceTicket findById(long id){
         try(Connection cn=getConnection();PreparedStatement ps=cn.prepareStatement(SELECT+"WHERE m.maintenance_ticket_id=?")){ps.setLong(1,id);try(ResultSet rs=ps.executeQuery()){return rs.next()?map(rs):null;}}catch(SQLException e){throw wrap(e);}
     }
@@ -62,6 +81,15 @@ public class MaintenanceRepository extends BaseRepository implements IMaintenanc
     @Override
     public void assign(long id,String priority,long staffId){
         update("UPDATE maintenance_tickets SET priority_code=?,assigned_staff_user_id=?,status_code='ASSIGNED',started_at=NULL,resolved_at=NULL,closed_at=NULL,updated_at=SYSUTCDATETIME() WHERE maintenance_ticket_id=? AND status_code IN ('OPEN','ASSIGNED','IN_PROGRESS','RESOLVED')",priority,staffId,id,"Issue không thể phân công");
+    }
+
+    @Override
+    public void claim(long id,long staffId){
+        update("UPDATE maintenance_tickets SET assigned_staff_user_id=?,status_code='ASSIGNED',"
+                        +"started_at=NULL,resolved_at=NULL,closed_at=NULL,updated_at=SYSUTCDATETIME() "
+                        +"WHERE maintenance_ticket_id=? AND status_code='OPEN' "
+                        +"AND assigned_staff_user_id IS NULL",
+                staffId,id,"Issue đã được nhân viên khác nhận hoặc không còn chờ xử lý");
     }
 
     @Override

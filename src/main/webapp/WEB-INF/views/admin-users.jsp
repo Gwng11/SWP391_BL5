@@ -156,11 +156,19 @@
 
             <div>
               <label>🛡️ Vai trò hệ thống *</label>
-              <select name="roleCode" required>
-                <c:forEach var="r" items="${roles}">
-                  <option value="${r}" ${editUser.roleCode == r ? 'selected' : ''}>${r}</option>
-                </c:forEach>
-              </select>
+              <c:choose>
+                <c:when test="${editUser.roleCode == 'ADMIN'}">
+                  <input type="hidden" name="roleCode" value="ADMIN">
+                  <input value="ADMIN (không thể thay đổi)" disabled style="background:#f8fafc; color:#64748b;">
+                </c:when>
+                <c:otherwise>
+                  <select name="roleCode" required>
+                    <c:forEach var="r" items="${assignableRoles}">
+                      <option value="${r}" ${editUser.roleCode == r ? 'selected' : ''}>${r}</option>
+                    </c:forEach>
+                  </select>
+                </c:otherwise>
+              </c:choose>
             </div>
 
             <div>
@@ -180,11 +188,6 @@
                   <option value="${s}" ${editUser.statusCode == s ? 'selected' : ''}>${s}</option>
                 </c:forEach>
               </select>
-            </div>
-
-            <div>
-              <label>🔒 Khóa tài khoản đến</label>
-              <input name="lockedUntil" value="${editUser.lockedUntil}" placeholder="yyyy-MM-ddThh:mm:ss">
             </div>
 
             <div class="full form-actions" style="border-top: 1px solid var(--bk-border); padding-top: 16px;">
@@ -263,7 +266,7 @@
             <div>
               <label>🛡️ Vai trò nhân viên *</label>
               <select name="roleCode" required>
-                <c:forEach var="r" items="${roles}">
+                <c:forEach var="r" items="${assignableRoles}">
                   <c:if test="${r != 'CUSTOMER'}">
                     <option value="${r}" ${(not empty param.roleCode ? param.roleCode == r : r == 'RECEPTIONIST') ? 'selected' : ''}>${r}</option>
                   </c:if>

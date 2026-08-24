@@ -5,9 +5,11 @@ import java.util.List;
 
 public interface IMaintenanceRepository {
     List<MaintenanceTicket> findAll(String statusCode, String priorityCode, Long roomId, Long staffUserId);
+    List<MaintenanceTicket> findStaffWorkQueue(String statusCode, String priorityCode, Long roomId, long staffUserId);
     MaintenanceTicket findById(long ticketId);
     long insert(MaintenanceTicket ticket);
     void assign(long ticketId, String priorityCode, long staffUserId);
+    void claim(long ticketId, long staffUserId);
     void start(long ticketId, long staffUserId);
     void resolve(long ticketId, long staffUserId, String resolutionNote);
     void reopen(long ticketId, Long staffUserId);

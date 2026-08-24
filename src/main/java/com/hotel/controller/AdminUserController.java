@@ -48,8 +48,14 @@ public class AdminUserController extends BaseController {
             Constants.ROLE_SERVICE_STAFF,
             Constants.ROLE_CUSTOMER
         ));
+        req.setAttribute("assignableRoles", List.of(
+            Constants.ROLE_MANAGER,
+            Constants.ROLE_RECEPTIONIST,
+            Constants.ROLE_SERVICE_STAFF,
+            Constants.ROLE_CUSTOMER
+        ));
         req.setAttribute("departments", List.of("GENERAL_SERVICE", "HOUSEKEEPING", "MAINTENANCE", "FRONT_DESK"));
-        req.setAttribute("statuses", List.of("ACTIVE", "LOCKED", "INACTIVE"));
+        req.setAttribute("statuses", List.of("ACTIVE", "INACTIVE"));
 
         req.getRequestDispatcher("/WEB-INF/views/admin-users.jsp").forward(req, resp);
     }
@@ -79,9 +85,8 @@ public class AdminUserController extends BaseController {
                 String roleCode = req.getParameter("roleCode");
                 String departmentCode = req.getParameter("departmentCode");
                 String statusCode = req.getParameter("statusCode");
-                String lockedUntil = req.getParameter("lockedUntil");
 
-                adminService.updateUser(userId, fullName, phone, address, identificationNumber, roleCode, departmentCode, statusCode, lockedUntil);
+                adminService.updateUser(userId, fullName, phone, address, identificationNumber, roleCode, departmentCode, statusCode);
                 redirect(req, resp, "/admin/users", "msg", "Cập nhật tài khoản thành công!");
             } else if ("resetPassword".equals(action)) {
                 long userId = longParam(req, "userId");

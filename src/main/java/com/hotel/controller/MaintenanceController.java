@@ -15,7 +15,9 @@ public class MaintenanceController extends BaseController{
     private final ManagerService service=new ManagerService();
     @Override protected void doGet(HttpServletRequest req,HttpServletResponse resp)throws ServletException,IOException{
         User me=currentUser(req);boolean manager=Constants.ROLE_MANAGER.equals(me.getRoleCode());
-        try{req.setAttribute("isManager",manager);req.setAttribute("issues",service.getMaintenanceTickets(req.getParameter("status"),req.getParameter("priority"),longParamOrNull(req,"roomId"),manager?longParamOrNull(req,"staffId"):null));req.setAttribute("rooms",service.getRooms(null,null,null));if(manager)req.setAttribute("staff",service.getServiceStaff());}
+        try{req.setAttribute("isManager",manager);req.setAttribute("issues",manager
+                    ?service.getMaintenanceTickets(req.getParameter("status"),req.getParameter("priority"),longParamOrNull(req,"roomId"),longParamOrNull(req,"staffId"))
+                    :service.getMaintenanceWorkQueue(req.getParameter("status"),req.getParameter("priority"),longParamOrNull(req,"roomId"),me.getUserId()));req.setAttribute("rooms",service.getRooms(null,null,null));if(manager)req.setAttribute("staff",service.getServiceStaff());}
         catch(RuntimeException e){req.setAttribute("err","Không tải được maintenance issues.");}
         req.getRequestDispatcher("/WEB-INF/views/maintenance.jsp").forward(req,resp);
     }
@@ -30,6 +32,7 @@ public class MaintenanceController extends BaseController{
                 else throw new IllegalStateException(Constants.MSG_NO_PERMISSION);
             }else{
                 if("report".equals(action))service.reportMaintenance(longParam(req,"roomId"),me.getUserId(),req.getParameter("title"),req.getParameter("description"),req.getParameter("priority"),null);
+                else if("claim".equals(action))service.claimMaintenance(longParam(req,"ticketId"),me.getUserId());
                 else if("start".equals(action))service.startMaintenance(longParam(req,"ticketId"),me.getUserId());
                 else if("resolve".equals(action))service.resolveMaintenance(longParam(req,"ticketId"),me.getUserId(),req.getParameter("resolutionNote"));
                 else throw new IllegalStateException(Constants.MSG_NO_PERMISSION);

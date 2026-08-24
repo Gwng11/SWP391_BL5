@@ -55,7 +55,7 @@
     </div>
     <c:choose>
       <c:when test="${not empty currentStay}"><a class="hero-action" href="${pageContext.request.contextPath}/services">＋ Đặt thêm dịch vụ</a></c:when>
-      <c:otherwise><span class="hero-action disabled"><c:out value="${empty stayError ? 'Cần có kỳ lưu trú đang hoạt động để đặt dịch vụ.' : stayError}"/></span></c:otherwise>
+      <c:otherwise><span class="hero-action disabled"><c:out value="${empty stayError ? 'Cần có đơn đã xác nhận hoặc kỳ lưu trú đang hoạt động để đặt dịch vụ.' : stayError}"/></span></c:otherwise>
     </c:choose>
   </section>
 

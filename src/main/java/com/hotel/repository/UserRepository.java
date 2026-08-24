@@ -198,8 +198,8 @@ public class UserRepository extends BaseRepository implements IUserRepository {
     }
 
     @Override
-    public void updateByAdmin(long userId, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String statusCode, LocalDateTime lockedUntil) {
-        String sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, identification_number = ?, role_code = ?, department_code = ?, status_code = ?, locked_until = ?, updated_at = SYSUTCDATETIME() WHERE user_id = ?";
+    public void updateByAdmin(long userId, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String statusCode) {
+        String sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, identification_number = ?, role_code = ?, department_code = ?, status_code = ?, updated_at = SYSUTCDATETIME() WHERE user_id = ?";
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, fullName);
             ps.setString(2, phone);
@@ -208,8 +208,7 @@ public class UserRepository extends BaseRepository implements IUserRepository {
             ps.setString(5, roleCode);
             ps.setString(6, departmentCode);
             ps.setString(7, statusCode);
-            bindTs(ps, 8, lockedUntil);
-            ps.setLong(9, userId);
+            ps.setLong(8, userId);
             ps.executeUpdate();
         } catch (SQLException e) { throw wrap(e); }
     }

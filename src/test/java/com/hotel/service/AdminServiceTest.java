@@ -8,7 +8,6 @@ import com.hotel.interfaces.IEmailTemplateRepository;
 import com.hotel.interfaces.IUserRepository;
 import com.hotel.ultis.Constants;
 import com.hotel.ultis.PasswordUtil;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,9 +86,45 @@ class AdminServiceTest {
         User u = new User();
         when(userRepo.findById(123L)).thenReturn(u);
 
-        service.updateUser(123L, "New Name", "0900000002", "Hanoi 2", "ID456", "MANAGER", null, "ACTIVE", "2026-08-20T12:00:00");
+        service.updateUser(123L, "New Name", "0900000002", "Hanoi 2", "ID456", "MANAGER", null, "ACTIVE");
 
-        verify(userRepo).updateByAdmin(eq(123L), eq("New Name"), eq("0900000002"), eq("Hanoi 2"), eq("ID456"), eq("MANAGER"), any(), eq("ACTIVE"), any(LocalDateTime.class));
+        verify(userRepo).updateByAdmin(eq(123L), eq("New Name"), eq("0900000002"), eq("Hanoi 2"), eq("ID456"), eq("MANAGER"), any(), eq("ACTIVE"));
+    }
+
+    @Test
+    void createEmployeeRejectsAdminRole() {
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> service.createEmployee("new-admin@hotel.vn", "Password123", "New Admin",
+                        null, null, null, "ADMIN", null, "http://localhost"));
+        assertEquals("Không được tạo tài khoản với vai trò ADMIN", error.getMessage());
+        verify(userRepo, never()).insert(any());
+    }
+
+    @Test
+    void updateUserRejectsPromotionToAdmin() {
+        User receptionist = new User();
+        receptionist.setRoleCode(Constants.ROLE_RECEPTIONIST);
+        when(userRepo.findById(123L)).thenReturn(receptionist);
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> service.updateUser(123L, "Name", null, null, null,
+                        "ADMIN", null, "ACTIVE"));
+
+        assertEquals("Không được thay đổi tài khoản thành vai trò ADMIN", error.getMessage());
+        verify(userRepo, never()).updateByAdmin(anyLong(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateExistingAdminKeepsAdminRole() {
+        User admin = new User();
+        admin.setRoleCode(Constants.ROLE_ADMIN);
+        when(userRepo.findById(123L)).thenReturn(admin);
+
+        service.updateUser(123L, "Admin Name", null, null, null,
+                Constants.ROLE_ADMIN, null, "ACTIVE");
+
+        verify(userRepo).updateByAdmin(eq(123L), eq("Admin Name"), isNull(), isNull(), isNull(),
+                eq(Constants.ROLE_ADMIN), isNull(), eq("ACTIVE"));
     }
 
     @Test

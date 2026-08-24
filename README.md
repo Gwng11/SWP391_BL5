@@ -12,6 +12,7 @@ Chạy lần lượt trong SSMS (database `SingleHotelManagementDB` đã tạo s
 2. `sql/patch_03_manager.sql` — **bắt buộc cho Manager**: profile nhân viên, trạng thái phòng, inspection/audit và index dashboard/report
 3. `sql/patch_02_seed_data.sql` — dữ liệu mẫu + tài khoản test:
 4. `sql/patch_04_manager_demo_data.sql` — **tùy chọn, nên chạy khi demo Manager**: room type/phòng/trạng thái, giá theo ngày, reservation/payment, housekeeping, maintenance và report data mang mã `MGR-DEMO`
+5. `sql/patch_08_staff_work_queue_demo.sql` — **tùy chọn để test Staff**: thêm tối đa 4 housekeeping task `PENDING` và 4 maintenance issue `OPEN`, đều chưa phân công để nhiều Staff thử nhận việc
 
 | Tài khoản | Mật khẩu | Vai trò |
 |---|---|---|

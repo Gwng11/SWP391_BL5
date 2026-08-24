@@ -13,10 +13,16 @@ import com.hotel.ultis.PasswordUtil;
 import com.hotel.ultis.ValidationUtil;
 import com.hotel.ultis.EmailUtil;
 import com.hotel.ultis.Constants;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class AdminService {
+    private static final Set<String> ASSIGNABLE_ROLES = Set.of(
+            Constants.ROLE_MANAGER,
+            Constants.ROLE_RECEPTIONIST,
+            Constants.ROLE_SERVICE_STAFF,
+            Constants.ROLE_CUSTOMER);
     private final IUserRepository userRepo;
     private final IEmailTemplateRepository templateRepo;
     private final IEmailLogRepository logRepo;
@@ -45,7 +51,7 @@ public class AdminService {
     public long createEmployee(String email, String rawPassword, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String appBaseUrl) {
         if (!ValidationUtil.isEmail(email)) throw new IllegalArgumentException("Email không hợp lệ");
         if (ValidationUtil.isBlank(fullName)) throw new IllegalArgumentException("Họ tên không được để trống");
-        if (ValidationUtil.isBlank(roleCode)) throw new IllegalArgumentException("Vai trò không được để trống");
+        String normalizedRole = requireAssignableRole(roleCode, "Không được tạo tài khoản với vai trò ADMIN");
         if (userRepo.findByEmail(email) != null) throw new IllegalArgumentException("Email đã tồn tại");
 
         User u = new User();
@@ -54,7 +60,7 @@ public class AdminService {
         u.setPhone(phone != null ? phone.trim() : null);
         u.setAddress(address != null ? address.trim() : null);
         u.setIdentificationNumber(identificationNumber != null ? identificationNumber.trim() : null);
-        u.setRoleCode(roleCode.trim());
+        u.setRoleCode(normalizedRole);
         u.setDepartmentCode(ValidationUtil.isBlank(departmentCode) ? null : departmentCode.trim());
         u.setStatusCode("ACTIVE");
 
@@ -82,25 +88,18 @@ public class AdminService {
         return userId;
     }
 
-    public void updateUser(long userId, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String statusCode, String lockedUntilStr) {
+    public void updateUser(long userId, String fullName, String phone, String address, String identificationNumber, String roleCode, String departmentCode, String statusCode) {
         User u = userRepo.findById(userId);
         if (u == null) throw new IllegalArgumentException("Tài khoản không tồn tại");
 
         if (ValidationUtil.isBlank(fullName)) throw new IllegalArgumentException("Họ tên không được để trống");
-        if (ValidationUtil.isBlank(roleCode)) throw new IllegalArgumentException("Vai trò không được để trống");
         if (ValidationUtil.isBlank(statusCode)) throw new IllegalArgumentException("Trạng thái không được để trống");
-
-        LocalDateTime lockedUntil = null;
-        if (lockedUntilStr != null && !lockedUntilStr.trim().isEmpty()) {
-            try {
-                lockedUntil = LocalDateTime.parse(lockedUntilStr.trim());
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Định dạng ngày khóa không hợp lệ (yyyy-MM-ddThh:mm:ss)");
-            }
-        }
+        String normalizedRole = Constants.ROLE_ADMIN.equals(u.getRoleCode())
+                ? Constants.ROLE_ADMIN
+                : requireAssignableRole(roleCode, "Không được thay đổi tài khoản thành vai trò ADMIN");
 
         String dep = ValidationUtil.isBlank(departmentCode) ? null : departmentCode.trim();
-        userRepo.updateByAdmin(userId, fullName.trim(), phone != null ? phone.trim() : null, address != null ? address.trim() : null, identificationNumber != null ? identificationNumber.trim() : null, roleCode.trim(), dep, statusCode.trim(), lockedUntil);
+        userRepo.updateByAdmin(userId, fullName.trim(), phone != null ? phone.trim() : null, address != null ? address.trim() : null, identificationNumber != null ? identificationNumber.trim() : null, normalizedRole, dep, statusCode.trim());
     }
 
     public void resetUserPassword(long userId, String newPassword) {
@@ -169,8 +168,16 @@ public class AdminService {
         try {
             userRepo.delete(userId);
         } catch (Exception e) {
-            userRepo.updateByAdmin(userId, u.getFullName(), u.getPhone(), u.getAddress(), u.getIdentificationNumber(), u.getRoleCode(), u.getDepartmentCode(), "INACTIVE", null);
+            userRepo.updateByAdmin(userId, u.getFullName(), u.getPhone(), u.getAddress(), u.getIdentificationNumber(), u.getRoleCode(), u.getDepartmentCode(), "INACTIVE");
         }
+    }
+
+    private String requireAssignableRole(String roleCode, String adminError) {
+        if (ValidationUtil.isBlank(roleCode)) throw new IllegalArgumentException("Vai trò không được để trống");
+        String normalized = roleCode.trim().toUpperCase(Locale.ROOT);
+        if (Constants.ROLE_ADMIN.equals(normalized)) throw new IllegalArgumentException(adminError);
+        if (!ASSIGNABLE_ROLES.contains(normalized)) throw new IllegalArgumentException("Vai trò không hợp lệ");
+        return normalized;
     }
 
     // Email Template Management
