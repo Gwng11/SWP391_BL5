@@ -322,14 +322,94 @@ public class ReservationRepository extends BaseRepository implements IReservatio
 
     @Override
     public void checkOut(long reservationId, long byUserId) {
-        String sql = "UPDATE reservations SET status_code = 'CHECKED_OUT', actual_check_out_at = SYSUTCDATETIME(), "
-                   + "checked_out_by_user_id = ?, updated_at = SYSUTCDATETIME() "
-                   + "WHERE reservation_id = ? AND status_code = 'CHECKED_IN'";
-        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setLong(1, byUserId);
-            ps.setLong(2, reservationId);
-            if (ps.executeUpdate() == 0)
-                throw new IllegalStateException("Đơn không ở trạng thái CHECKED_IN, không thể check-out");
+        try (Connection cn = getConnection()) {
+            cn.setAutoCommit(false);
+            cn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            try {
+                try (PreparedStatement ps = cn.prepareStatement(
+                        "SELECT status_code FROM reservations WITH (UPDLOCK,HOLDLOCK) WHERE reservation_id=?")) {
+                    ps.setLong(1, reservationId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next() || !"CHECKED_IN".equals(rs.getString("status_code"))) {
+                            throw new IllegalStateException("Đơn không ở trạng thái CHECKED_IN, không thể check-out");
+                        }
+                    }
+                }
+
+                List<Long> roomIds = new ArrayList<>();
+                String currentRooms = "SELECT ra.room_id FROM room_assignments ra WITH (UPDLOCK,HOLDLOCK) "
+                        + "JOIN reservation_rooms rr ON rr.reservation_room_id=ra.reservation_room_id "
+                        + "WHERE rr.reservation_id=? AND ra.is_current=1";
+                try (PreparedStatement ps = cn.prepareStatement(currentRooms)) {
+                    ps.setLong(1, reservationId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) roomIds.add(rs.getLong("room_id"));
+                    }
+                }
+                if (roomIds.isEmpty()) {
+                    throw new IllegalStateException("Không tìm thấy phòng vật lý đang được gán cho kỳ lưu trú");
+                }
+
+                String activeTask = "SELECT COUNT(*) FROM housekeeping_tasks WITH (UPDLOCK,HOLDLOCK) "
+                        + "WHERE room_id=? AND status_code IN ('PENDING','ASSIGNED','IN_PROGRESS')";
+                for (Long roomId : roomIds) {
+                    try (PreparedStatement ps = cn.prepareStatement(activeTask)) {
+                        ps.setLong(1, roomId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            rs.next();
+                            if (rs.getInt(1) > 0) {
+                                throw new IllegalStateException(
+                                        "Phòng đang có housekeeping task chưa hoàn tất; hãy xử lý task trước khi check-out");
+                            }
+                        }
+                    }
+                }
+
+                try (PreparedStatement ps = cn.prepareStatement(
+                        "UPDATE reservations SET status_code='CHECKED_OUT', actual_check_out_at=SYSUTCDATETIME(), "
+                                + "checked_out_by_user_id=?, updated_at=SYSUTCDATETIME() WHERE reservation_id=?")) {
+                    ps.setLong(1, byUserId);
+                    ps.setLong(2, reservationId);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = cn.prepareStatement(
+                        "UPDATE ra SET is_current=0, unassigned_at=SYSUTCDATETIME(), unassigned_reason=N'Checked out' "
+                                + "FROM room_assignments ra JOIN reservation_rooms rr "
+                                + "ON rr.reservation_room_id=ra.reservation_room_id "
+                                + "WHERE rr.reservation_id=? AND ra.is_current=1")) {
+                    ps.setLong(1, reservationId);
+                    ps.executeUpdate();
+                }
+
+                String releaseRoom = "UPDATE r SET cleaning_status='DIRTY', "
+                        + "operational_status=CASE WHEN r.is_active=0 OR rt.is_active=0 THEN 'OUT_OF_SERVICE' "
+                        + "WHEN EXISTS(SELECT 1 FROM maintenance_tickets mt WHERE mt.room_id=r.room_id "
+                        + "AND mt.status_code NOT IN ('CLOSED','CANCELLED')) THEN 'MAINTENANCE' ELSE 'AVAILABLE' END, "
+                        + "updated_at=SYSUTCDATETIME() FROM rooms r JOIN room_types rt "
+                        + "ON rt.room_type_id=r.room_type_id WHERE r.room_id=?";
+                String createTask = "INSERT INTO housekeeping_tasks "
+                        + "(room_id,reservation_id,created_by_user_id,task_type,priority_code,status_code,scheduled_at,notes) "
+                        + "VALUES (?,?,?,'CHECKOUT_CLEANING','NORMAL','PENDING',SYSUTCDATETIME(),N'Dọn phòng sau check-out')";
+                for (Long roomId : roomIds) {
+                    try (PreparedStatement ps = cn.prepareStatement(releaseRoom)) {
+                        ps.setLong(1, roomId);
+                        ps.executeUpdate();
+                    }
+                    try (PreparedStatement ps = cn.prepareStatement(createTask)) {
+                        ps.setLong(1, roomId);
+                        ps.setLong(2, reservationId);
+                        ps.setLong(3, byUserId);
+                        ps.executeUpdate();
+                    }
+                }
+                cn.commit();
+            } catch (SQLException | RuntimeException e) {
+                cn.rollback();
+                throw e;
+            } finally {
+                cn.setAutoCommit(true);
+            }
         } catch (SQLException e) { throw wrap(e); }
     }
 

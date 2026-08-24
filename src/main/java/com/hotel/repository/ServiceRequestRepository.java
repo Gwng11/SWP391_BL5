@@ -121,9 +121,11 @@ public class ServiceRequestRepository extends BaseRepository implements IService
 
     @Override
     public void completeAndAddCharge(long serviceRequestId, long staffUserId) {
-        String select = "SELECT reservation_id, total_amount FROM service_requests WITH (UPDLOCK, HOLDLOCK) "
-                + "WHERE service_request_id = ? AND assigned_staff_user_id = ? "
-                + "AND status_code IN ('ASSIGNED','IN_PROGRESS')";
+        String select = "SELECT sr.reservation_id, sr.total_amount, i.status_code AS invoice_status "
+                + "FROM service_requests sr WITH (UPDLOCK, HOLDLOCK) "
+                + "LEFT JOIN invoices i ON i.reservation_id=sr.reservation_id "
+                + "WHERE sr.service_request_id = ? AND sr.assigned_staff_user_id = ? "
+                + "AND sr.status_code IN ('ASSIGNED','IN_PROGRESS')";
         String complete = "UPDATE service_requests SET status_code='COMPLETED', "
                 + "started_at=COALESCE(started_at,SYSUTCDATETIME()), completed_at=SYSUTCDATETIME() "
                 + "WHERE service_request_id=?";
@@ -141,6 +143,11 @@ public class ServiceRequestRepository extends BaseRepository implements IService
                         if (!rs.next()) throw new IllegalStateException("Bạn không được hoàn tất yêu cầu này");
                         reservationId = rs.getLong("reservation_id");
                         amount = rs.getBigDecimal("total_amount");
+                        String invoiceStatus = rs.getString("invoice_status");
+                        if (invoiceStatus != null && !"DRAFT".equals(invoiceStatus)) {
+                            throw new IllegalStateException(
+                                    "Hóa đơn cuối đã phát hành; không thể hoàn tất thêm dịch vụ");
+                        }
                     }
                 }
                 try (PreparedStatement ps = cn.prepareStatement(complete)) {

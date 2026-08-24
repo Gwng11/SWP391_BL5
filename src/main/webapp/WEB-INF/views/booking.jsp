@@ -1,6 +1,31 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="_header.jspf" %>
 
+<style>
+  .booking-checkout { --checkout-blue:#0757c8;--checkout-ink:#152c4a; }
+  .booking-checkout > .bk-page-header { position:relative;overflow:hidden;margin-bottom:24px;padding:28px 32px;border:0;border-radius:19px;background:linear-gradient(118deg,#06458f,#1477d7);box-shadow:0 12px 30px rgba(7,71,145,.17); }
+  .booking-checkout > .bk-page-header:after { content:"";position:absolute;width:180px;height:180px;right:25px;top:-90px;border:1px solid rgba(255,255,255,.18);border-radius:50%; }
+  .booking-checkout > .bk-page-header .bk-page-title { position:relative;z-index:1; }
+  .booking-checkout > .bk-page-header h1,.booking-checkout > .bk-page-header p { color:#fff; }
+  .booking-checkout > .bk-page-header p { opacity:.82; }
+  .booking-checkout > .bk-page-header .btn-muted { position:relative;z-index:1;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff; }
+  .booking-checkout > .grid { gap:24px;align-items:start; }
+  .booking-checkout .card { border-color:#dce5ef;border-radius:17px;box-shadow:0 8px 26px rgba(35,57,84,.08); }
+  .booking-checkout .col-8 > .card:last-child { padding:25px; }
+  .booking-checkout .col-8 > .card:last-child h2 { color:var(--checkout-ink); }
+  .booking-checkout .col-8 > .card:last-child input,
+  .booking-checkout .col-8 > .card:last-child textarea,
+  .booking-checkout .col-8 > .card:last-child select { border-color:#d8e2ee;background:#fafbfd; }
+  .booking-checkout .col-4 { position:sticky;top:18px; }
+  .booking-checkout .col-4 .card { border:1px solid #cfe0f4 !important;background:linear-gradient(145deg,#f7fbff,#eaf4ff) !important; }
+  .booking-checkout .col-4 .card h3 { color:var(--checkout-blue) !important;border-bottom-color:#cfe0f4 !important; }
+  .booking-checkout .col-4 .card > div { color:#425870 !important;border-bottom-color:#d8e5f2 !important; }
+  .booking-checkout button[type="submit"] { border-radius:10px; }
+  @media(max-width:850px){.booking-checkout > .bk-page-header{align-items:flex-start;flex-direction:column;gap:16px;padding:24px}.booking-checkout > .grid{display:block}.booking-checkout .col-8,.booking-checkout .col-4{width:100%;max-width:none}.booking-checkout .col-4{position:static;margin-top:20px}}
+</style>
+
+<div class="booking-checkout">
+
 <!-- Booking Hero Header -->
 <div class="bk-page-header">
   <div class="bk-page-title">
@@ -220,6 +245,8 @@
       </div>
     </div>
   </div>
+</div>
+
 </div>
 
 <%@ include file="_footer.jspf" %>

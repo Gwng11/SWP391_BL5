@@ -126,6 +126,32 @@ class ServiceRequestServiceTest {
                 () -> service.reschedule(12, LocalDateTime.now().minusHours(1), null));
     }
 
+    @Test
+    void finalInvoiceIsBlockedWhileAnyServiceRequestIsActive() {
+        ServiceRequest completed = request("COMPLETED");
+        ServiceRequest active = request("IN_PROGRESS");
+        when(requests.findByReservation(17)).thenReturn(List.of(completed, active));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.requireReadyForFinalInvoice(17));
+
+        when(requests.findByReservation(17)).thenReturn(List.of(completed));
+        assertDoesNotThrow(() -> service.requireReadyForFinalInvoice(17));
+    }
+
+    @Test
+    void checkoutIsBlockedUntilEveryCompletedServiceIsInvoiced() {
+        ServiceRequest completed = request("COMPLETED");
+        when(requests.findByReservation(17)).thenReturn(List.of(completed));
+        when(requests.findCompletedNotInvoiced(17)).thenReturn(List.of(completed));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.requireReadyForCheckout(17));
+
+        when(requests.findCompletedNotInvoiced(17)).thenReturn(List.of());
+        assertDoesNotThrow(() -> service.requireReadyForCheckout(17));
+    }
+
     private User user(long id, String role) {
         User user = new User();
         user.setUserId(id);
@@ -149,6 +175,12 @@ class ServiceRequestServiceTest {
         result.setUnitName("lượt");
         result.setUnitPrice(new BigDecimal("100"));
         result.setActive(active);
+        return result;
+    }
+
+    private ServiceRequest request(String status) {
+        ServiceRequest result = new ServiceRequest();
+        result.setStatusCode(status);
         return result;
     }
 }

@@ -175,23 +175,23 @@ public class ServiceRequestService {
         return requestRepo.findByReservation(reservationId);
     }
 
-    /** Giữ tương thích tạm thời với luồng checkout hiện hữu. */
-    public void createHousekeepingTask(long reservationId, long customerId, String roomNumber) {
-        List<HotelService> catalog = hotelServiceRepo.findAllActive();
-        if (catalog.isEmpty()) return;
-        HotelService service = catalog.stream()
-                .filter(s -> "CLEANING".equalsIgnoreCase(s.getServiceCode()))
-                .findFirst().orElse(catalog.get(0));
-        ServiceRequest request = new ServiceRequest();
-        request.setReservationId(reservationId);
-        request.setCustomerId(customerId);
-        request.setHotelServiceId(service.getHotelServiceId());
-        request.setQuantity(BigDecimal.ONE);
-        request.setUnitPriceSnapshot(BigDecimal.ZERO);
-        request.setTotalAmount(BigDecimal.ZERO);
-        request.setRequestedForAt(LocalDateTime.now().plusMinutes(1));
-        request.setNotes("[TỰ ĐỘNG] Dọn phòng " + roomNumber + " sau check-out");
-        requestRepo.insert(request);
+    public void requireReadyForFinalInvoice(long reservationId) {
+        boolean active = requestRepo.findByReservation(reservationId).stream()
+                .anyMatch(r -> "PENDING".equals(r.getStatusCode())
+                        || "ASSIGNED".equals(r.getStatusCode())
+                        || "IN_PROGRESS".equals(r.getStatusCode()));
+        if (active) {
+            throw new IllegalStateException(
+                    "Còn yêu cầu dịch vụ chưa hoàn tất hoặc chưa hủy; chưa thể phát hành hóa đơn cuối");
+        }
+    }
+
+    public void requireReadyForCheckout(long reservationId) {
+        requireReadyForFinalInvoice(reservationId);
+        if (!requestRepo.findCompletedNotInvoiced(reservationId).isEmpty()) {
+            throw new IllegalStateException(
+                    "Còn dịch vụ đã hoàn tất chưa được đưa vào hóa đơn; chưa thể check-out");
+        }
     }
 
     private void requireRequestActor(User actor) {

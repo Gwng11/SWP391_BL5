@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.stream.Collectors; // <-- THÊM DÒNG NÀY
 import java.io.IOException;
 import java.util.List;
 
@@ -20,8 +21,25 @@ public class ManagerServiceController extends BaseController {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 1. Lấy biến keyword từ giao diện gửi lên
+        String keyword = req.getParameter("keyword");
+
+        // 2. Lấy danh sách và lọc theo keyword nếu có
         List<HotelService> services = hotelServiceService.findAll();
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = keyword.trim().toLowerCase();
+            services = services.stream()
+                    .filter(s -> (s.getServiceName() != null && s.getServiceName().toLowerCase().contains(kw))
+                            || (s.getServiceCode() != null && s.getServiceCode().toLowerCase().contains(kw)))
+                    .collect(Collectors.toList());
+        }
+
+        // 3. Đưa biến ra JSP
         req.setAttribute("services", services);
+<<<<<<< Updated upstream
+=======
+        req.setAttribute("keyword", keyword); // <-- Bổ sung đẩy keyword ra JSP
+>>>>>>> Stashed changes
 
         Long editId = longParamOrNull(req, "id");
         if (editId != null) {
