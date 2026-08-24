@@ -152,7 +152,8 @@ public class HousekeepingRepository extends BaseRepository implements IHousekeep
 
     private long taskRoom(Connection cn,long taskId,long staffUserId,boolean start) throws SQLException{
         String allowed=start?"('ASSIGNED','IN_PROGRESS')":"('IN_PROGRESS')";
-        try(PreparedStatement ps=cn.prepareStatement("SELECT room_id FROM housekeeping_tasks WITH (UPDLOCK) WHERE housekeeping_task_id=? AND assigned_staff_user_id=? AND status_code IN "+allowed)){
+        String notCompleted=start?"":" AND completed_at IS NULL";
+        try(PreparedStatement ps=cn.prepareStatement("SELECT room_id FROM housekeeping_tasks WITH (UPDLOCK) WHERE housekeeping_task_id=? AND assigned_staff_user_id=? AND status_code IN "+allowed+notCompleted)){
             ps.setLong(1,taskId);ps.setLong(2,staffUserId);try(ResultSet rs=ps.executeQuery()){if(!rs.next())throw new IllegalStateException("Task không thuộc nhân viên hoặc sai trạng thái");return rs.getLong(1);}
         }
     }

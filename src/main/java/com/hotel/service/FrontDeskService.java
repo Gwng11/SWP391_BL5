@@ -207,17 +207,11 @@ public class FrontDeskService {
         if (inv == null || !Constants.INV_PAID.equals(inv.getStatusCode()))
             throw new IllegalStateException("Chưa phát hành/thanh toán đủ hóa đơn cuối trước khi check-out");
 
-        // 1. Lấy danh sách các phòng đang được gán cho đơn này
-        List<RoomAssignment> currentAssignments = assignmentRepo.findCurrentByReservation(reservationId);
+        serviceRequestService.requireReadyForCheckout(reservationId);
 
-        // 2. Thực hiện check-out & giải phóng phòng (Phòng sẽ tự động sang AVAILABLE + DIRTY trong DB)
+        // Một transaction DB duy nhất: đóng kỳ ở, giải phóng assignment, đưa phòng về
+        // DIRTY/unavailable và tạo housekeeping task thật cho từng phòng vật lý.
         reservationRepo.checkOut(reservationId, byUserId);
-        assignmentRepo.releaseAllForReservation(reservationId, "Checked out");
-
-        // 3. Tự động sinh Task dọn phòng cho đội Buồng phòng (Housekeeping)
-        for (RoomAssignment ra : currentAssignments) {
-            serviceRequestService.createHousekeepingTask(reservationId, r.getCustomerId(), ra.getRoomNumber());
-        }
     }
 
 

@@ -37,6 +37,7 @@ public class InvoiceService {
     private final IReservationRepository reservationRepo = new ReservationRepository();
     private final IReservationRoomRepository resRoomRepo = new ReservationRoomRepository();
     private final IServiceRequestRepository serviceRequestRepo = new ServiceRequestRepository();
+    private final ServiceRequestService serviceRequestService = new ServiceRequestService();
     private final IPaymentRepository paymentRepo = new PaymentRepository();
     private final ICustomerRepository customerRepo = new CustomerRepository();
     private final FrontDeskService frontDeskService = new FrontDeskService();
@@ -57,6 +58,7 @@ public class InvoiceService {
         if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Chỉ phát hành hóa đơn cho khách đang ở (CHECKED_IN)");
+        serviceRequestService.requireReadyForFinalInvoice(reservationId);
 
         Invoice inv = frontDeskService.getOrCreateDraftInvoice(r, byUserId);
         if (!Constants.INV_DRAFT.equals(inv.getStatusCode())) return inv; // đã phát hành rồi
