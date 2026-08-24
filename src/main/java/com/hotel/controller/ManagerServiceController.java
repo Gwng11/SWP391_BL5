@@ -10,11 +10,8 @@ import java.util.stream.Collectors; // <-- THÊM DÒNG NÀY
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Quản lý danh mục dịch vụ dành cho Manager (CRUD + Ảnh image_url + Bật/Tắt +
- * Tìm kiếm)
- */
-@WebServlet(urlPatterns = { "/manager/services" })
+/** Quản lý danh mục dịch vụ dành cho Manager (CRUD + Ảnh image_url + Bật/Tắt + Tìm kiếm) */
+@WebServlet(urlPatterns = {"/manager/services"})
 public class ManagerServiceController extends BaseController {
 
     private final HotelServiceManagementService hotelServiceService = new HotelServiceManagementService();
@@ -36,10 +33,7 @@ public class ManagerServiceController extends BaseController {
 
         // 3. Đưa biến ra JSP
         req.setAttribute("services", services);
-<<<<<<< Updated upstream
-=======
         req.setAttribute("keyword", keyword); // <-- Bổ sung đẩy keyword ra JSP
->>>>>>> Stashed changes
 
         Long editId = longParamOrNull(req, "id");
         if (editId != null) {
