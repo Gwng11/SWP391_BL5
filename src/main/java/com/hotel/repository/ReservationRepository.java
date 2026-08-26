@@ -336,6 +336,21 @@ public class ReservationRepository extends BaseRepository implements IReservatio
                     }
                 }
 
+                // Không chỉ dựa vào kiểm tra ở service: chốt lại invoice trong chính transaction
+                // để request thủ công hoặc trạng thái thay đổi đồng thời không thể bỏ qua điều kiện thanh toán.
+                try (PreparedStatement ps = cn.prepareStatement(
+                        "SELECT status_code,total_amount,paid_amount FROM invoices WITH (UPDLOCK,HOLDLOCK) "
+                                + "WHERE reservation_id=?")) {
+                    ps.setLong(1, reservationId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next() || !"PAID".equals(rs.getString("status_code"))
+                                || rs.getBigDecimal("paid_amount").compareTo(rs.getBigDecimal("total_amount")) < 0) {
+                            throw new IllegalStateException(
+                                    "Hóa đơn chưa được thanh toán đủ, không thể check-out");
+                        }
+                    }
+                }
+
                 List<Long> roomIds = new ArrayList<>();
                 String currentRooms = "SELECT ra.room_id FROM room_assignments ra WITH (UPDLOCK,HOLDLOCK) "
                         + "JOIN reservation_rooms rr ON rr.reservation_room_id=ra.reservation_room_id "

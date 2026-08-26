@@ -61,7 +61,7 @@
             <input type="hidden" name="hotelServiceId" value="${service.hotelServiceId}">
             <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}"><input type="hidden" name="reservationId" value="${currentStay.reservationId}"></c:if>
             <label>Số lượng (<c:out value="${service.unitName}"/>)</label>
-            <input type="number" name="quantity" value="1" min="0.01" step="0.01" required>
+            <input type="number" name="quantity" value="1" min="1" step="1" required>
             <label>Thời gian mong muốn</label>
             <input type="datetime-local" name="requestedForAt" required>
             <label>Ghi chú thêm (không bắt buộc)</label>

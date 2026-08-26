@@ -23,7 +23,8 @@
     <label>Phương thức</label>
     <select name="method" style="width:100%">
       <option value="CASH">Tiền mặt</option>
-      <option value="ONLINE">Online (giả lập)</option>
+      <option value="BANK_TRANSFER">Chuyển khoản đã xác nhận</option>
+      <option value="ONLINE">Thanh toán online</option>
     </select>
   </c:if>
   <p><button class="btn btn-success" type="submit" style="width:100%">Thanh toán</button></p>

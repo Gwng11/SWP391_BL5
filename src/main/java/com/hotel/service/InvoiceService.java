@@ -1,20 +1,16 @@
 package com.hotel.service;
 
-import com.hotel.entity.Customer;
 import com.hotel.entity.Invoice;
 import com.hotel.entity.InvoiceItem;
-import com.hotel.entity.Payment;
 import com.hotel.entity.Reservation;
 import com.hotel.entity.ReservationRoom;
 import com.hotel.entity.ServiceRequest;
-import com.hotel.interfaces.ICustomerRepository;
 import com.hotel.interfaces.IInvoiceItemRepository;
 import com.hotel.interfaces.IInvoiceRepository;
 import com.hotel.interfaces.IPaymentRepository;
 import com.hotel.interfaces.IReservationRepository;
 import com.hotel.interfaces.IReservationRoomRepository;
 import com.hotel.interfaces.IServiceRequestRepository;
-import com.hotel.repository.CustomerRepository;
 import com.hotel.repository.InvoiceItemRepository;
 import com.hotel.repository.InvoiceRepository;
 import com.hotel.repository.PaymentRepository;
@@ -23,11 +19,7 @@ import com.hotel.repository.ReservationRoomRepository;
 import com.hotel.repository.ServiceRequestRepository;
 import com.hotel.ultis.Constants;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /** F14 - Phát hành hóa đơn & thanh toán cuối */
 public class InvoiceService {
@@ -39,9 +31,8 @@ public class InvoiceService {
     private final IServiceRequestRepository serviceRequestRepo = new ServiceRequestRepository();
     private final ServiceRequestService serviceRequestService = new ServiceRequestService();
     private final IPaymentRepository paymentRepo = new PaymentRepository();
-    private final ICustomerRepository customerRepo = new CustomerRepository();
     private final FrontDeskService frontDeskService = new FrontDeskService();
-    private final EmailService emailService = new EmailService();
+    private final PaymentService paymentService = new PaymentService();
 
     public Invoice getByReservation(long reservationId) { return invoiceRepo.findByReservation(reservationId); }
     public List<InvoiceItem> getItems(long invoiceId) { return invoiceItemRepo.findByInvoice(invoiceId); }
@@ -94,7 +85,9 @@ public class InvoiceService {
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (InvoiceItem i : invoiceItemRepo.findByInvoice(inv.getInvoiceId())) subtotal = subtotal.add(i.getAmount());
-        BigDecimal tax = subtotal.multiply(Constants.TAX_RATE).setScale(2, RoundingMode.HALF_UP);
+        // Giữ snapshot thuế của reservation lịch sử; reservation mới có tax_amount = 0
+        // vì SRS hiện hành không quy định tự cộng VAT.
+        BigDecimal tax = r.getTaxAmount() == null ? BigDecimal.ZERO : r.getTaxAmount();
         BigDecimal total = subtotal.add(tax);
         invoiceRepo.updateTotals(inv.getInvoiceId(), subtotal, tax, total);
         invoiceRepo.issue(inv.getInvoiceId(), byUserId);
@@ -130,43 +123,10 @@ public class InvoiceService {
     }
 
     /** F14.2: thu phần còn lại + gửi email hóa đơn */
-    public void processFinalPayment(long reservationId, String methodCode, long byUserId) {
+    public void processFinalPayment(long reservationId, String methodCode, Long byUserId) {
         Invoice inv = invoiceRepo.findByReservation(reservationId);
         if (inv == null || Constants.INV_DRAFT.equals(inv.getStatusCode()))
             throw new IllegalStateException("Chưa phát hành hóa đơn");
-        BigDecimal outstanding = getOutstanding(inv);
-        Reservation r = reservationRepo.findById(reservationId);
-
-        Long paymentId = null;
-        if (outstanding.compareTo(BigDecimal.ZERO) > 0) {
-            Payment p = new Payment();
-            p.setReservationId(reservationId);
-            p.setInvoiceId(inv.getInvoiceId());
-            p.setRecordedByUserId(byUserId);
-            p.setPaymentType(Constants.PAY_FINAL);
-            p.setMethodCode(methodCode);
-            p.setAmount(outstanding);
-            p.setStatusCode(Constants.PAY_SUCCESS);
-            if ("ONLINE".equals(methodCode)) {
-                p.setProviderName("SANDBOX_GATEWAY");
-                p.setProviderReference("TXN-" + UUID.randomUUID());
-            }
-            paymentId = paymentRepo.insert(p);
-        }
-        invoiceRepo.applyPayment(inv.getInvoiceId(), inv.getTotalAmount(), Constants.INV_PAID);
-        sendInvoiceEmail(r, invoiceRepo.findById(inv.getInvoiceId()), paymentId, byUserId);
-    }
-
-    private void sendInvoiceEmail(Reservation r, Invoice inv, Long paymentId, long byUserId) {
-        Customer c = customerRepo.findById(r.getCustomerId());
-        if (c == null || c.getEmail() == null || c.getEmail().isEmpty()) return;
-        Map<String, String> params = new HashMap<>();
-        params.put("full_name", c.getFullName());
-        params.put("booking_code", r.getBookingCode());
-        params.put("invoice_number", inv.getInvoiceNumber());
-        params.put("total_amount", inv.getTotalAmount().toPlainString());
-        params.put("paid_amount", inv.getPaidAmount().toPlainString());
-        emailService.send(Constants.EV_INVOICE_AND_RECEIPT, c.getEmail(), params,
-                c.getUserId(), r.getReservationId(), paymentId, inv.getInvoiceId(), byUserId);
+        paymentService.payFinalInvoice(reservationId, methodCode, byUserId);
     }
 }

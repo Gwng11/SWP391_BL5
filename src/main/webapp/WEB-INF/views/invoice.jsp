@@ -55,7 +55,7 @@
             <option value="CASH">Tiền mặt</option>
             <option value="CARD">Thẻ</option>
             <option value="BANK_TRANSFER">Chuyển khoản</option>
-            <option value="ONLINE">Online (giả lập)</option>
+            <option value="ONLINE">Thanh toán online</option>
           </select>
           <button class="btn btn-success" type="submit">💰 Thu phần còn lại & gửi email hóa đơn</button>
         </form>

@@ -118,7 +118,7 @@
         </div>
         <div>
           <label>Số tiền đã thu *</label>
-          <input type="number" step="0.01" name="amount" style="width:100%" required placeholder="Thu tối thiểu 30% cọc hoặc 100%">
+          <input type="number" step="0.01" name="amount" style="width:100%" required placeholder="Thu tối thiểu 20% cọc hoặc 100%">
         </div>
       </div>
 
@@ -137,7 +137,7 @@
 <!-- Room Rates Reference Table -->
 <div class="card">
   <h2 style="font-size:16px; font-weight:700; margin-top:0; border-bottom:1px solid var(--bk-border); padding-bottom:8px; margin-bottom:12px;">
-    📊 Bảng giá tham khảo (Giá chưa gồm 10% thuế VAT)
+    📊 Bảng giá tham khảo
   </h2>
   <div class="table-wrap">
     <table>

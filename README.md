@@ -27,6 +27,26 @@ Chạy lần lượt trong SSMS (database `SingleHotelManagementDB` đã tạo s
   Nếu bạn đã có DBContext riêng thì giữ của bạn, miễn là có `public Connection getConnection()` trả về **connection mới mỗi lần gọi**.
 - `ultis/EmailUtil.java`: điền SMTP_USER / SMTP_PASS (Gmail cần App Password). Chưa cấu hình cũng chạy được — email sẽ ghi log `FAILED` vào `email_logs`, nghiệp vụ chính không bị ảnh hưởng.
 
+#### Cấu hình thanh toán online
+
+Mặc định dự án dùng `SANDBOX` nội bộ để có thể chạy và demo ngay mà không cần tài khoản cổng thanh toán.
+Để dùng môi trường thử nghiệm VNPay, cấu hình các biến môi trường trước khi chạy Tomcat:
+
+```text
+HMS_PAYMENT_PROVIDER=VNPAY
+HMS_VNPAY_TMN_CODE=<mã website sandbox do VNPay cấp>
+HMS_VNPAY_HASH_SECRET=<chuỗi bí mật sandbox do VNPay cấp>
+HMS_VNPAY_RETURN_URL=https://<public-host>/HotelManagement/payment/vnpay-return
+```
+
+`HMS_VNPAY_PAY_URL` là tùy chọn; nếu bỏ trống hệ thống dùng URL VNPay Sandbox
+`https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`.
+
+Khai báo IPN URL trên VNPay Sandbox là:
+`https://<public-host>/HotelManagement/payment/vnpay-ipn`.
+VNPay phải truy cập được IPN từ Internet, vì vậy khi thử trên localhost cần một public HTTPS tunnel
+hoặc máy chủ thử nghiệm. Không đưa `HMS_VNPAY_HASH_SECRET` vào source code hay commit lên Git.
+
 ### Bước 3 — Chạy
 ```bash
 mvn clean package
@@ -67,7 +87,7 @@ NetBeans/IntelliJ: mở project Maven → Run trên Tomcat 10.1.
 
 ```
 Khách đăng ký (F04) → xác thực email → tìm phòng (F02) → xem chi tiết (F03)
-→ đặt phòng (F06, đơn PENDING) → đặt cọc 30% (F08, đơn → CONFIRMED)
+→ đặt phòng (F06, đơn PENDING) → đặt cọc 20% (F08, đơn → CONFIRMED)
 → Lễ tân check-in (F10) → gán phòng sạch (F11) → khách yêu cầu dịch vụ (F15)
 → nhân viên xử lý (F16, tiền cộng vào đơn) → phụ thu/gia hạn nếu cần (F12)
 → phát hành hóa đơn + thu tiền còn lại (F14) → check-out (F13, phòng → DIRTY)
@@ -75,7 +95,7 @@ Khách đăng ký (F04) → xác thực email → tìm phòng (F02) → xem chi 
 
 ## 4. Quy tắc nghiệp vụ đã cài đặt
 
-- **Giá**: ưu tiên `room_rates` theo ngày, thiếu thì dùng `base_price`; thuế 10%, cọc 30% (đổi trong `ultis/Constants`).
+- **Giá**: ưu tiên `room_rates` theo ngày, thiếu thì dùng `base_price`; SRS hiện không quy định thuế và yêu cầu cọc 20% (cấu hình trong `ultis/Constants`).
 - **Tồn phòng** = số phòng active của loại − SUM(quantity) các đơn PENDING/CONFIRMED/CHECKED_IN giao ngày; tôn trọng `stop_sell`.
 - **Check-in** yêu cầu đơn CONFIRMED + đủ cọc. **Check-out** yêu cầu hóa đơn PAID.
 - **Gán phòng**: chỉ phòng AVAILABLE + CLEAN/INSPECTED, đúng loại đã đặt; DB có unique index chặn 1 phòng bị gán 2 lần; đổi phòng giữ lịch sử.
@@ -86,7 +106,7 @@ Khách đăng ký (F04) → xác thực email → tìm phòng (F02) → xem chi 
 ### 4b. Luồng Walk-in tại quầy
 
 Lễ tân mở `/reception/walkin`, tra khách theo CCCD/hộ chiếu, chọn một phòng vật lý
-đang `AVAILABLE` và `CLEAN/INSPECTED`, nhập số đêm và thu tối thiểu 30% tiền cọc.
+đang `AVAILABLE` và `CLEAN/INSPECTED`, nhập số đêm và thu tối thiểu 20% tiền cọc.
 Một lần xác nhận sẽ tạo đơn `WALK_IN`, ghi payment, chuyển đơn sang `CONFIRMED`,
 check-in và gán phòng đã chọn. Nếu check-in hoặc gán phòng gặp tranh chấp phút cuối,
 đơn và payment vẫn được giữ để lễ tân xử lý tiếp tại màn Check-in/Gán phòng.
@@ -97,7 +117,9 @@ khóa theo thứ tự `room_type_id`, nên luồng online và walk-in không th�
 ## 5. Ghi chú
 
 - Package tiện ích đặt tên `ultis` theo đúng cấu trúc bạn mô tả (nếu muốn đổi thành `utils`: đổi tên thư mục + sửa `package`/`import`).
-- Cổng thanh toán ONLINE đang **giả lập** (SANDBOX_GATEWAY, luôn thành công) — chỗ tích hợp VNPay/MoMo thật đã đánh dấu `TODO` trong `PaymentService`.
+- Thanh toán ONLINE dùng `SandboxPaymentGateway` theo mặc định và adapter `VnPayPaymentGateway` khi
+  `HMS_PAYMENT_PROVIDER=VNPAY`. Giao dịch VNPay đi qua vòng đời `PENDING` → redirect → Return/IPN xác minh
+  chữ ký và số tiền → `SUCCESS/FAILED`; callback lặp lại được xử lý idempotent để không ghi nhận tiền hai lần.
 - F25–F26 (quản trị user và quản lý template email) chưa nằm trong phạm vi Manager và không được cấp cho role `MANAGER`.
 
 ## 6. Kiểm thử

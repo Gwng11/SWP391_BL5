@@ -14,9 +14,20 @@ import java.io.IOException;
 @WebServlet(urlPatterns = {"/reception/checkout"})
 public class CheckOutController extends BaseController {
 
-    private final FrontDeskService frontDeskService = new FrontDeskService();
-    private final ReservationService reservationService = new ReservationService();
-    private final InvoiceService invoiceService = new InvoiceService();
+    private final FrontDeskService frontDeskService;
+    private final ReservationService reservationService;
+    private final InvoiceService invoiceService;
+
+    public CheckOutController() {
+        this(new FrontDeskService(), new ReservationService(), new InvoiceService());
+    }
+
+    CheckOutController(FrontDeskService frontDeskService, ReservationService reservationService,
+                       InvoiceService invoiceService) {
+        this.frontDeskService = frontDeskService;
+        this.reservationService = reservationService;
+        this.invoiceService = invoiceService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -27,7 +38,10 @@ public class CheckOutController extends BaseController {
             req.setAttribute("rooms", reservationService.getRooms(id));
             var inv = invoiceService.getByReservation(id);
             req.setAttribute("invoice", inv);
-            if (inv != null) req.setAttribute("items", invoiceService.getItems(inv.getInvoiceId()));
+            if (inv != null) {
+                req.setAttribute("items", invoiceService.getItems(inv.getInvoiceId()));
+                req.setAttribute("outstanding", invoiceService.getOutstanding(inv));
+            }
         }
         req.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(req, resp);
     }

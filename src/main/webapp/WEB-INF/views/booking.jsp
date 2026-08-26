@@ -241,7 +241,7 @@
 
       <div style="font-size:12px; color:#92400e; line-height:1.5; margin-top:16px;">
         💡 <strong>Thông tin hóa đơn đặt chỗ:</strong><br>
-        Tổng tiền tạm tính = Đơn giá ngày × Số đêm lưu trú × Số lượng phòng đặt + 10% thuế VAT. Quý khách vui lòng thanh toán hoặc đặt cọc tối thiểu <strong>30%</strong> giá trị đơn hàng để được xác nhận giữ chỗ thành công.
+        Tổng tiền tạm tính = Đơn giá ngày × Số đêm lưu trú × Số lượng phòng đặt. Quý khách vui lòng thanh toán hoặc đặt cọc tối thiểu <strong>20%</strong> giá trị đơn hàng để được xác nhận giữ chỗ thành công.
       </div>
     </div>
   </div>

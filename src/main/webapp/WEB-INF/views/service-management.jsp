@@ -6,14 +6,8 @@
 <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; color: #333; }
-    .lux-wrapper { display: flex; min-height: 100vh; }
-    .lux-sidebar { width: 260px; background-color: #0b1b42; color: #fff; display: flex; flex-direction: column; }
-    .lux-brand { font-size: 1.5rem; font-weight: bold; padding: 24px; color: #fff; letter-spacing: 0.5px; }
-    .lux-nav { list-style: none; padding: 0; margin: 0; }
-    .lux-nav li a { display: block; padding: 14px 24px; color: #9ba4b5; text-decoration: none; font-weight: 500; }
-    .lux-nav li a:hover { color: #fff; background: rgba(255,255,255,0.05); }
-    .lux-nav li.active a { color: #0b1b42; background-color: #e5b945; border-radius: 0 20px 20px 0; margin-right: 20px; font-weight: 600; }
-    .lux-main { flex: 1; display: flex; flex-direction: column; }
+    .lux-wrapper { min-height: 100vh; }
+    .lux-main { width: 100%; min-width: 0; display: flex; flex-direction: column; }
     .lux-topbar { background: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .lux-content { padding: 32px; flex: 1; }
 
@@ -45,16 +39,6 @@
 </style>
 
 <div class="lux-wrapper">
-    <!-- Sidebar LuxeStay HMS bên trái -->
-    <aside class="lux-sidebar">
-        <div class="lux-brand">LuxeStay HMS</div>
-        <ul class="lux-nav">
-            <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
-            <li><a href="${pageContext.request.contextPath}/services">Dịch vụ Khách sạn</a></li>
-            <li class="active"><a href="${pageContext.request.contextPath}/manager/services">Quản lý Dịch vụ</a></li>
-        </ul>
-    </aside>
-
     <main class="lux-main">
         <header class="lux-topbar">
             <h2>Quản lý Danh mục Dịch vụ</h2>
@@ -74,7 +58,7 @@
 
                     <!-- Thanh tìm kiếm dịch vụ -->
                     <form method="get" action="${pageContext.request.contextPath}/manager/services" class="lux-search-box">
-                        <input type="text" name="q" value="${keyword}" placeholder="Nhập tên dịch vụ cần tìm..." class="lux-form-control">
+                        <input type="text" name="q" value="${keyword}" placeholder="Tìm theo ID, mã, tên, đơn vị hoặc mô tả..." class="lux-form-control">
                         <button type="submit" class="lux-btn">Tìm</button>
                         <c:if test="${not empty keyword}">
                             <a href="${pageContext.request.contextPath}/manager/services" class="lux-btn lux-btn-secondary">Tất cả</a>
@@ -115,10 +99,12 @@
                                             <span class="lux-badge lux-badge-success">Đang mở</span>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="lux-badge lux-badge-danger">Đang ẩn</span>
+                                            <span class="lux-badge lux-badge-danger">Ngừng phục vụ</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
+
+
                                 <td>
                                     <div style="display: flex; gap: 6px;">
                                         <a href="${pageContext.request.contextPath}/manager/services?id=${s.hotelServiceId}" class="lux-btn lux-btn-sm lux-btn-warning">Sửa</a>
@@ -127,7 +113,7 @@
                                             <input type="hidden" name="hotelServiceId" value="${s.hotelServiceId}">
                                             <input type="hidden" name="active" value="${!s.active}">
                                             <button type="submit" class="lux-btn lux-btn-sm lux-btn-secondary">
-                                                    ${s.active ? 'Ẩn' : 'Hiện'}
+                                                    ${s.active ? 'Ngừng phục vụ' : 'Mở lại dịch vụ'}
                                             </button>
                                         </form>
                                         <form method="post" action="${pageContext.request.contextPath}/manager/services" style="display:inline;"
@@ -178,6 +164,7 @@
                         <div class="lux-form-group">
                             <label>Đơn giá (VNĐ)</label>
                             <input type="number" name="unitPrice" value="${editService.unitPrice}" step="1000" min="0" required class="lux-form-control">
+<%--                            "text" inputmode="numeric"--%>
                         </div>
 
                         <div class="lux-form-group">
@@ -187,7 +174,7 @@
 
                         <div class="lux-form-group">
                             <label>Mô tả dịch vụ</label>
-                            <textarea name="description" rows="3" class="lux-form-control">${editService.description}</textarea>
+                            <textarea name="description" rows="3" maxlength="500" class="lux-form-control">${editService.description}</textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
