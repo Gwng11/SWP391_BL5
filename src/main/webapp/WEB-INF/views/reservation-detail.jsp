@@ -64,7 +64,7 @@
           <strong><fmt:formatNumber value="${r.serviceTotal}"/> đ</strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-          <span>Thuế giá trị gia tăng (10% VAT):</span>
+          <span>Thuế:</span>
           <strong><fmt:formatNumber value="${r.taxAmount}"/> đ</strong>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; border-top:1px dashed rgba(0,53,128,0.2); padding-top:8px; margin-top:8px;">

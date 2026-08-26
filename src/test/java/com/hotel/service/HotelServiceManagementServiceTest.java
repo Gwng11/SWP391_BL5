@@ -44,6 +44,47 @@ class HotelServiceManagementServiceTest {
     }
 
     @Test
+    void descriptionLongerThanFiveHundredCharactersIsRejected() {
+        HotelService item = item();
+        item.setDescription("a".repeat(501));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.create(item));
+
+        assertEquals("Mô tả dịch vụ không được vượt quá 500 ký tự", error.getMessage());
+        verify(repository, never()).insert(any());
+    }
+
+    @Test
+    void searchSupportsIdCodeNameUnitDescriptionStatusAndVietnameseWithoutMarks() {
+        HotelService breakfast = item();
+        breakfast.setHotelServiceId(14);
+        breakfast.setServiceCode("BREAKFAST");
+        breakfast.setServiceName("Bữa sáng");
+        breakfast.setUnitName("suất");
+        breakfast.setDescription("Buffet tại nhà hàng");
+        breakfast.setActive(true);
+
+        HotelService laundry = item();
+        laundry.setHotelServiceId(21);
+        laundry.setServiceCode("SVC_LAUNDRY");
+        laundry.setServiceName("Giặt ủi");
+        laundry.setUnitName("kg");
+        laundry.setDescription("Nhận đồ tại phòng");
+        laundry.setActive(false);
+        when(repository.findAll()).thenReturn(List.of(breakfast, laundry));
+
+        assertEquals(List.of(breakfast), service.search("14"));
+        assertEquals(List.of(laundry), service.search("svc"));
+        assertEquals(List.of(breakfast), service.search("bua sang"));
+        assertEquals(List.of(laundry), service.search("kg"));
+        assertEquals(List.of(breakfast), service.search("nha hang"));
+        assertEquals(List.of(laundry), service.search("ngung phuc vu"));
+        assertEquals(2, service.search(" ").size());
+    }
+
+    @Test
     void deleteOnlyWhenThereIsNoRequestHistory() {
         HotelService item = item();
         item.setHotelServiceId(7);

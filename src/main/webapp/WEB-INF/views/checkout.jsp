@@ -108,12 +108,28 @@
               </table>
             </div>
 
-            <form method="post" action="${pageContext.request.contextPath}/reception/checkout" onsubmit="return confirm('Xác nhận khách thanh toán hoàn tất và rời khỏi phòng?')">
-              <input type="hidden" name="id" value="${r.reservationId}">
-              <button class="btn btn-danger" type="submit" style="width:100%; font-size:16px; padding:12px; font-weight:700;">
-                ✔ Xác nhận Khách rời đi (Check-out)
-              </button>
-            </form>
+            <c:choose>
+              <c:when test="${invoice.statusCode == 'PAID'}">
+                <div class="msg" style="margin-bottom:12px;">✅ Hóa đơn đã thanh toán đủ. Có thể hoàn tất check-out.</div>
+                <form method="post" action="${pageContext.request.contextPath}/reception/checkout"
+                      onsubmit="return confirm('Xác nhận khách đã thanh toán hoàn tất và rời khỏi phòng?')">
+                  <input type="hidden" name="id" value="${r.reservationId}">
+                  <button class="btn btn-danger" type="submit" style="width:100%; font-size:16px; padding:12px; font-weight:700;">
+                    ✔ Xác nhận Khách rời đi (Check-out)
+                  </button>
+                </form>
+              </c:when>
+              <c:otherwise>
+                <div class="err" style="margin-bottom:12px;">
+                  ⚠️ Hóa đơn chưa thanh toán đủ. Còn phải thu:
+                  <strong><fmt:formatNumber value="${outstanding}"/> đ</strong>.
+                </div>
+                <a class="btn btn-success" style="display:block;text-align:center"
+                   href="${pageContext.request.contextPath}/reception/invoice?reservationId=${r.reservationId}">
+                  💳 Sang trang thanh toán hóa đơn
+                </a>
+              </c:otherwise>
+            </c:choose>
           </c:otherwise>
         </c:choose>
       </div>

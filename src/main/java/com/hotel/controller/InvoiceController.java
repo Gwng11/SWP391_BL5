@@ -4,6 +4,7 @@ import com.hotel.entity.Invoice;
 import com.hotel.entity.User;
 import com.hotel.service.InvoiceService;
 import com.hotel.service.PaymentService;
+import com.hotel.payment.PaymentStartResult;
 import com.hotel.service.ReservationService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -43,8 +44,13 @@ public class InvoiceController extends BaseController {
             if ("generate".equals(action)) {
                 invoiceService.generateFinalInvoice(reservationId, me.getUserId());
             } else if ("pay".equals(action)) {
-                invoiceService.processFinalPayment(reservationId,
-                        req.getParameter("method") == null ? "CASH" : req.getParameter("method"), me.getUserId());
+                PaymentStartResult started = paymentService.startFinalInvoice(reservationId,
+                        req.getParameter("method") == null ? "CASH" : req.getParameter("method"), me.getUserId(),
+                        PaymentRequestUtil.vnPayReturnUrl(req), PaymentRequestUtil.clientIp(req));
+                if (started.requiresRedirect()) {
+                    resp.sendRedirect(started.redirectUrl());
+                    return;
+                }
             } else if ("voidItem".equals(action)) {
                 invoiceService.voidExtraItem(reservationId, longParam(req, "itemId"), me.getUserId());
             } else {

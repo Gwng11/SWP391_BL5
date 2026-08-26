@@ -5,6 +5,7 @@ import com.hotel.interfaces.IHotelServiceRepository;
 import com.hotel.repository.HotelServiceRepository;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,6 +21,23 @@ public class HotelServiceManagementService {
 
     public List<HotelService> findAll() { return repository.findAll(); }
     public HotelService findById(long id) { return repository.findById(id); }
+
+    public List<HotelService> search(String keyword) {
+        List<HotelService> services = repository.findAll();
+        if (keyword == null || keyword.isBlank()) return services;
+
+        String term = normalizeSearchText(keyword);
+        return services.stream()
+                .filter(service -> Long.toString(service.getHotelServiceId()).contains(term)
+                        || normalizeSearchText(service.getServiceCode()).contains(term)
+                        || normalizeSearchText(service.getServiceName()).contains(term)
+                        || normalizeSearchText(service.getUnitName()).contains(term)
+                        || normalizeSearchText(service.getDescription()).contains(term)
+                        || normalizeSearchText(service.isActive()
+                                ? "đang mở active"
+                                : "ngừng phục vụ inactive").contains(term))
+                .toList();
+    }
 
     public long create(HotelService service) {
         normalizeAndValidate(service);
@@ -67,6 +85,9 @@ public class HotelServiceManagementService {
         if (service.getUnitName().isEmpty() || service.getUnitName().length() > 30) {
             throw new IllegalArgumentException("Đơn vị tính phải có từ 1 đến 30 ký tự");
         }
+        if (service.getDescription() != null && service.getDescription().length() > 500) {
+            throw new IllegalArgumentException("Mô tả dịch vụ không được vượt quá 500 ký tự");
+        }
         BigDecimal price = service.getUnitPrice();
         if (price == null || price.signum() < 0) throw new IllegalArgumentException("Đơn giá không được âm");
         if (service.getImageUrl() != null && service.getImageUrl().length() > 255) {
@@ -85,5 +106,13 @@ public class HotelServiceManagementService {
     private String nullableTrim(String value) {
         String result = trim(value);
         return result.isEmpty() ? null : result;
+    }
+
+    private String normalizeSearchText(String value) {
+        if (value == null) return "";
+        String withoutMarks = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return withoutMarks.replace('đ', 'd').replace('Đ', 'D')
+                .toLowerCase(Locale.ROOT).trim();
     }
 }

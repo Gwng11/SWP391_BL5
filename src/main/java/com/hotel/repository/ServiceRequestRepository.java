@@ -144,10 +144,10 @@ public class ServiceRequestRepository extends BaseRepository implements IService
                 + "FROM service_requests sr WITH (UPDLOCK, HOLDLOCK) "
                 + "LEFT JOIN invoices i ON i.reservation_id=sr.reservation_id "
                 + "WHERE sr.service_request_id = ? AND sr.assigned_staff_user_id = ? "
-                + "AND sr.status_code IN ('ASSIGNED','IN_PROGRESS')";
+                + "AND sr.status_code = 'IN_PROGRESS'";
         String complete = "UPDATE service_requests SET status_code='COMPLETED', "
-                + "started_at=COALESCE(started_at,SYSUTCDATETIME()), completed_at=SYSUTCDATETIME() "
-                + "WHERE service_request_id=?";
+                + "completed_at=SYSUTCDATETIME() "
+                + "WHERE service_request_id=? AND status_code='IN_PROGRESS'";
         String charge = "UPDATE reservations SET service_total=service_total+?, total_amount=total_amount+?, "
                 + "updated_at=SYSUTCDATETIME() WHERE reservation_id=?";
         try (Connection cn = getConnection()) {
@@ -159,7 +159,8 @@ public class ServiceRequestRepository extends BaseRepository implements IService
                     ps.setLong(1, serviceRequestId);
                     ps.setLong(2, staffUserId);
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new IllegalStateException("Bạn không được hoàn tất yêu cầu này");
+                        if (!rs.next()) throw new IllegalStateException(
+                                "Yêu cầu phải được bắt đầu trước khi hoàn tất và phải thuộc nhân viên hiện tại");
                         reservationId = rs.getLong("reservation_id");
                         amount = rs.getBigDecimal("total_amount");
                         String invoiceStatus = rs.getString("invoice_status");
@@ -171,7 +172,9 @@ public class ServiceRequestRepository extends BaseRepository implements IService
                 }
                 try (PreparedStatement ps = cn.prepareStatement(complete)) {
                     ps.setLong(1, serviceRequestId);
-                    ps.executeUpdate();
+                    if (ps.executeUpdate() == 0) {
+                        throw new IllegalStateException("Yêu cầu không còn ở trạng thái đang thực hiện");
+                    }
                 }
                 if (amount != null && amount.signum() > 0) {
                     try (PreparedStatement ps = cn.prepareStatement(charge)) {

@@ -7,8 +7,10 @@ public final class Constants {
     private Constants() {}
 
     // Thuế & tỉ lệ đặt cọc
-    public static final BigDecimal TAX_RATE = new BigDecimal("0.10");     // 10% VAT
-    public static final BigDecimal DEPOSIT_RATE = new BigDecimal("0.30"); // cọc 30%
+    // SRS hiện hành quy định cọc 20%. SRS chưa quy định thuế nên không tự cộng thuế.
+    // Các reservation đã tạo vẫn giữ snapshot tax_amount/deposit_required trong DB.
+    public static final BigDecimal TAX_RATE = BigDecimal.ZERO;
+    public static final BigDecimal DEPOSIT_RATE = new BigDecimal("0.20");
     public static final int PENDING_HOLD_HOURS = 24; // đơn PENDING giữ chỗ tối đa 24h nếu chưa cọc
 
     // users.role_code

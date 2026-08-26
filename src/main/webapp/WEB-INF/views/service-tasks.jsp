@@ -84,6 +84,8 @@
               <button class="btn btn-danger" type="submit">Hủy</button>
             </form>
           </c:if>
+
+
           <c:if test="${!isDispatcher && s.statusCode == 'ASSIGNED'}">
             <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
@@ -91,12 +93,14 @@
               <button class="btn" type="submit">Bắt đầu</button>
             </form>
           </c:if>
-          <c:if test="${!isDispatcher && (s.statusCode == 'ASSIGNED' || s.statusCode == 'IN_PROGRESS')}">
+          <c:if test="${!isDispatcher && s.statusCode == 'IN_PROGRESS'}">
             <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="complete">
               <button class="btn btn-success" type="submit">Hoàn tất</button>
             </form>
+          </c:if>
+          <c:if test="${!isDispatcher && (s.statusCode == 'ASSIGNED' || s.statusCode == 'IN_PROGRESS')}">
             <form method="post" action="${pageContext.request.contextPath}${taskUrl}">
               <input type="hidden" name="id" value="${s.serviceRequestId}">
               <input type="hidden" name="action" value="unable">
@@ -104,6 +108,7 @@
               <button class="btn btn-danger" type="submit">Không thể thực hiện</button>
             </form>
           </c:if>
+
         </td>
       </tr>
     </c:forEach>

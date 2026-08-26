@@ -57,6 +57,9 @@
                 </td>
                 <td style="text-align: right;">
                   <a class="btn btn-muted btn-small" href="${pageContext.request.contextPath}/reservation?id=${r.reservationId}">✏️ Chi tiết</a>
+                  <c:if test="${r.statusCode == 'CHECKED_IN' || r.statusCode == 'CHECKED_OUT'}">
+                    <a class="btn btn-small" href="${pageContext.request.contextPath}/my-invoice?reservationId=${r.reservationId}">🧾 Hóa đơn</a>
+                  </c:if>
                 </td>
               </tr>
             </c:forEach>
