@@ -44,21 +44,25 @@ public class FrontDeskService {
     private IReservationGuestRepository guestRepo = new ReservationGuestRepository();
 
     // Constructor mặc định cho Controller / Servlet
-    public FrontDeskService() {}
+    public FrontDeskService() {
+    }
+
     /** F10: check-in - yêu cầu đơn CONFIRMED và đã nộp đủ cọc */
     public void checkIn(long reservationId, long byUserId) {
         Reservation r = reservationRepo.findById(reservationId);
-        if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
+        if (r == null)
+            throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CONFIRMED.equals(r.getStatusCode()))
             throw new IllegalStateException("Đơn phải ở trạng thái CONFIRMED mới check-in được");
         if (paymentService.getDepositPaid(reservationId).compareTo(r.getDepositRequired()) < 0)
             throw new IllegalStateException("Khách chưa nộp đủ tiền cọc");
-        // Không cho check-in TRƯỚC ngày nhận phòng (khách đến sớm → đổi ngày đơn hoặc tạo Walk-in)
+        // Không cho check-in TRƯỚC ngày nhận phòng (khách đến sớm → đổi ngày đơn hoặc
+        // tạo đơn mới cho đêm nay)
         java.time.LocalDate today = java.time.LocalDate.now();
         if (today.isBefore(r.getCheckInDate()))
             throw new IllegalStateException("Đơn nhận phòng ngày "
                     + r.getCheckInDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                    + " — chưa đến ngày. Khách đến sớm: hãy ĐỔI NGÀY đơn (màn chi tiết đơn) hoặc tạo WALK-IN cho đêm nay");
+                    + " — chưa đến ngày. Khách đến sớm: hãy ĐỔI NGÀY đơn (màn chi tiết đơn) hoặc tạo đơn đặt phòng mới cho đêm nay");
         // Khai báo lưu trú: khách ở CHÍNH bắt buộc có giấy tờ tùy thân
         boolean primaryHasDoc = guestRepo.findByReservation(reservationId).stream()
                 .anyMatch(g -> g.isPrimaryGuest()
@@ -78,7 +82,8 @@ public class FrontDeskService {
 
     /**
      * Danh sách loại phòng còn THIẾU phòng sạch sẵn sàng so với nhu cầu của đơn.
-     * Gộp nhu cầu theo loại (nhiều dòng có thể cùng loại phòng), trừ số đã gán trước đó.
+     * Gộp nhu cầu theo loại (nhiều dòng có thể cùng loại phòng), trừ số đã gán
+     * trước đó.
      * Trả về rỗng = đủ phòng để gán.
      */
     public List<String> findRoomShortages(long reservationId) {
@@ -86,7 +91,8 @@ public class FrontDeskService {
         Map<Long, String> typeNames = new HashMap<>();
         for (ReservationRoom rr : resRoomRepo.findByReservation(reservationId)) {
             int missing = rr.getQuantity() - assignmentRepo.countCurrentByReservationRoom(rr.getReservationRoomId());
-            if (missing > 0) needByType.merge(rr.getRoomTypeId(), missing, Integer::sum);
+            if (missing > 0)
+                needByType.merge(rr.getRoomTypeId(), missing, Integer::sum);
             typeNames.put(rr.getRoomTypeId(), rr.getTypeName());
         }
         List<String> shortages = new ArrayList<>();
@@ -98,7 +104,9 @@ public class FrontDeskService {
         return shortages;
     }
 
-    /** Tiến độ gán phòng của 1 đơn: [đã gán, cần gán] - dùng cảnh báo ở màn Đang ở */
+    /**
+     * Tiến độ gán phòng của 1 đơn: [đã gán, cần gán] - dùng cảnh báo ở màn Đang ở
+     */
     public int[] getAssignmentProgress(long reservationId) {
         int required = 0;
         int assigned = 0;
@@ -106,20 +114,22 @@ public class FrontDeskService {
             required += rr.getQuantity();
             assigned += assignmentRepo.countCurrentByReservationRoom(rr.getReservationRoomId());
         }
-        return new int[]{assigned, required};
+        return new int[] { assigned, required };
     }
 
     /** F11: danh sách phòng có thể gán cho 1 dòng đặt phòng */
     public List<Room> getAssignableRooms(long reservationRoomId) {
         ReservationRoom rr = resRoomRepo.findById(reservationRoomId);
-        if (rr == null) throw new IllegalArgumentException("Dòng đặt phòng không tồn tại");
+        if (rr == null)
+            throw new IllegalArgumentException("Dòng đặt phòng không tồn tại");
         return roomRepo.findAssignableRooms(rr.getRoomTypeId());
     }
 
     /** F11: gán phòng vật lý - kiểm tra đúng loại, phòng sạch & trống */
     public void assignRoom(long reservationRoomId, long roomId, long byUserId) {
         ReservationRoom rr = resRoomRepo.findById(reservationRoomId);
-        if (rr == null) throw new IllegalArgumentException("Dòng đặt phòng không tồn tại");
+        if (rr == null)
+            throw new IllegalArgumentException("Dòng đặt phòng không tồn tại");
         Reservation r = reservationRepo.findById(rr.getReservationId());
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()) && !Constants.RES_CONFIRMED.equals(r.getStatusCode()))
             throw new IllegalStateException("Chỉ gán phòng cho đơn CONFIRMED/CHECKED_IN");
@@ -131,14 +141,16 @@ public class FrontDeskService {
         if (!"AVAILABLE".equals(room.getOperationalStatus())
                 || !("READY".equals(room.getCleaningStatus()) || "INSPECTED".equals(room.getCleaningStatus())))
             throw new IllegalStateException("Phòng chưa sẵn sàng (bẩn/bảo trì/đang dùng)");
-        // Unique index UX_room_assignments_current_room trong DB chặn double-assign lần cuối
+        // Unique index UX_room_assignments_current_room trong DB chặn double-assign lần
+        // cuối
         assignmentRepo.assign(reservationRoomId, roomId, byUserId);
     }
 
     /** F11: đổi phòng */
     public void changeRoom(long roomAssignmentId, long newRoomId, long byUserId, String reason) {
         Room room = roomRepo.findById(newRoomId);
-        if (room == null) throw new IllegalArgumentException("Phòng mới không tồn tại");
+        if (room == null)
+            throw new IllegalArgumentException("Phòng mới không tồn tại");
         if (!"AVAILABLE".equals(room.getOperationalStatus())
                 || !("READY".equals(room.getCleaningStatus()) || "INSPECTED".equals(room.getCleaningStatus())))
             throw new IllegalStateException("Phòng mới chưa sẵn sàng");
@@ -160,9 +172,10 @@ public class FrontDeskService {
 
     /** F12: thêm phụ thu (EXTRA) - tạo hóa đơn DRAFT nếu chưa có */
     public void addExtraCharge(long reservationId, String description, BigDecimal quantity,
-                               BigDecimal unitPrice, long byUserId) {
+            BigDecimal unitPrice, long byUserId) {
         Reservation r = reservationRepo.findById(reservationId);
-        if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
+        if (r == null)
+            throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Chỉ thêm phụ thu cho khách đang ở");
         // V3: validate dữ liệu phụ thu trước khi ghi (tránh nổ CHECK constraint DB)
@@ -195,11 +208,13 @@ public class FrontDeskService {
 
     /**
      * F13: check-out - yêu cầu hóa đơn cuối đã thanh toán đủ (F14 thực hiện trước).
-     * Trả phòng: assignment đóng lại, phòng DIRTY; loại phòng inactive giữ OUT_OF_SERVICE.
+     * Trả phòng: assignment đóng lại, phòng DIRTY; loại phòng inactive giữ
+     * OUT_OF_SERVICE.
      */
     public void checkOut(long reservationId, long byUserId) {
         Reservation r = reservationRepo.findById(reservationId);
-        if (r == null) throw new IllegalArgumentException("Đơn không tồn tại");
+        if (r == null)
+            throw new IllegalArgumentException("Đơn không tồn tại");
         if (!Constants.RES_CHECKED_IN.equals(r.getStatusCode()))
             throw new IllegalStateException("Đơn không ở trạng thái CHECKED_IN");
 
@@ -213,7 +228,6 @@ public class FrontDeskService {
         // DIRTY/unavailable và tạo housekeeping task thật cho từng phòng vật lý.
         reservationRepo.checkOut(reservationId, byUserId);
     }
-
 
     Invoice getOrCreateDraftInvoice(Reservation r, long byUserId) {
         Invoice inv = invoiceRepo.findByReservation(r.getReservationId());
