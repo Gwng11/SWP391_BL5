@@ -6,6 +6,7 @@ import com.hotel.entity.User;
 import com.hotel.service.PaymentService;
 import com.hotel.service.ReservationService;
 import com.hotel.service.ServiceRequestService;
+import com.hotel.service.CustomerService;
 import com.hotel.ultis.Constants;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,14 +21,17 @@ public class ReservationController extends BaseController {
     private final ReservationService reservationService = new ReservationService();
     private final PaymentService paymentService = new PaymentService();
     private final ServiceRequestService serviceRequestService = new ServiceRequestService();
+    private final CustomerService customerService = new CustomerService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         User me = currentUser(req);
         if ("/my-reservations".equals(req.getServletPath())) {
             Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
-            req.setAttribute("reservations",
-                    c == null ? java.util.List.of() : reservationService.getByCustomer(c.getCustomerId()));
+            java.util.List<Reservation> reservations = c == null
+                    ? java.util.List.of() : reservationService.getByCustomer(c.getCustomerId());
+            reservations.forEach(r -> r.setServiceRequestEligible(serviceRequestService.canRequestService(r)));
+            req.setAttribute("reservations", reservations);
             req.getRequestDispatcher("/WEB-INF/views/my-reservations.jsp").forward(req, resp);
             return;
         }
@@ -42,6 +46,7 @@ public class ReservationController extends BaseController {
             }
         }
         req.setAttribute("r", r);
+        req.setAttribute("bookingCustomer", customerService.getById(r.getCustomerId()));
         req.setAttribute("rooms", reservationService.getRooms(id));
         req.setAttribute("guests", reservationService.getGuests(id));
         req.setAttribute("payments", paymentService.getByReservation(id));

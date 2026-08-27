@@ -6,10 +6,12 @@ import com.hotel.entity.Reservation;
 import com.hotel.entity.ServiceRequest;
 import com.hotel.entity.User;
 import com.hotel.interfaces.IHotelServiceRepository;
+import com.hotel.interfaces.IHotelProfileRepository;
 import com.hotel.interfaces.IReservationRepository;
 import com.hotel.interfaces.IServiceRequestRepository;
 import com.hotel.interfaces.IUserRepository;
 import com.hotel.repository.HotelServiceRepository;
+import com.hotel.repository.HotelProfileRepository;
 import com.hotel.repository.ReservationRepository;
 import com.hotel.repository.ServiceRequestRepository;
 import com.hotel.repository.UserRepository;
@@ -18,6 +20,7 @@ import com.hotel.ultis.Constants;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /** Nghiệp vụ F15/F16 cho yêu cầu dịch vụ khách sạn. */
@@ -25,23 +28,26 @@ public class ServiceRequestService {
     private static final String SERVICE_DEPARTMENT = "GENERAL_SERVICE";
 
     private final IHotelServiceRepository hotelServiceRepo;
+    private final IHotelProfileRepository hotelProfileRepo;
     private final IServiceRequestRepository requestRepo;
     private final IReservationRepository reservationRepo;
     private final IUserRepository userRepo;
 
     public ServiceRequestService() {
         this(new HotelServiceRepository(), new ServiceRequestRepository(),
-                new ReservationRepository(), new UserRepository());
+                new ReservationRepository(), new UserRepository(), new HotelProfileRepository());
     }
 
     public ServiceRequestService(IHotelServiceRepository hotelServiceRepo,
                                  IServiceRequestRepository requestRepo,
                                  IReservationRepository reservationRepo,
-                                 IUserRepository userRepo) {
+                                 IUserRepository userRepo,
+                                 IHotelProfileRepository hotelProfileRepo) {
         this.hotelServiceRepo = hotelServiceRepo;
         this.requestRepo = requestRepo;
         this.reservationRepo = reservationRepo;
         this.userRepo = userRepo;
+        this.hotelProfileRepo = hotelProfileRepo;
     }
 
     public List<HotelService> getCatalog(String keyword) {
@@ -64,6 +70,16 @@ public class ServiceRequestService {
         requireRequestActor(actor);
         if (Constants.ROLE_CUSTOMER.equals(actor.getRoleCode())) {
             if (customer == null) throw new IllegalStateException("Không tìm thấy hồ sơ khách hàng hiện tại");
+            if (reservationContextId != null) {
+                Reservation selected = reservationRepo.findById(reservationContextId);
+                if (selected == null || selected.getCustomerId() != customer.getCustomerId()) {
+                    throw new IllegalStateException("Bạn không có quyền đặt dịch vụ cho đơn này");
+                }
+                if (!isServiceEligibleReservation(selected)) {
+                    throw new IllegalStateException("Đơn không còn trong thời gian có thể đặt dịch vụ");
+                }
+                return selected;
+            }
             List<Reservation> eligible = reservationRepo.findByCustomer(customer.getCustomerId()).stream()
                     .filter(this::isServiceEligibleReservation)
                     .toList();
@@ -99,12 +115,43 @@ public class ServiceRequestService {
     private boolean isServiceEligibleReservation(Reservation reservation) {
         return reservation != null
                 && (Constants.RES_CONFIRMED.equals(reservation.getStatusCode())
-                    || Constants.RES_CHECKED_IN.equals(reservation.getStatusCode()));
+                    || Constants.RES_CHECKED_IN.equals(reservation.getStatusCode()))
+                && reservation.getCheckInDate() != null
+                && reservation.getCheckOutDate() != null
+                && LocalDateTime.now().isBefore(serviceWindowEnd(reservation));
+    }
+
+    public boolean canRequestService(Reservation reservation) {
+        return isServiceEligibleReservation(reservation);
+    }
+
+    public LocalDateTime serviceWindowStart(Reservation reservation) {
+        if (reservation == null || reservation.getCheckInDate() == null) {
+            throw new IllegalStateException("Thiếu ngày nhận phòng của đơn");
+        }
+        var profile = hotelProfileRepo.getProfile();
+        LocalTime checkInTime = profile != null && profile.getCheckInTime() != null
+                ? profile.getCheckInTime() : LocalTime.of(14, 0);
+        return reservation.getCheckInDate().atTime(checkInTime);
+    }
+
+    public LocalDateTime serviceWindowEnd(Reservation reservation) {
+        if (reservation == null || reservation.getCheckOutDate() == null) {
+            throw new IllegalStateException("Thiếu ngày trả phòng của đơn");
+        }
+        var profile = hotelProfileRepo.getProfile();
+        LocalTime checkOutTime = profile != null && profile.getCheckOutTime() != null
+                ? profile.getCheckOutTime() : LocalTime.NOON;
+        return reservation.getCheckOutDate().atTime(checkOutTime);
     }
 
     public long createRequest(User actor, Customer customer, Long reservationContextId,
                               long hotelServiceId, BigDecimal quantity,
                               LocalDateTime requestedForAt, String notes) {
+        requireRequestActor(actor);
+        if (reservationContextId == null) {
+            throw new IllegalStateException("Vui lòng chọn đúng kỳ lưu trú từ màn hình Đơn của tôi trước khi đặt dịch vụ");
+        }
         Reservation stay = resolveCurrentStay(actor, customer, reservationContextId);
         HotelService service = getActiveService(hotelServiceId);
         if (service == null) throw new IllegalArgumentException("Dịch vụ không tồn tại hoặc đã ngừng phục vụ");
@@ -114,10 +161,7 @@ public class ServiceRequestService {
         if (quantity.compareTo(new BigDecimal("99999999.99")) > 0) {
             throw new IllegalArgumentException("Số lượng vượt quá giới hạn cho phép");
         }
-        if (requestedForAt == null) throw new IllegalArgumentException("Vui lòng chọn thời gian mong muốn");
-        if (requestedForAt.isBefore(LocalDateTime.now().minusMinutes(1))) {
-            throw new IllegalArgumentException("Thời gian mong muốn không được ở trong quá khứ");
-        }
+        validateRequestedTime(stay, requestedForAt);
         String cleanNotes = notes == null ? null : notes.trim();
         if (cleanNotes != null && cleanNotes.length() > 500) {
             throw new IllegalArgumentException("Ghi chú không được vượt quá 500 ký tự");
@@ -200,10 +244,25 @@ public class ServiceRequestService {
     }
 
     public void reschedule(long serviceRequestId, LocalDateTime requestedForAt, String note) {
-        if (requestedForAt == null || requestedForAt.isBefore(LocalDateTime.now().minusMinutes(1))) {
-            throw new IllegalArgumentException("Thời gian phục vụ mới không hợp lệ");
-        }
+        ServiceRequest request = requestRepo.findById(serviceRequestId);
+        if (request == null) throw new IllegalArgumentException("Yêu cầu dịch vụ không tồn tại");
+        Reservation stay = reservationRepo.findById(request.getReservationId());
+        if (stay == null) throw new IllegalStateException("Không tìm thấy đơn lưu trú của yêu cầu");
+        validateRequestedTime(stay, requestedForAt);
         requestRepo.reschedule(serviceRequestId, requestedForAt, note);
+    }
+
+    private void validateRequestedTime(Reservation stay, LocalDateTime requestedForAt) {
+        if (requestedForAt == null) throw new IllegalArgumentException("Vui lòng chọn thời gian mong muốn");
+        if (requestedForAt.isBefore(LocalDateTime.now().minusMinutes(1))) {
+            throw new IllegalArgumentException("Thời gian mong muốn không được ở trong quá khứ");
+        }
+        LocalDateTime serviceWindowStart = serviceWindowStart(stay);
+        LocalDateTime serviceWindowEnd = serviceWindowEnd(stay);
+        if (requestedForAt.isBefore(serviceWindowStart) || !requestedForAt.isBefore(serviceWindowEnd)) {
+            throw new IllegalArgumentException("Thời gian dịch vụ phải nằm trong thời gian lưu trú từ "
+                    + serviceWindowStart + " đến trước " + serviceWindowEnd);
+        }
     }
 
     public List<ServiceRequest> getByReservation(long reservationId) {

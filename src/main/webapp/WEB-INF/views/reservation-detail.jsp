@@ -23,6 +23,25 @@
 <div class="grid">
   <!-- Left Side: Room Details, Guests, and Payments (col-8) -->
   <div class="col-8">
+
+    <c:if test="${not empty bookingCustomer}">
+      <div class="card">
+        <h2 style="border-bottom:1px solid var(--bk-border); padding-bottom:12px; margin-bottom:16px; font-size:18px;">
+          👤 Thông tin khách hàng đặt phòng
+        </h2>
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 22px; font-size:14px;">
+          <div><span class="muted">Mã khách hàng</span><br><strong>${bookingCustomer.customerCode}</strong></div>
+          <div><span class="muted">Trạng thái hồ sơ</span><br><span class="badge status-${bookingCustomer.statusCode}">${bookingCustomer.statusCode}</span></div>
+          <div><span class="muted">Họ và tên</span><br><strong><c:out value="${bookingCustomer.fullName}" default="—"/></strong></div>
+          <div><span class="muted">Ngày sinh</span><br><strong><c:out value="${bookingCustomer.dateOfBirth}" default="—"/></strong></div>
+          <div><span class="muted">Email</span><br><strong><c:out value="${bookingCustomer.email}" default="—"/></strong></div>
+          <div><span class="muted">Số điện thoại</span><br><strong><c:out value="${bookingCustomer.phone}" default="—"/></strong></div>
+          <div><span class="muted">Giấy tờ tùy thân</span><br><strong><c:out value="${bookingCustomer.idDocumentType}" default="—"/> <c:out value="${bookingCustomer.idDocumentNumber}"/></strong></div>
+          <div><span class="muted">Quốc tịch</span><br><strong><c:out value="${bookingCustomer.nationality}" default="—"/></strong></div>
+          <div style="grid-column:1/-1;"><span class="muted">Địa chỉ liên hệ</span><br><strong><c:out value="${bookingCustomer.address}" default="—"/></strong></div>
+        </div>
+      </div>
+    </c:if>
     
     <!-- 1. Room details card -->
     <div class="card">

@@ -47,3 +47,6 @@ Thumbs.db
 *.patch
 
 docs/
+
+# Codex temporary spreadsheet files
+/.codex-spreadsheet-work/

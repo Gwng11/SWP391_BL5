@@ -66,7 +66,9 @@ public class AuthService {
         c.setPhone(phone);
         customerRepo.insert(c);
 
-        sendVerificationEmail(u, appBaseUrl);
+        // Customer accounts are available immediately after registration.
+        userRepo.markEmailVerified(userId);
+        u.setEmailVerifiedAt(LocalDateTime.now(ZoneOffset.UTC));
         return u;
     }
 
@@ -106,8 +108,6 @@ public class AuthService {
             if (lockedUntil != null) throw new IllegalArgumentException(Constants.MSG_ACCOUNT_LOCKED);
             throw new IllegalArgumentException(Constants.MSG_INVALID_LOGIN);
         }
-        if (Constants.ROLE_CUSTOMER.equals(u.getRoleCode()) && u.getEmailVerifiedAt() == null)
-            throw new IllegalArgumentException("Please verify your email address before logging in.");
         userRepo.recordLoginSuccess(u.getUserId());
         return u;
     }

@@ -1,6 +1,7 @@
 package com.hotel.service;
 
 import com.hotel.entity.User;
+import com.hotel.entity.Customer;
 import com.hotel.interfaces.ICustomerRepository;
 import com.hotel.interfaces.IUserRepository;
 import com.hotel.interfaces.IUserTokenRepository;
@@ -47,6 +48,29 @@ class AuthServiceTest {
     @Test void inactiveManagerIsRejected(){User manager=manager("Manager@123");manager.setStatusCode("INACTIVE");when(users.findByEmail(anyString())).thenReturn(manager);assertEquals(Constants.MSG_ACCOUNT_INACTIVE,assertThrows(IllegalArgumentException.class,()->service.login("manager@hotel.vn","Manager@123")).getMessage());}
 
     @Test void accountRecoveryDoesNotIssueStaffToken(){User manager=manager("Manager@123");when(users.findByEmail(anyString())).thenReturn(manager);service.forgotPassword("manager@hotel.vn","http://localhost");verifyNoInteractions(tokens,email);}
+
+    @Test void unverifiedCustomerCanLoginImmediately(){
+        User customer=new User();customer.setUserId(43);customer.setEmail("customer@hotel.vn");
+        customer.setPasswordHash(PasswordUtil.hash("Customer@123"));customer.setRoleCode(Constants.ROLE_CUSTOMER);
+        customer.setStatusCode("ACTIVE");customer.setEmailVerifiedAt(null);
+        when(users.findByEmail("customer@hotel.vn")).thenReturn(customer);
+
+        assertSame(customer,service.login("customer@hotel.vn","Customer@123"));
+        verify(users).recordLoginSuccess(customer.getUserId());
+    }
+
+    @Test void registrationActivatesCustomerWithoutSendingVerificationEmail(){
+        when(users.findByEmail("new@hotel.vn")).thenReturn(null);
+        when(users.insert(any(User.class))).thenReturn(44L);
+
+        User registered=service.register("new@hotel.vn","Customer@123"," New Customer ","0900000000","http://localhost");
+
+        assertEquals(44L,registered.getUserId());
+        assertNotNull(registered.getEmailVerifiedAt());
+        verify(users).markEmailVerified(44L);
+        verify(customers).insert(any(Customer.class));
+        verifyNoInteractions(tokens,email);
+    }
 
     private User manager(String password){User u=new User();u.setUserId(42);u.setEmail("manager@hotel.vn");u.setPasswordHash(PasswordUtil.hash(password));u.setRoleCode(Constants.ROLE_MANAGER);u.setStatusCode("ACTIVE");return u;}
 }

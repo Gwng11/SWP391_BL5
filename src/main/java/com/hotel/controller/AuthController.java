@@ -77,7 +77,7 @@ public class AuthController extends BaseController {
             } else if ("/register".equals(path)) {
                 authService.register(req.getParameter("email"), req.getParameter("password"),
                         req.getParameter("fullName"), req.getParameter("phone"), baseUrl(req));
-                req.setAttribute("msg", "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+                req.setAttribute("msg", "Đăng ký thành công! Bạn có thể đăng nhập ngay.");
                 req.setAttribute("redirect", req.getParameter("redirect"));
                 req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
             } else if ("/forgot-password".equals(path)) {
