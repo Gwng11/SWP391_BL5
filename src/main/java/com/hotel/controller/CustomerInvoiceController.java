@@ -43,6 +43,9 @@ public class CustomerInvoiceController extends BaseController {
         req.setAttribute("r", reservation);
         req.setAttribute("invoice", invoice);
         req.setAttribute("payments", paymentService.getByReservation(reservation.getReservationId()));
+        req.setAttribute("onlinePaymentAvailable", paymentService.isOnlinePaymentAvailable());
+        req.setAttribute("onlinePaymentSimulation", paymentService.isOnlinePaymentSimulation());
+        req.setAttribute("onlinePaymentDisplayName", paymentService.getOnlinePaymentDisplayName());
         if (invoice != null && !Constants.INV_DRAFT.equals(invoice.getStatusCode())) {
             req.setAttribute("items", invoiceService.getItems(invoice.getInvoiceId()));
             req.setAttribute("outstanding", invoiceService.getOutstanding(invoice));

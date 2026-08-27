@@ -31,6 +31,7 @@ public class DepositController extends BaseController {
         req.setAttribute("r", r);
         req.setAttribute("depositPaid", paymentService.getDepositPaid(id));
         req.setAttribute("outstanding", paymentService.getDepositOutstanding(r));
+        exposeOnlinePayment(req);
         req.getRequestDispatcher("/WEB-INF/views/deposit.jsp").forward(req, resp);
     }
 
@@ -81,5 +82,11 @@ public class DepositController extends BaseController {
                 || Constants.ROLE_RECEPTIONIST.equals(me.getRoleCode()))) return true;
         resp.sendError(HttpServletResponse.SC_FORBIDDEN);
         return false;
+    }
+
+    private void exposeOnlinePayment(HttpServletRequest req) {
+        req.setAttribute("onlinePaymentAvailable", paymentService.isOnlinePaymentAvailable());
+        req.setAttribute("onlinePaymentSimulation", paymentService.isOnlinePaymentSimulation());
+        req.setAttribute("onlinePaymentDisplayName", paymentService.getOnlinePaymentDisplayName());
     }
 }

@@ -54,10 +54,25 @@
       </div>
 
       <c:if test="${invoice.statusCode != 'PAID' && outstanding > 0}">
+        <c:if test="${not onlinePaymentAvailable}">
+          <div class="err" style="margin-top:22px">Thanh toán online chưa được cấu hình. Vui lòng liên hệ khách sạn.</div>
+        </c:if>
+        <c:if test="${onlinePaymentSimulation}">
+          <div class="alert" style="margin-top:22px">Đang dùng Sandbox mô phỏng; giao dịch không đi qua VNPay.</div>
+        </c:if>
         <form method="post" action="${pageContext.request.contextPath}/my-invoice" style="margin-top:22px;text-align:right"
               onsubmit="return confirm('Xác nhận thanh toán toàn bộ số tiền còn lại?')">
           <input type="hidden" name="reservationId" value="${r.reservationId}">
-          <button class="btn btn-success" type="submit">💳 Thanh toán online <fmt:formatNumber value="${outstanding}"/> đ</button>
+          <c:choose>
+            <c:when test="${onlinePaymentAvailable}">
+              <button class="btn btn-success" type="submit">💳 Thanh toán qua
+                <c:out value="${onlinePaymentDisplayName}"/> — <fmt:formatNumber value="${outstanding}"/> đ
+              </button>
+            </c:when>
+            <c:otherwise>
+              <button class="btn btn-success" type="button" disabled>Chưa cấu hình thanh toán online</button>
+            </c:otherwise>
+          </c:choose>
         </form>
       </c:if>
     </div>

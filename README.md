@@ -29,18 +29,41 @@ Chạy lần lượt trong SSMS (database `SingleHotelManagementDB` đã tạo s
 
 #### Cấu hình thanh toán online
 
-Mặc định dự án dùng `SANDBOX` nội bộ để có thể chạy và demo ngay mà không cần tài khoản cổng thanh toán.
-Để dùng môi trường thử nghiệm VNPay, cấu hình các biến môi trường trước khi chạy Tomcat:
+Hệ thống mặc định **không ghi nhận giả một giao dịch online thành công**. Khi chưa cấu hình gateway,
+nút thanh toán online bị vô hiệu hóa và backend cũng từ chối request thủ công.
+
+Để dùng VNPay Sandbox, chỉ cần cấu hình hai biến môi trường trước khi khởi động Tomcat:
+
+```text
+HMS_VNPAY_TMN_CODE=<mã website sandbox do VNPay cấp>
+HMS_VNPAY_HASH_SECRET=<chuỗi bí mật sandbox do VNPay cấp>
+```
+
+Khi thấy đủ hai biến trên, hệ thống tự chọn VNPay. Các biến tùy chọn:
 
 ```text
 HMS_PAYMENT_PROVIDER=VNPAY
-HMS_VNPAY_TMN_CODE=<mã website sandbox do VNPay cấp>
-HMS_VNPAY_HASH_SECRET=<chuỗi bí mật sandbox do VNPay cấp>
 HMS_VNPAY_RETURN_URL=https://<public-host>/HotelManagement/payment/vnpay-return
+HMS_VNPAY_PAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 ```
 
-`HMS_VNPAY_PAY_URL` là tùy chọn; nếu bỏ trống hệ thống dùng URL VNPay Sandbox
-`https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`.
+- `HMS_PAYMENT_PROVIDER=VNPAY` chỉ cần khi muốn khai báo tường minh; bình thường có thể bỏ.
+- `HMS_VNPAY_RETURN_URL` nên đặt khi có domain/tunnel cố định. Nếu bỏ, hệ thống tự dựng URL từ request
+  và hỗ trợ `X-Forwarded-Proto/Host/Port` của Cloudflare Tunnel.
+- `HMS_VNPAY_PAY_URL` có giá trị Sandbox như trên theo mặc định.
+- Chỉ để demo không qua VNPay mới đặt `HMS_PAYMENT_PROVIDER=SANDBOX`; giao diện sẽ cảnh báo đây là mô phỏng.
+
+Ví dụ cho phiên PowerShell hiện tại:
+
+```powershell
+$env:HMS_VNPAY_TMN_CODE='YOUR_TMN_CODE'
+$env:HMS_VNPAY_HASH_SECRET='YOUR_HASH_SECRET'
+$env:HMS_VNPAY_RETURN_URL='https://pay-test.example.com/HotelManagement/payment/vnpay-return'
+mvn clean package
+```
+
+Tomcat/IDE phải được khởi động từ tiến trình đã nhận các biến này. Nếu thay biến khi Tomcat đang chạy,
+hãy dừng và khởi động lại Tomcat.
 
 Khai báo IPN URL trên VNPay Sandbox là:
 `https://<public-host>/HotelManagement/payment/vnpay-ipn`.
@@ -117,8 +140,8 @@ khóa theo thứ tự `room_type_id`, nên luồng online và walk-in không th�
 ## 5. Ghi chú
 
 - Package tiện ích đặt tên `ultis` theo đúng cấu trúc bạn mô tả (nếu muốn đổi thành `utils`: đổi tên thư mục + sửa `package`/`import`).
-- Thanh toán ONLINE dùng `SandboxPaymentGateway` theo mặc định và adapter `VnPayPaymentGateway` khi
-  `HMS_PAYMENT_PROVIDER=VNPAY`. Giao dịch VNPay đi qua vòng đời `PENDING` → redirect → Return/IPN xác minh
+- Thanh toán ONLINE bị khóa an toàn khi chưa cấu hình. Hệ thống tự dùng `VnPayPaymentGateway` khi có đủ
+  hai credentials; `SandboxPaymentGateway` chỉ hoạt động khi được bật tường minh. Giao dịch VNPay đi qua vòng đời `PENDING` → redirect → Return/IPN xác minh
   chữ ký và số tiền → `SUCCESS/FAILED`; callback lặp lại được xử lý idempotent để không ghi nhận tiền hai lần.
 - F25–F26 (quản trị user và quản lý template email) chưa nằm trong phạm vi Manager và không được cấp cho role `MANAGER`.
 

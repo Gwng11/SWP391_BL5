@@ -32,6 +32,9 @@ public class InvoiceController extends BaseController {
             req.setAttribute("outstanding", invoiceService.getOutstanding(inv));
         }
         req.setAttribute("totalPaid", paymentService.getTotalPaid(reservationId));
+        req.setAttribute("onlinePaymentAvailable", paymentService.isOnlinePaymentAvailable());
+        req.setAttribute("onlinePaymentSimulation", paymentService.isOnlinePaymentSimulation());
+        req.setAttribute("onlinePaymentDisplayName", paymentService.getOnlinePaymentDisplayName());
         req.getRequestDispatcher("/WEB-INF/views/invoice.jsp").forward(req, resp);
     }
 
