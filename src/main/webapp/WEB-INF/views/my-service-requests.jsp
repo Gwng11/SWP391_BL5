@@ -53,10 +53,7 @@
       <h1>Dịch vụ của tôi</h1>
       <p>Theo dõi tiến độ phục vụ, nhân viên phụ trách và khoản phí của từng yêu cầu.</p>
     </div>
-    <c:choose>
-      <c:when test="${not empty currentStay}"><a class="hero-action" href="${pageContext.request.contextPath}/services">＋ Đặt thêm dịch vụ</a></c:when>
-      <c:otherwise><span class="hero-action disabled"><c:out value="${empty stayError ? 'Cần có đơn đã xác nhận hoặc kỳ lưu trú đang hoạt động để đặt dịch vụ.' : stayError}"/></span></c:otherwise>
-    </c:choose>
+    <a class="hero-action" href="${pageContext.request.contextPath}/my-reservations">Chọn đơn để đặt thêm dịch vụ</a>
   </section>
 
   <c:if test="${param.created == '1'}"><div class="msg" style="margin-top:18px">✅ Yêu cầu dịch vụ đã được gửi. Lễ tân sẽ tiếp nhận và phân công nhân viên.</div></c:if>
@@ -82,7 +79,7 @@
 
     <c:choose>
       <c:when test="${empty requests}">
-        <div class="empty-history">🛎️ Chưa có yêu cầu dịch vụ phù hợp.<br><c:if test="${not empty currentStay}"><a class="btn" href="${pageContext.request.contextPath}/services">Khám phá dịch vụ</a></c:if></div>
+        <div class="empty-history">🛎️ Chưa có yêu cầu dịch vụ phù hợp.<br><a class="btn" href="${pageContext.request.contextPath}/services">Xem danh mục dịch vụ</a></div>
       </c:when>
       <c:otherwise>
         <div class="request-list">

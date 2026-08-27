@@ -31,6 +31,7 @@ public class Reservation {
     private LocalDateTime updatedAt;
     private String customerName;
     private String customerEmail;
+    private boolean serviceRequestEligible;
 
     public long getReservationId() { return reservationId; }
     public void setReservationId(long reservationId) { this.reservationId = reservationId; }
@@ -84,4 +85,6 @@ public class Reservation {
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getCustomerEmail() { return customerEmail; }
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public boolean isServiceRequestEligible() { return serviceRequestEligible; }
+    public void setServiceRequestEligible(boolean serviceRequestEligible) { this.serviceRequestEligible = serviceRequestEligible; }
 }

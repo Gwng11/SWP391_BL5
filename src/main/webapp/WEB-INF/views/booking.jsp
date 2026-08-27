@@ -166,6 +166,53 @@
       </h2>
       <form method="post" action="${pageContext.request.contextPath}/booking">
         <input type="hidden" name="roomTypeId" value="${roomType.roomTypeId}">
+
+        <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}">
+          <div style="margin-bottom:22px; padding:18px; border:1px solid #bfdbfe; border-radius:12px; background:#eff6ff;">
+            <h3 style="margin:0 0 6px; color:var(--bk-navy); font-size:16px;">👤 Thông tin khách hàng đặt phòng</h3>
+            <p style="margin:0 0 16px; color:var(--bk-muted); font-size:13px;">
+              Thông tin này được lưu vào hồ sơ và hiển thị cho lễ tân trong chi tiết đơn đặt phòng.
+            </p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+              <div>
+                <label>Họ và tên *</label>
+                <input name="customerFullName" value="<c:out value='${bookingCustomer.fullName}'/>" maxlength="150" required style="width:100%">
+              </div>
+              <div>
+                <label>Email tài khoản</label>
+                <input value="<c:out value='${bookingCustomer.email}'/>" disabled style="width:100%; background:#e5e7eb;">
+              </div>
+              <div>
+                <label>Số điện thoại *</label>
+                <input name="customerPhone" value="<c:out value='${bookingCustomer.phone}'/>" maxlength="30" inputmode="tel" required style="width:100%">
+              </div>
+              <div>
+                <label>Ngày sinh *</label>
+                <input type="date" name="customerDateOfBirth" value="${bookingCustomer.dateOfBirth}" required style="width:100%">
+              </div>
+              <div>
+                <label>Loại giấy tờ *</label>
+                <select name="customerDocumentType" required style="width:100%">
+                  <option value="">-- Chọn loại giấy tờ --</option>
+                  <option value="CCCD" ${bookingCustomer.idDocumentType == 'CCCD' ? 'selected' : ''}>CCCD</option>
+                  <option value="PASSPORT" ${bookingCustomer.idDocumentType == 'PASSPORT' ? 'selected' : ''}>Hộ chiếu</option>
+                </select>
+              </div>
+              <div>
+                <label>Số giấy tờ *</label>
+                <input name="customerDocumentNumber" value="<c:out value='${bookingCustomer.idDocumentNumber}'/>" maxlength="50" required style="width:100%">
+              </div>
+              <div>
+                <label>Quốc tịch *</label>
+                <input name="customerNationality" value="<c:out value='${bookingCustomer.nationality}'/>" maxlength="80" required style="width:100%">
+              </div>
+              <div>
+                <label>Địa chỉ liên hệ *</label>
+                <input name="customerAddress" value="<c:out value='${bookingCustomer.address}'/>" maxlength="250" required style="width:100%">
+              </div>
+            </div>
+          </div>
+        </c:if>
         
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
           <div>
@@ -197,7 +244,7 @@
         </c:if>
 
         <label style="margin-top:16px;">👤 Tên khách lưu trú chính</label>
-        <input name="primaryGuestName" value="<c:out value='${selectedCustomer != null ? selectedCustomer.fullName : (sessionScope.currentUser.roleCode == "CUSTOMER" ? sessionScope.currentUser.fullName : "")}'/>" placeholder="Họ tên người đại diện nhận phòng" maxlength="150" style="width:100%">
+        <input name="primaryGuestName" value="<c:out value='${selectedCustomer != null ? selectedCustomer.fullName : (sessionScope.currentUser.roleCode == "CUSTOMER" ? bookingCustomer.fullName : "")}'/>" placeholder="Họ tên người đại diện nhận phòng" maxlength="150" style="width:100%">
 
         <label style="margin-top:16px;">💬 Yêu cầu đặc biệt (Không bắt buộc)</label>
         <textarea name="specialRequests" placeholder="Ví dụ: phòng tầng cao, giường phụ, check-in muộn..." style="width:100%" rows="3"></textarea>

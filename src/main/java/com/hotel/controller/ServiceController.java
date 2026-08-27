@@ -26,6 +26,11 @@ public class ServiceController extends BaseController {
         req.setAttribute("catalog", serviceRequestService.getCatalog(keyword));
         req.setAttribute("keyword", keyword);
         Long reservationId = longParamOrNull(req, "reservationId");
+        if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode()) && reservationId == null) {
+            req.setAttribute("browseOnly", true);
+            req.getRequestDispatcher("/WEB-INF/views/services.jsp").forward(req, resp);
+            return;
+        }
         try {
             Customer customer = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
             req.setAttribute("currentStay", serviceRequestService.resolveCurrentStay(me, customer, reservationId));

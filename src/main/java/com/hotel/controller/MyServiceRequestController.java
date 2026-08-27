@@ -62,11 +62,6 @@ public class MyServiceRequestController extends BaseController {
             req.setAttribute("completedRequestCount", completedCount);
             req.setAttribute("completedAmount", completedAmount);
             req.setAttribute("statusFilter", statusFilter);
-            try {
-                req.setAttribute("currentStay", serviceRequestService.resolveCurrentStay(me, customer, null));
-            } catch (IllegalArgumentException | IllegalStateException e) {
-                req.setAttribute("stayError", e.getMessage());
-            }
         } catch (IllegalArgumentException | IllegalStateException e) {
             req.setAttribute("err", e.getMessage());
             req.setAttribute("requests", List.of());

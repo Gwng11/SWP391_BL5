@@ -52,7 +52,10 @@
     <div class="service-hero-content">
       <div class="service-kicker">Dịch vụ dành riêng cho kỳ lưu trú</div>
       <h1>Thêm trải nghiệm, tận hưởng trọn vẹn</h1>
-      <p>Từ ẩm thực, giặt ủi đến đưa đón và chăm sóc cá nhân — chọn dịch vụ phù hợp, thời gian mong muốn và gửi yêu cầu chỉ trong vài bước.</p>
+      <c:choose>
+        <c:when test="${not empty currentStay}"><p>Từ ẩm thực, giặt ủi đến đưa đón và chăm sóc cá nhân — chọn dịch vụ phù hợp cho kỳ lưu trú đã chọn.</p></c:when>
+        <c:otherwise><p>Xem danh mục, mô tả và giá các dịch vụ hiện có. Để đặt dịch vụ, hãy chọn một kỳ lưu trú phù hợp trong “Đơn của tôi”.</p></c:otherwise>
+      </c:choose>
       <c:if test="${not empty currentStay}">
         <div class="stay-context"><span class="stay-dot"></span><span>Kỳ lưu trú <b><c:out value="${currentStay.bookingCode}"/></b> · <c:out value="${currentStay.customerName}"/></span></div>
       </c:if>
@@ -67,7 +70,7 @@
     <div class="toolbar-actions">
       <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}"><a class="my-requests-link" href="${pageContext.request.contextPath}/my-service-requests">Dịch vụ của tôi</a></c:if>
       <form method="get" action="${pageContext.request.contextPath}/services" class="service-search">
-        <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' && not empty currentStay}"><input type="hidden" name="reservationId" value="${currentStay.reservationId}"></c:if>
+        <c:if test="${not empty currentStay}"><input type="hidden" name="reservationId" value="${currentStay.reservationId}"></c:if>
         <input name="q" value="<c:out value='${keyword}'/>" placeholder="Tìm theo tên dịch vụ" aria-label="Tìm dịch vụ">
         <button class="btn" type="submit">Tìm kiếm</button>
       </form>
@@ -87,10 +90,10 @@
             <div class="service-card-body">
               <h3><c:out value="${s.serviceName}"/></h3>
               <p class="service-description"><c:out value="${empty s.description ? 'Dịch vụ tiện ích dành cho khách đang lưu trú tại khách sạn.' : s.description}"/></p>
-              <c:url var="detailUrl" value="/service-detail"><c:param name="id" value="${s.hotelServiceId}"/><c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' && not empty currentStay}"><c:param name="reservationId" value="${currentStay.reservationId}"/></c:if></c:url>
+              <c:url var="detailUrl" value="/service-detail"><c:param name="id" value="${s.hotelServiceId}"/><c:if test="${not empty currentStay}"><c:param name="reservationId" value="${currentStay.reservationId}"/></c:if></c:url>
               <div class="service-footer">
                 <div><div class="price-from">Giá dịch vụ</div><div class="service-price"><fmt:formatNumber value="${s.unitPrice}"/> đ <small>/ <c:out value="${s.unitName}"/></small></div></div>
-                <c:choose><c:when test="${not empty currentStay}"><a class="btn" href="${detailUrl}">Chọn dịch vụ →</a></c:when><c:otherwise><span class="unavailable-note">Cần có đơn đã xác nhận hoặc kỳ lưu trú đang hoạt động để yêu cầu.</span></c:otherwise></c:choose>
+                <a class="btn" href="${detailUrl}">${not empty currentStay ? 'Chọn dịch vụ' : 'Xem chi tiết'} →</a>
               </div>
             </div>
           </article>

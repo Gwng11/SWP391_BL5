@@ -7,6 +7,7 @@ import com.hotel.entity.User;
 import com.hotel.service.CustomerService;
 import com.hotel.service.ReservationService;
 import com.hotel.service.RoomService;
+import com.hotel.service.UserService;
 import com.hotel.ultis.Constants;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -28,6 +29,7 @@ public class BookingController extends BaseController {
     private final ReservationService reservationService = new ReservationService();
     private final RoomService roomService = new RoomService();
     private final CustomerService customerService = new CustomerService();
+    private final UserService userService = new UserService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -37,7 +39,9 @@ public class BookingController extends BaseController {
         req.setAttribute("roomType", roomType);
         // Lễ tân đặt hộ: tìm khách theo SĐT/CCCD/tên thay vì nhập ID tay
         User me = currentUser(req);
-        if (me != null && !Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
+        if (me != null && Constants.ROLE_CUSTOMER.equals(me.getRoleCode())) {
+            req.setAttribute("bookingCustomer", userService.getCustomerProfile(me.getUserId()));
+        } else if (me != null) {
             String q = req.getParameter("q");
             if (q != null && !q.isBlank()) req.setAttribute("customerResults", customerService.search(q));
             Long selectedId = longParamOrNull(req, "customerId");
@@ -100,6 +104,11 @@ public class BookingController extends BaseController {
                 Customer c = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
                 if (c == null)
                     throw new IllegalStateException("Tài khoản chưa có hồ sơ khách hàng, vui lòng liên hệ lễ tân");
+                Customer submitted = customerProfileFromRequest(req);
+                req.setAttribute("bookingCustomer", submitted);
+                c = userService.completeCustomerProfileForReservation(me.getUserId(), submitted);
+                req.getSession().setAttribute(Constants.SESSION_USER, userService.getUser(me.getUserId()));
+                req.getSession().setAttribute(Constants.SESSION_CUSTOMER, c);
                 customerId = c.getCustomerId();
                 source = "ONLINE";
             } else {
@@ -134,7 +143,21 @@ public class BookingController extends BaseController {
             Long pickedId = longParamOrNull(req, "customerId");
             if (pickedId != null && !Constants.ROLE_CUSTOMER.equals(me.getRoleCode()))
                 req.setAttribute("selectedCustomer", customerService.getById(pickedId));
+            if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode()) && req.getAttribute("bookingCustomer") == null)
+                req.setAttribute("bookingCustomer", userService.getCustomerProfile(me.getUserId()));
             req.getRequestDispatcher("/WEB-INF/views/booking.jsp").forward(req, resp);
         }
+    }
+
+    private Customer customerProfileFromRequest(HttpServletRequest req) {
+        Customer c = new Customer();
+        c.setFullName(req.getParameter("customerFullName"));
+        c.setPhone(req.getParameter("customerPhone"));
+        c.setDateOfBirth(dateParam(req, "customerDateOfBirth"));
+        c.setIdDocumentType(req.getParameter("customerDocumentType"));
+        c.setIdDocumentNumber(req.getParameter("customerDocumentNumber"));
+        c.setNationality(req.getParameter("customerNationality"));
+        c.setAddress(req.getParameter("customerAddress"));
+        return c;
     }
 }

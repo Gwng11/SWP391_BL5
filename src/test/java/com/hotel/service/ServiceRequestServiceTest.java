@@ -6,6 +6,7 @@ import com.hotel.entity.Reservation;
 import com.hotel.entity.ServiceRequest;
 import com.hotel.entity.User;
 import com.hotel.interfaces.IHotelServiceRepository;
+import com.hotel.interfaces.IHotelProfileRepository;
 import com.hotel.interfaces.IReservationRepository;
 import com.hotel.interfaces.IServiceRequestRepository;
 import com.hotel.interfaces.IUserRepository;
@@ -16,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +29,7 @@ class ServiceRequestServiceTest {
     private IServiceRequestRepository requests;
     private IReservationRepository reservations;
     private IUserRepository users;
+    private IHotelProfileRepository hotelProfile;
     private ServiceRequestService service;
 
     @BeforeEach
@@ -34,7 +38,12 @@ class ServiceRequestServiceTest {
         requests = mock(IServiceRequestRepository.class);
         reservations = mock(IReservationRepository.class);
         users = mock(IUserRepository.class);
-        service = new ServiceRequestService(services, requests, reservations, users);
+        hotelProfile = mock(IHotelProfileRepository.class);
+        com.hotel.entity.HotelProfile profile = new com.hotel.entity.HotelProfile();
+        profile.setCheckInTime(LocalTime.of(14, 0));
+        profile.setCheckOutTime(LocalTime.NOON);
+        when(hotelProfile.getProfile()).thenReturn(profile);
+        service = new ServiceRequestService(services, requests, reservations, users, hotelProfile);
     }
 
     @Test
@@ -43,12 +52,12 @@ class ServiceRequestServiceTest {
         Customer customer = new Customer();
         customer.setCustomerId(9);
         Reservation stay = stay(17, 9);
-        when(reservations.findByCustomer(9)).thenReturn(List.of(stay));
+        when(reservations.findById(17)).thenReturn(stay);
         HotelService catalogItem = hotelService(true);
         when(services.findById(3)).thenReturn(catalogItem);
         when(requests.insert(any())).thenReturn(44L);
 
-        long id = service.createRequest(actor, customer, 999L, 3,
+        long id = service.createRequest(actor, customer, 17L, 3,
                 new BigDecimal("2"), LocalDateTime.now().plusHours(2), " Giao tại phòng ");
 
         assertEquals(44L, id);
@@ -57,7 +66,7 @@ class ServiceRequestServiceTest {
         assertEquals(17, captor.getValue().getReservationId());
         assertEquals(new BigDecimal("200.00"), captor.getValue().getTotalAmount());
         assertEquals("Giao tại phòng", captor.getValue().getNotes());
-        verify(reservations, never()).findById(999L);
+        verify(reservations).findById(17L);
     }
 
     @Test
@@ -77,16 +86,27 @@ class ServiceRequestServiceTest {
         customer.setCustomerId(9);
         Reservation confirmed = stay(17, 9);
         confirmed.setStatusCode(Constants.RES_CONFIRMED);
-        when(reservations.findByCustomer(9)).thenReturn(List.of(confirmed));
+        when(reservations.findById(17)).thenReturn(confirmed);
         when(services.findById(3)).thenReturn(hotelService(true));
         when(requests.insert(any())).thenReturn(45L);
 
-        assertEquals(45L, service.createRequest(actor, customer, null, 3,
+        assertEquals(45L, service.createRequest(actor, customer, 17L, 3,
                 BigDecimal.ONE, LocalDateTime.now().plusDays(1), null));
 
         ArgumentCaptor<ServiceRequest> captor = ArgumentCaptor.forClass(ServiceRequest.class);
         verify(requests).insert(captor.capture());
         assertEquals(17L, captor.getValue().getReservationId());
+    }
+
+    @Test
+    void creatingRequestWithoutSelectedReservationContextIsRejected() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+
+        assertThrows(IllegalStateException.class, () -> service.createRequest(
+                actor, customer, null, 3, BigDecimal.ONE, LocalDateTime.now().plusHours(1), null));
+        verifyNoInteractions(services, requests, reservations);
     }
 
     @Test
@@ -113,6 +133,35 @@ class ServiceRequestServiceTest {
 
         assertThrows(IllegalStateException.class,
                 () -> service.resolveCurrentStay(actor, customer, null));
+    }
+
+    @Test
+    void requestedTimeMustBeInsideSelectedReservationStay() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+        Reservation stay = stay(17, 9);
+        when(reservations.findById(17)).thenReturn(stay);
+        when(services.findById(3)).thenReturn(hotelService(true));
+
+        LocalDateTime beforeCheckIn = stay.getCheckInDate().atTime(13, 59);
+        LocalDateTime atCheckOut = stay.getCheckOutDate().atTime(12, 0);
+        assertThrows(IllegalArgumentException.class, () -> service.createRequest(
+                actor, customer, 17L, 3, BigDecimal.ONE, beforeCheckIn, null));
+        assertThrows(IllegalArgumentException.class, () -> service.createRequest(
+                actor, customer, 17L, 3, BigDecimal.ONE, atCheckOut, null));
+        verify(requests, never()).insert(any());
+    }
+
+    @Test
+    void customerCannotUseAnotherCustomersReservationId() {
+        User actor = user(5, Constants.ROLE_CUSTOMER);
+        Customer customer = new Customer();
+        customer.setCustomerId(9);
+        when(reservations.findById(17)).thenReturn(stay(17, 10));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.resolveCurrentStay(actor, customer, 17L));
     }
 
     @Test
@@ -196,6 +245,10 @@ class ServiceRequestServiceTest {
     @Test
     void receptionistCanRescheduleReturnedPendingRequest() {
         LocalDateTime newTime = LocalDateTime.now().plusHours(3);
+        ServiceRequest request = request(Constants.SR_PENDING);
+        request.setReservationId(17);
+        when(requests.findById(12)).thenReturn(request);
+        when(reservations.findById(17)).thenReturn(stay(17, 9));
         service.reschedule(12, newTime, "Theo yêu cầu của khách");
         verify(requests).reschedule(12, newTime, "Theo yêu cầu của khách");
         assertThrows(IllegalArgumentException.class,
@@ -240,6 +293,8 @@ class ServiceRequestServiceTest {
         reservation.setReservationId(id);
         reservation.setCustomerId(customerId);
         reservation.setStatusCode(Constants.RES_CHECKED_IN);
+        reservation.setCheckInDate(LocalDate.now().minusDays(1));
+        reservation.setCheckOutDate(LocalDate.now().plusDays(3));
         return reservation;
     }
 

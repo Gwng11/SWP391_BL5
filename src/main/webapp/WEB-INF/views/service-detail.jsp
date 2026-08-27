@@ -34,7 +34,7 @@
 </style>
 
 <div class="service-order">
-  <c:url var="backUrl" value="/services"><c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST' && not empty currentStay}"><c:param name="reservationId" value="${currentStay.reservationId}"/></c:if></c:url>
+  <c:url var="backUrl" value="/services"><c:if test="${not empty currentStay}"><c:param name="reservationId" value="${currentStay.reservationId}"/></c:if></c:url>
   <a class="back-link" href="${backUrl}">← Quay lại danh sách dịch vụ</a>
 
   <div class="order-layout">
@@ -51,25 +51,29 @@
     </section>
 
     <aside class="request-panel">
-      <div class="panel-kicker">Đặt dịch vụ</div>
-      <h2>Thông tin yêu cầu</h2>
+      <div class="panel-kicker">${not empty currentStay ? 'Đặt dịch vụ' : 'Xem dịch vụ'}</div>
+      <h2>${not empty currentStay ? 'Thông tin yêu cầu' : 'Thông tin dịch vụ'}</h2>
       <div class="service-price"><fmt:formatNumber value="${service.unitPrice}"/> đ <small>/ <c:out value="${service.unitName}"/></small></div>
       <c:choose>
         <c:when test="${not empty currentStay}">
           <div class="stay-box"><span class="stay-icon">🏨</span><span>Kỳ lưu trú <b><c:out value="${currentStay.bookingCode}"/></b><br><c:out value="${currentStay.customerName}"/></span></div>
           <form method="post" action="${pageContext.request.contextPath}/service-detail">
             <input type="hidden" name="hotelServiceId" value="${service.hotelServiceId}">
-            <c:if test="${sessionScope.currentUser.roleCode == 'RECEPTIONIST'}"><input type="hidden" name="reservationId" value="${currentStay.reservationId}"></c:if>
+            <input type="hidden" name="reservationId" value="${currentStay.reservationId}">
             <label>Số lượng (<c:out value="${service.unitName}"/>)</label>
             <input type="number" name="quantity" value="1" min="1" step="1" required>
             <label>Thời gian mong muốn</label>
-            <input type="datetime-local" name="requestedForAt" required>
+            <input type="datetime-local" name="requestedForAt" min="${serviceWindowStart}" max="${serviceWindowEnd}" required>
             <label>Ghi chú thêm (không bắt buộc)</label>
             <textarea name="notes" rows="4" maxlength="500" placeholder="Ví dụ: giao đến phòng trước 20:00"></textarea>
             <button class="btn btn-success submit-service" type="submit">Gửi yêu cầu dịch vụ →</button>
           </form>
         </c:when>
-        <c:otherwise><div class="err"><c:out value="${stayError}"/></div></c:otherwise>
+        <c:otherwise>
+          <div class="stay-box"><span class="stay-icon">📋</span><span>Đây là chế độ xem thông tin dịch vụ. Để đặt, bạn cần chọn đúng kỳ lưu trú trong <b>Đơn của tôi</b>.</span></div>
+          <c:if test="${sessionScope.currentUser.roleCode == 'CUSTOMER'}"><a class="btn submit-service" href="${pageContext.request.contextPath}/my-reservations">Chọn đơn để đặt dịch vụ →</a></c:if>
+          <c:if test="${sessionScope.currentUser.roleCode != 'CUSTOMER' && not empty stayError}"><div class="err"><c:out value="${stayError}"/></div></c:if>
+        </c:otherwise>
       </c:choose>
     </aside>
   </div>

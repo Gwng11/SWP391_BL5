@@ -17,7 +17,9 @@ import java.util.Properties;
 public final class EmailUtil {
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
-    private static final String SMTP_USER = "ducnhhe187046@gmail.com";
+//    private static final String SMTP_USER = "ducnhhe187046@fpt.edu.vn";
+//private static final String SMTP_PASS = "dbuz ntfg mein ttgv";
+private static final String SMTP_USER = "quangson2112004@gmail.com";
     private static final String SMTP_PASS = "vohlzaoawyitzwig";
     private static final String FROM_NAME = "Hotel Management System";
 

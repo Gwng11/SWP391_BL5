@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /** F15 - Trang chi tiết dịch vụ & Gửi yêu cầu đặt dịch vụ */
 @WebServlet(urlPatterns = {"/service-detail"})
@@ -35,9 +36,20 @@ public class ServiceDetailController extends BaseController {
         req.setAttribute("service", service);
 
         Long reservationId = longParamOrNull(req, "reservationId");
+        if (Constants.ROLE_CUSTOMER.equals(me.getRoleCode()) && reservationId == null) {
+            req.setAttribute("browseOnly", true);
+            req.getRequestDispatcher("/WEB-INF/views/service-detail.jsp").forward(req, resp);
+            return;
+        }
         try {
             Customer customer = (Customer) req.getSession().getAttribute(Constants.SESSION_CUSTOMER);
-            req.setAttribute("currentStay", serviceRequestService.resolveCurrentStay(me, customer, reservationId));
+            var currentStay = serviceRequestService.resolveCurrentStay(me, customer, reservationId);
+            req.setAttribute("currentStay", currentStay);
+            DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            req.setAttribute("serviceWindowStart",
+                    serviceRequestService.serviceWindowStart(currentStay).format(inputFormat));
+            req.setAttribute("serviceWindowEnd",
+                    serviceRequestService.serviceWindowEnd(currentStay).minusMinutes(1).format(inputFormat));
         } catch (IllegalArgumentException | IllegalStateException e) {
             req.setAttribute("stayError", e.getMessage());
         }
