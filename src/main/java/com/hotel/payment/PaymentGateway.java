@@ -8,6 +8,12 @@ public interface PaymentGateway {
     String providerName();
     GatewayResult authorize(Payment payment);
 
+    default String displayName() { return providerName(); }
+
+    default boolean isAvailable() { return true; }
+
+    default boolean isSimulation() { return false; }
+
     default boolean requiresRedirect() { return false; }
 
     default String buildPaymentUrl(Payment payment, String returnUrl, String clientIp) {

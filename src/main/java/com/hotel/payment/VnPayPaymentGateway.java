@@ -40,6 +40,7 @@ public class VnPayPaymentGateway implements PaymentGateway {
     }
 
     @Override public String providerName() { return "VNPAY"; }
+    @Override public String displayName() { return "VNPay Sandbox"; }
     @Override public boolean requiresRedirect() { return true; }
 
     @Override

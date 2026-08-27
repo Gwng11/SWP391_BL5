@@ -37,6 +37,7 @@ class PaymentServiceTest {
         emailService = mock(EmailService.class);
         gateway = mock(PaymentGateway.class);
         when(gateway.providerName()).thenReturn("SANDBOX_GATEWAY");
+        when(gateway.isAvailable()).thenReturn(true);
         service = new PaymentService(paymentRepo, reservationRepo, invoiceRepo,
                 customerRepo, emailService, gateway);
     }
@@ -111,6 +112,22 @@ class PaymentServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> service.payFinalInvoice(10, "CRYPTO", null));
         verifyNoInteractions(invoiceRepo, paymentRepo, gateway);
+    }
+
+    @Test
+    void unconfiguredOnlineGatewayIsRejectedBeforePaymentIsInserted() {
+        when(gateway.isAvailable()).thenReturn(false);
+        Reservation reservation = reservation(Constants.RES_PENDING, "1000000", "200000");
+        when(reservationRepo.findById(10)).thenReturn(reservation);
+        when(paymentRepo.sumSuccess(10, null)).thenReturn(BigDecimal.ZERO);
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> service.startDeposit(10, new BigDecimal("200000"), "ONLINE", null,
+                        "https://hotel.test/payment/vnpay-return", "127.0.0.1"));
+
+        assertTrue(error.getMessage().contains("HMS_VNPAY_TMN_CODE"));
+        verify(paymentRepo, never()).insert(any());
+        verify(gateway, never()).authorize(any());
     }
 
     @Test

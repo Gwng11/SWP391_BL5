@@ -48,6 +48,9 @@
        — Đã trả: <fmt:formatNumber value="${invoice.paidAmount}"/> đ
        — Còn lại: <b style="color:#c0392b"><fmt:formatNumber value="${outstanding}"/> đ</b></p>
       <c:if test="${invoice.statusCode != 'PAID'}">
+        <c:if test="${onlinePaymentSimulation}">
+          <div class="alert">Online đang dùng Sandbox mô phỏng và sẽ tự ghi nhận thành công.</div>
+        </c:if>
         <form method="post" action="${pageContext.request.contextPath}/reception/invoice">
           <input type="hidden" name="reservationId" value="${r.reservationId}">
           <input type="hidden" name="action" value="pay">
@@ -55,7 +58,12 @@
             <option value="CASH">Tiền mặt</option>
             <option value="CARD">Thẻ</option>
             <option value="BANK_TRANSFER">Chuyển khoản</option>
-            <option value="ONLINE">Thanh toán online</option>
+            <c:choose>
+              <c:when test="${onlinePaymentAvailable}">
+                <option value="ONLINE">Thanh toán qua <c:out value="${onlinePaymentDisplayName}"/></option>
+              </c:when>
+              <c:otherwise><option value="ONLINE" disabled>Online — chưa cấu hình</option></c:otherwise>
+            </c:choose>
           </select>
           <button class="btn btn-success" type="submit">💰 Thu phần còn lại & gửi email hóa đơn</button>
         </form>

@@ -56,6 +56,12 @@ public class PaymentService {
         return paymentRepo.findByReservation(reservationId);
     }
 
+    public boolean isOnlinePaymentAvailable() { return onlineGateway.isAvailable(); }
+
+    public boolean isOnlinePaymentSimulation() { return onlineGateway.isSimulation(); }
+
+    public String getOnlinePaymentDisplayName() { return onlineGateway.displayName(); }
+
     public BigDecimal getDepositPaid(long reservationId) {
         return paymentRepo.sumSuccess(reservationId, Constants.PAY_DEPOSIT);
     }
@@ -99,6 +105,7 @@ public class PaymentService {
                     + remaining.toPlainString() + " đ)");
 
         validateMethod(methodCode);
+        validateOnlineGateway(methodCode);
         Payment p = new Payment();
         p.setReservationId(reservationId);
         p.setRecordedByUserId(recordedByUserId);
@@ -128,6 +135,7 @@ public class PaymentService {
     public PaymentStartResult startFinalInvoice(long reservationId, String methodCode, Long recordedByUserId,
                                                 String returnUrl, String clientIp) {
         validateMethod(methodCode);
+        validateOnlineGateway(methodCode);
         Invoice inv = invoiceRepo.findByReservation(reservationId);
         if (inv == null || Constants.INV_DRAFT.equals(inv.getStatusCode()))
             throw new IllegalStateException("Chưa phát hành hóa đơn");
@@ -229,6 +237,13 @@ public class PaymentService {
         if (!"CASH".equals(methodCode) && !"CARD".equals(methodCode)
                 && !"BANK_TRANSFER".equals(methodCode) && !"ONLINE".equals(methodCode))
             throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ");
+    }
+
+    private void validateOnlineGateway(String methodCode) {
+        if ("ONLINE".equals(methodCode) && !onlineGateway.isAvailable()) {
+            throw new IllegalStateException("Thanh toán online chưa được cấu hình. "
+                    + "Hãy đặt HMS_VNPAY_TMN_CODE và HMS_VNPAY_HASH_SECRET rồi khởi động lại Tomcat.");
+        }
     }
 
     private String safeFailure(String reason) {
