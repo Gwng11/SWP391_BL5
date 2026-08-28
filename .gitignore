@@ -50,3 +50,9 @@ docs/
 
 # Codex temporary spreadsheet files
 /.codex-spreadsheet-work/
+
+/outputs/
+
+/README.local.md
+
+/AGENTS.md
