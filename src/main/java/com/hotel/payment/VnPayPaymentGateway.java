@@ -1,6 +1,7 @@
 package com.hotel.payment;
 
 import com.hotel.entity.Payment;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -98,6 +99,20 @@ public class VnPayPaymentGateway implements PaymentGateway {
         String transactionNo = parameters.get("vnp_TransactionNo");
         return success ? GatewayResult.success(transactionNo)
                 : GatewayResult.failed("VNPAY trả mã " + parameters.get("vnp_ResponseCode"));
+    }
+
+    @Override
+    public String callbackMerchantReference(Map<String, String> parameters) {
+        return parameters == null ? null : parameters.get("vnp_TxnRef");
+    }
+
+    @Override
+    public BigDecimal callbackAmount(Map<String, String> parameters) {
+        try {
+            return new BigDecimal(parameters.get("vnp_Amount")).movePointLeft(2);
+        } catch (NumberFormatException | NullPointerException ex) {
+            throw new IllegalArgumentException("Số tiền VNPAY không hợp lệ", ex);
+        }
     }
 
     private String canonical(Map<String, String> params) {

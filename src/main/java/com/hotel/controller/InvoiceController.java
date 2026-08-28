@@ -49,7 +49,8 @@ public class InvoiceController extends BaseController {
             } else if ("pay".equals(action)) {
                 PaymentStartResult started = paymentService.startFinalInvoice(reservationId,
                         req.getParameter("method") == null ? "CASH" : req.getParameter("method"), me.getUserId(),
-                        PaymentRequestUtil.vnPayReturnUrl(req), PaymentRequestUtil.clientIp(req));
+                        PaymentRequestUtil.gatewayReturnUrl(req, paymentService.getOnlinePaymentProviderName()),
+                        PaymentRequestUtil.clientIp(req));
                 if (started.requiresRedirect()) {
                     resp.sendRedirect(started.redirectUrl());
                     return;

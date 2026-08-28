@@ -61,7 +61,8 @@ public class CustomerInvoiceController extends BaseController {
         try {
             // Customer không được sửa phương thức hoặc số tiền bằng request thủ công.
             PaymentStartResult started = paymentService.startFinalInvoice(reservationId, "ONLINE", null,
-                    PaymentRequestUtil.vnPayReturnUrl(req), PaymentRequestUtil.clientIp(req));
+                    PaymentRequestUtil.gatewayReturnUrl(req, paymentService.getOnlinePaymentProviderName()),
+                    PaymentRequestUtil.clientIp(req));
             if (started.requiresRedirect()) {
                 resp.sendRedirect(started.redirectUrl());
                 return;

@@ -41,7 +41,7 @@ public class PaymentRepository extends BaseRepository implements IPaymentReposit
         try (Connection cn = getConnection()) {
             cn.setAutoCommit(false);
             try {
-                preventDuplicateActiveVnPay(cn, p);
+                preventDuplicateActiveGatewayPayment(cn, p);
                 long id;
                 try (PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setLong(1, p.getReservationId());
@@ -72,18 +72,21 @@ public class PaymentRepository extends BaseRepository implements IPaymentReposit
         } catch (SQLException e) { throw wrap(e); }
     }
 
-    /** Chặn double-click tạo hai giao dịch VNPay còn hiệu lực cho cùng một khoản thu. */
-    private void preventDuplicateActiveVnPay(Connection cn, Payment payment) throws SQLException {
-        if (!"VNPAY".equals(payment.getProviderName()) || !"PENDING".equals(payment.getStatusCode())) return;
+    /** Chặn double-click tạo hai giao dịch gateway còn hiệu lực cho cùng một khoản thu. */
+    private void preventDuplicateActiveGatewayPayment(Connection cn, Payment payment) throws SQLException {
+        if (!"ONLINE".equals(payment.getMethodCode()) || payment.getProviderName() == null
+                || !"PENDING".equals(payment.getStatusCode())) return;
         String sql = "SELECT TOP 1 payment_id FROM payments WITH (UPDLOCK, HOLDLOCK) "
-                + "WHERE reservation_id=? AND payment_type=? AND provider_name='VNPAY' "
+                + "WHERE reservation_id=? AND payment_type=? AND provider_name=? "
                 + "AND status_code='PENDING' AND created_at >= DATEADD(MINUTE,-20,SYSUTCDATETIME())";
         try (PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setLong(1, payment.getReservationId());
             ps.setString(2, payment.getPaymentType());
+            ps.setString(3, payment.getProviderName());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next())
-                    throw new IllegalStateException("Đang có một giao dịch VNPay chờ xử lý; vui lòng hoàn tất hoặc thử lại sau 20 phút");
+                    throw new IllegalStateException("Đang có một giao dịch " + payment.getProviderName()
+                            + " chờ xử lý; vui lòng hoàn tất hoặc thử lại sau 20 phút");
             }
         }
     }

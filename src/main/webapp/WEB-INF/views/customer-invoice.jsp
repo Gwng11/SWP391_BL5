@@ -58,7 +58,7 @@
           <div class="err" style="margin-top:22px">Thanh toán online chưa được cấu hình. Vui lòng liên hệ khách sạn.</div>
         </c:if>
         <c:if test="${onlinePaymentSimulation}">
-          <div class="alert" style="margin-top:22px">Đang dùng Sandbox mô phỏng; giao dịch không đi qua VNPay.</div>
+          <div class="alert" style="margin-top:22px">Đang dùng Sandbox mô phỏng; giao dịch không đi qua gateway thật.</div>
         </c:if>
         <form method="post" action="${pageContext.request.contextPath}/my-invoice" style="margin-top:22px;text-align:right"
               onsubmit="return confirm('Xác nhận thanh toán toàn bộ số tiền còn lại?')">

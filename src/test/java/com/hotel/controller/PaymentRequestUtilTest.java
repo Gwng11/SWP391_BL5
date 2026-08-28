@@ -12,7 +12,7 @@ class PaymentRequestUtilTest {
         HttpServletRequest request = request("http", "localhost", 9981, "/HotelManagement");
 
         assertEquals("http://localhost:9981/HotelManagement/payment/vnpay-return",
-                PaymentRequestUtil.vnPayReturnUrl(request));
+                PaymentRequestUtil.gatewayReturnUrl(request, "VNPAY"));
     }
 
     @Test
@@ -22,7 +22,7 @@ class PaymentRequestUtilTest {
         when(request.getHeader("X-Forwarded-Host")).thenReturn("hotel-demo.example.com");
 
         assertEquals("https://hotel-demo.example.com/HotelManagement/payment/vnpay-return",
-                PaymentRequestUtil.vnPayReturnUrl(request));
+                PaymentRequestUtil.gatewayReturnUrl(request, "VNPAY"));
     }
 
     @Test
@@ -31,7 +31,17 @@ class PaymentRequestUtilTest {
         when(request.getHeader("X-Forwarded-Host")).thenReturn("evil.test/path");
 
         assertEquals("http://hotel.example.com/HotelManagement/payment/vnpay-return",
-                PaymentRequestUtil.vnPayReturnUrl(request));
+                PaymentRequestUtil.gatewayReturnUrl(request, "VNPAY"));
+    }
+
+    @Test
+    void momoUsesItsOwnPublicReturnEndpoint() {
+        HttpServletRequest request = request("http", "localhost", 9981, "/HotelManagement");
+        when(request.getHeader("X-Forwarded-Proto")).thenReturn("https");
+        when(request.getHeader("X-Forwarded-Host")).thenReturn("hotel-demo.example.com");
+
+        assertEquals("https://hotel-demo.example.com/HotelManagement/payment/momo-return",
+                PaymentRequestUtil.gatewayReturnUrl(request, "MOMO"));
     }
 
     private HttpServletRequest request(String scheme, String host, int port, String contextPath) {

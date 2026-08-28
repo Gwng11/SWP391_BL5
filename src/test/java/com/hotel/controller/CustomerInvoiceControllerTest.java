@@ -71,13 +71,14 @@ class CustomerInvoiceControllerTest {
         when(reservationService.getById(12)).thenReturn(reservation);
         when(request.getParameter("method")).thenReturn("CASH");
         when(request.getParameter("amount")).thenReturn("1");
+        when(paymentService.getOnlinePaymentProviderName()).thenReturn("MOMO");
         when(paymentService.startFinalInvoice(eq(12L), eq("ONLINE"), isNull(), anyString(), anyString()))
                 .thenReturn(new PaymentStartResult(new Payment(), "https://sandbox.vnpayment.vn/pay"));
 
         controller.doPost(request, response);
 
         verify(paymentService).startFinalInvoice(eq(12L), eq("ONLINE"), isNull(),
-                eq("http://localhost:9981/HotelManagement/payment/vnpay-return"), eq("127.0.0.1"));
+                eq("http://localhost:9981/HotelManagement/payment/momo-return"), eq("127.0.0.1"));
         verify(response).sendRedirect("https://sandbox.vnpayment.vn/pay");
     }
 

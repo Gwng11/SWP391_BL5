@@ -1,6 +1,7 @@
 package com.hotel.payment;
 
 import com.hotel.entity.Payment;
+import java.math.BigDecimal;
 import java.util.Map;
 
 /** Abstraction để thay SANDBOX bằng VNPay/MoMo mà không đổi nghiệp vụ thanh toán. */
@@ -22,5 +23,15 @@ public interface PaymentGateway {
 
     default GatewayResult verifyCallback(Map<String, String> parameters) {
         throw new UnsupportedOperationException("Gateway không hỗ trợ callback");
+    }
+
+    /** Merchant-side reference used to find the pending payment for a callback. */
+    default String callbackMerchantReference(Map<String, String> parameters) {
+        throw new UnsupportedOperationException("Gateway không hỗ trợ callback reference");
+    }
+
+    /** Amount in VND represented by a verified callback. */
+    default BigDecimal callbackAmount(Map<String, String> parameters) {
+        throw new UnsupportedOperationException("Gateway không hỗ trợ callback amount");
     }
 }

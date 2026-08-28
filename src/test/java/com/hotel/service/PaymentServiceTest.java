@@ -125,7 +125,7 @@ class PaymentServiceTest {
                 () -> service.startDeposit(10, new BigDecimal("200000"), "ONLINE", null,
                         "https://hotel.test/payment/vnpay-return", "127.0.0.1"));
 
-        assertTrue(error.getMessage().contains("HMS_VNPAY_TMN_CODE"));
+        assertTrue(error.getMessage().contains("HMS_PAYMENT_PROVIDER"));
         verify(paymentRepo, never()).insert(any());
         verify(gateway, never()).authorize(any());
     }
@@ -135,6 +135,8 @@ class PaymentServiceTest {
         when(gateway.requiresRedirect()).thenReturn(true);
         when(gateway.providerName()).thenReturn("VNPAY");
         when(gateway.verifyCallback(anyMap())).thenReturn(GatewayResult.success("VNP-900"));
+        when(gateway.callbackMerchantReference(anyMap())).thenReturn("HMS-80");
+        when(gateway.callbackAmount(anyMap())).thenReturn(new BigDecimal("200000"));
         Payment pending = payment(80, Constants.PAY_PENDING, "200000");
         pending.setReservationId(10);
         pending.setPaymentType(Constants.PAY_DEPOSIT);
@@ -151,6 +153,24 @@ class PaymentServiceTest {
         assertTrue(outcome.successful());
         assertFalse(outcome.alreadyProcessed());
         verify(paymentRepo, times(1)).completeDeposit(80, "VNP-900");
+    }
+
+    @Test
+    void redirectGatewayFailureMarksAlreadyInsertedPaymentFailed() {
+        Reservation reservation = reservation(Constants.RES_PENDING, "1000000", "200000");
+        when(reservationRepo.findById(10)).thenReturn(reservation);
+        when(paymentRepo.sumSuccess(10, null)).thenReturn(BigDecimal.ZERO);
+        when(paymentRepo.insert(any())).thenReturn(81L);
+        when(gateway.requiresRedirect()).thenReturn(true);
+        when(gateway.buildPaymentUrl(any(), anyString(), anyString()))
+                .thenThrow(new IllegalStateException("MoMo timeout"));
+
+        assertThrows(IllegalStateException.class, () -> service.startDeposit(10,
+                new BigDecimal("200000"), "ONLINE", null,
+                "https://hotel.test/payment/momo-return", "127.0.0.1"));
+
+        verify(paymentRepo).insert(any());
+        verify(paymentRepo).markFailed(81, "MoMo timeout");
     }
 
     private Reservation reservation(String status, String total, String deposit) {

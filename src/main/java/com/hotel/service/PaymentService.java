@@ -62,6 +62,8 @@ public class PaymentService {
 
     public String getOnlinePaymentDisplayName() { return onlineGateway.displayName(); }
 
+    public String getOnlinePaymentProviderName() { return onlineGateway.providerName(); }
+
     public BigDecimal getDepositPaid(long reservationId) {
         return paymentRepo.sumSuccess(reservationId, Constants.PAY_DEPOSIT);
     }
@@ -84,7 +86,7 @@ public class PaymentService {
     public Payment payDeposit(long reservationId, BigDecimal amount, String methodCode, Long recordedByUserId) {
         PaymentStartResult started = startDeposit(reservationId, amount, methodCode, recordedByUserId, null, null);
         if (started.requiresRedirect())
-            throw new IllegalStateException("Thanh toán cần chuyển hướng đến VNPAY");
+            throw new IllegalStateException("Thanh toán cần chuyển hướng đến cổng thanh toán online");
         return started.payment();
     }
 
@@ -114,11 +116,9 @@ public class PaymentService {
         p.setAmount(amount);
         p.setStatusCode(Constants.PAY_PENDING);
         prepareOnlinePayment(p);
-        String paymentUrl = null;
-        if ("ONLINE".equals(methodCode) && onlineGateway.requiresRedirect())
-            paymentUrl = onlineGateway.buildPaymentUrl(p, returnUrl, clientIp);
         long paymentId = paymentRepo.insert(p);
         p.setPaymentId(paymentId);
+        String paymentUrl = buildRedirectUrlOrFail(p, returnUrl, clientIp);
         if (paymentUrl != null) return new PaymentStartResult(p, paymentUrl);
         Payment completed = completeImmediate(p, true);
         return new PaymentStartResult(completed, null);
@@ -128,7 +128,7 @@ public class PaymentService {
     public Payment payFinalInvoice(long reservationId, String methodCode, Long recordedByUserId) {
         PaymentStartResult started = startFinalInvoice(reservationId, methodCode, recordedByUserId, null, null);
         if (started.requiresRedirect())
-            throw new IllegalStateException("Thanh toán cần chuyển hướng đến VNPAY");
+            throw new IllegalStateException("Thanh toán cần chuyển hướng đến cổng thanh toán online");
         return started.payment();
     }
 
@@ -154,11 +154,9 @@ public class PaymentService {
         p.setAmount(outstanding);
         p.setStatusCode(Constants.PAY_PENDING);
         prepareOnlinePayment(p);
-        String paymentUrl = null;
-        if ("ONLINE".equals(methodCode) && onlineGateway.requiresRedirect())
-            paymentUrl = onlineGateway.buildPaymentUrl(p, returnUrl, clientIp);
         long paymentId = paymentRepo.insert(p);
         p.setPaymentId(paymentId);
+        String paymentUrl = buildRedirectUrlOrFail(p, returnUrl, clientIp);
         if (paymentUrl != null) return new PaymentStartResult(p, paymentUrl);
         return new PaymentStartResult(completeImmediate(p, false), null);
     }
@@ -168,10 +166,10 @@ public class PaymentService {
         if (!onlineGateway.requiresRedirect())
             throw new IllegalStateException("Gateway hiện tại không nhận callback");
         GatewayResult result = onlineGateway.verifyCallback(parameters);
-        String merchantReference = parameters.get("vnp_TxnRef");
+        String merchantReference = onlineGateway.callbackMerchantReference(parameters);
         Payment payment = paymentRepo.findByProviderReference(onlineGateway.providerName(), merchantReference);
-        if (payment == null) throw new IllegalArgumentException("Không tìm thấy giao dịch VNPAY");
-        validateCallbackAmount(payment, parameters.get("vnp_Amount"));
+        if (payment == null) throw new IllegalArgumentException("Không tìm thấy giao dịch " + onlineGateway.displayName());
+        validateCallbackAmount(payment, onlineGateway.callbackAmount(parameters));
         if (Constants.PAY_SUCCESS.equals(payment.getStatusCode()))
             return new PaymentCallbackOutcome(payment, true, true);
         if (!result.successful()) {
@@ -218,19 +216,24 @@ public class PaymentService {
         if (onlineGateway.requiresRedirect()) payment.setProviderReference(merchantReference());
     }
 
+    private String buildRedirectUrlOrFail(Payment payment, String returnUrl, String clientIp) {
+        if (!"ONLINE".equals(payment.getMethodCode()) || !onlineGateway.requiresRedirect()) return null;
+        try {
+            return onlineGateway.buildPaymentUrl(payment, returnUrl, clientIp);
+        } catch (RuntimeException ex) {
+            paymentRepo.markFailed(payment.getPaymentId(), safeFailure(ex.getMessage()));
+            throw ex;
+        }
+    }
+
     private String merchantReference() {
         return "HMS" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
                 + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
-    private void validateCallbackAmount(Payment payment, String vnpAmount) {
-        try {
-            BigDecimal returned = new BigDecimal(vnpAmount).movePointLeft(2);
-            if (returned.compareTo(payment.getAmount()) != 0)
-                throw new IllegalArgumentException("Số tiền VNPAY không khớp giao dịch");
-        } catch (NumberFormatException | NullPointerException ex) {
-            throw new IllegalArgumentException("Số tiền VNPAY không hợp lệ");
-        }
+    private void validateCallbackAmount(Payment payment, BigDecimal returned) {
+        if (returned == null || returned.compareTo(payment.getAmount()) != 0)
+            throw new IllegalArgumentException("Số tiền từ cổng thanh toán không khớp giao dịch");
     }
 
     private void validateMethod(String methodCode) {
@@ -242,7 +245,7 @@ public class PaymentService {
     private void validateOnlineGateway(String methodCode) {
         if ("ONLINE".equals(methodCode) && !onlineGateway.isAvailable()) {
             throw new IllegalStateException("Thanh toán online chưa được cấu hình. "
-                    + "Hãy đặt HMS_VNPAY_TMN_CODE và HMS_VNPAY_HASH_SECRET rồi khởi động lại Tomcat.");
+                    + "Hãy đặt HMS_PAYMENT_PROVIDER và credentials của cổng thanh toán rồi khởi động lại Tomcat.");
         }
     }
 

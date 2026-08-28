@@ -32,6 +32,45 @@ Chạy lần lượt trong SSMS (database `SingleHotelManagementDB` đã tạo s
 Hệ thống mặc định **không ghi nhận giả một giao dịch online thành công**. Khi chưa cấu hình gateway,
 nút thanh toán online bị vô hiệu hóa và backend cũng từ chối request thủ công.
 
+Để dùng **MoMo Sandbox**, cấu hình ba credentials được MoMo cấp. Không đưa secret vào source code hoặc Git:
+
+```text
+HMS_PAYMENT_PROVIDER=MOMO
+HMS_MOMO_PARTNER_CODE=<partnerCode>
+HMS_MOMO_ACCESS_KEY=<accessKey>
+HMS_MOMO_SECRET_KEY=<secretKey>
+```
+
+Các biến MoMo tùy chọn:
+
+```text
+HMS_MOMO_CREATE_URL=https://test-payment.momo.vn/v2/gateway/api/create
+HMS_MOMO_REDIRECT_URL=https://<public-host>/HotelManagement/payment/momo-return
+HMS_MOMO_IPN_URL=https://<public-host>/HotelManagement/payment/momo-ipn
+HMS_MOMO_PARTNER_NAME=Hotel Management System
+HMS_MOMO_STORE_ID=HMS
+```
+
+- `redirectUrl` đưa trình duyệt khách về hệ thống; `ipnUrl` là callback server-to-server xác nhận kết quả.
+- Khi bỏ hai biến URL, hệ thống tự dựng URL HTTPS từ các header proxy của Cloudflare. Khi đặt URL tường minh,
+  cả hai URL phải là địa chỉ public HTTPS mà MoMo truy cập được.
+- Payment được lưu `PENDING` trước khi gọi MoMo; chỉ callback có HMAC-SHA256 hợp lệ, đúng `orderId`, đúng số tiền
+  và `resultCode=0` mới chuyển sang `SUCCESS`.
+
+Ví dụ PowerShell với Cloudflare Tunnel:
+
+```powershell
+$env:HMS_PAYMENT_PROVIDER='MOMO'
+$env:HMS_MOMO_PARTNER_CODE='YOUR_PARTNER_CODE'
+$env:HMS_MOMO_ACCESS_KEY='YOUR_ACCESS_KEY'
+$env:HMS_MOMO_SECRET_KEY='YOUR_SECRET_KEY'
+$env:HMS_MOMO_REDIRECT_URL='https://<tunnel-host>/HotelManagement/payment/momo-return'
+$env:HMS_MOMO_IPN_URL='https://<tunnel-host>/HotelManagement/payment/momo-ipn'
+```
+
+Sau khi đặt biến, phải dừng và khởi động lại Tomcat/IDE. Các tài khoản demo công khai chỉ được dùng với
+`test-payment.momo.vn`, tuyệt đối không dùng cho production.
+
 Để dùng VNPay Sandbox, chỉ cần cấu hình hai biến môi trường trước khi khởi động Tomcat:
 
 ```text
@@ -140,8 +179,8 @@ khóa theo thứ tự `room_type_id`, nên luồng online và walk-in không th�
 ## 5. Ghi chú
 
 - Package tiện ích đặt tên `ultis` theo đúng cấu trúc bạn mô tả (nếu muốn đổi thành `utils`: đổi tên thư mục + sửa `package`/`import`).
-- Thanh toán ONLINE bị khóa an toàn khi chưa cấu hình. Hệ thống tự dùng `VnPayPaymentGateway` khi có đủ
-  hai credentials; `SandboxPaymentGateway` chỉ hoạt động khi được bật tường minh. Giao dịch VNPay đi qua vòng đời `PENDING` → redirect → Return/IPN xác minh
+- Thanh toán ONLINE bị khóa an toàn khi chưa cấu hình. Hệ thống chọn `MomoPaymentGateway` hoặc `VnPayPaymentGateway`
+  theo credentials/provider; `SandboxPaymentGateway` chỉ hoạt động khi được bật tường minh. Giao dịch gateway đi qua vòng đời `PENDING` → redirect → Return/IPN xác minh
   chữ ký và số tiền → `SUCCESS/FAILED`; callback lặp lại được xử lý idempotent để không ghi nhận tiền hai lần.
 - F25–F26 (quản trị user và quản lý template email) chưa nằm trong phạm vi Manager và không được cấp cho role `MANAGER`.
 
