@@ -7,11 +7,11 @@
   <p>Còn phải nộp: <b style="color:#c0392b"><fmt:formatNumber value="${outstanding}"/> đ</b></p>
   <c:if test="${not onlinePaymentAvailable}">
     <div class="err">Thanh toán online chưa được cấu hình. Cần đặt
-      <code>HMS_VNPAY_TMN_CODE</code> và <code>HMS_VNPAY_HASH_SECRET</code>, sau đó khởi động lại Tomcat.
+      <code>HMS_PAYMENT_PROVIDER</code> và credentials của gateway, sau đó khởi động lại Tomcat.
     </div>
   </c:if>
   <c:if test="${onlinePaymentSimulation}">
-    <div class="alert">Đang dùng Sandbox mô phỏng: thao tác này không đi qua VNPay và sẽ tự ghi nhận thành công.</div>
+    <div class="alert">Đang dùng Sandbox mô phỏng: thao tác này không đi qua gateway thật và sẽ tự ghi nhận thành công.</div>
   </c:if>
   <form method="post" action="${pageContext.request.contextPath}/deposit">
   <input type="hidden" name="reservationId" value="${r.reservationId}">

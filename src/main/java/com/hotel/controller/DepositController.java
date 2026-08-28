@@ -64,7 +64,8 @@ public class DepositController extends BaseController {
             }
             Long recordedBy = Constants.ROLE_CUSTOMER.equals(me.getRoleCode()) ? null : me.getUserId();
             PaymentStartResult started = paymentService.startDeposit(id, amount, method, recordedBy,
-                    PaymentRequestUtil.vnPayReturnUrl(req), PaymentRequestUtil.clientIp(req));
+                    PaymentRequestUtil.gatewayReturnUrl(req, paymentService.getOnlinePaymentProviderName()),
+                    PaymentRequestUtil.clientIp(req));
             if (started.requiresRedirect()) {
                 resp.sendRedirect(started.redirectUrl());
                 return;

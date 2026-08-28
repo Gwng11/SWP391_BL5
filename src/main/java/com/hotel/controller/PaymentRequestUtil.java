@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 final class PaymentRequestUtil {
     private PaymentRequestUtil() {}
 
-    static String vnPayReturnUrl(HttpServletRequest request) {
+    static String gatewayReturnUrl(HttpServletRequest request, String providerName) {
         String forwardedProto = firstHeaderValue(request.getHeader("X-Forwarded-Proto"));
         String scheme = isHttpScheme(forwardedProto) ? forwardedProto.toLowerCase() : request.getScheme();
         String forwardedHost = firstHeaderValue(request.getHeader("X-Forwarded-Host"));
@@ -20,7 +20,9 @@ final class PaymentRequestUtil {
         if (!hostContainsPort(host) && port != defaultPort(scheme)) {
             url.append(':').append(port);
         }
-        return url.append(request.getContextPath()).append("/payment/vnpay-return").toString();
+        String callbackPath = "MOMO".equalsIgnoreCase(providerName)
+                ? "/payment/momo-return" : "/payment/vnpay-return";
+        return url.append(request.getContextPath()).append(callbackPath).toString();
     }
 
     static String clientIp(HttpServletRequest request) {
